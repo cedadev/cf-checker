@@ -35,6 +35,7 @@ from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
 checkerVersion=1.9
+CFVersions=['CF-1.0','CF-1.1']
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -166,13 +167,14 @@ def chkDerivedName(name):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, udunitsDat=''):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, udunitsDat='', version=''):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
       self.coards = coards
       self.standardNames = cfStandardNamesXML
       self.udunits = udunitsDat
+      self.version = version
       self.err = 0
       self.warn = 0
       #rc = self.Checker(file)
@@ -315,7 +317,7 @@ class CFChecker:
   def setUpAttributeList(self):
   #-----------------------------
       """Set up Dictionary of valid attributes, their corresponding
-      Type; S(tring) or N(umeric) and Use C(oordinate),
+      Type; S(tring), N(umeric) D(ata variable type)  and Use C(oordinate),
       D(ata non-coordinate) or G(lobal) variable."""
     
       self.AttrList={}
@@ -333,7 +335,7 @@ class CFChecker:
       self.AttrList['coordinates']=['S','D']
       self.AttrList['_FillValue']=['N','D']
       self.AttrList['flag_meanings']=['S','D']
-      self.AttrList['flag_values']=['S','D']
+      self.AttrList['flag_values']=['D','D']
       self.AttrList['formula_terms']=['S','C']
       self.AttrList['grid_mapping']=['S','D']
       self.AttrList['history']=['S','G']
@@ -699,10 +701,16 @@ class CFChecker:
     """Check validity of global attributes."""
     rc=1
     if self.f.attributes.has_key('Conventions'):
-        if self.f.attributes['Conventions'] != "CF-1.0":
+        conventions = self.f.attributes['Conventions']
+        
+        if conventions not in CFVersions:
             print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
             self.err = self.err+1
             rc=0
+
+        if conventions != version:
+            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF version",version
+            
     else:
         print "WARNING (2.6.1): No 'Conventions' attribute present"
         self.warn = self.warn+1
@@ -839,6 +847,8 @@ class CFChecker:
     kind of variable."""
     rc=1
     var=self.f[varName]
+
+##    print "%%%",type(varName)
     
     if not self.validName(attribute):
         print "ERROR: Invalid attribute name -",attribute
@@ -852,8 +862,9 @@ class CFChecker:
     #------------------------------------------------------------
     if self.AttrList.has_key(attribute):
         # Standard Attribute, therefore check type
-        
+
         attrType=type(value)
+
         if attrType == types.StringType:
             attrType='S'
         elif attrType == types.IntType or attrType == types.FloatType:
@@ -864,6 +875,18 @@ class CFChecker:
             attrType=self.AttrList[attribute][0]
         else:
             print "Unknown Type for attribute:",attribute,attrType
+
+
+        # Special case for 'D' as they will always be satisfied by one of the cases
+        # above.
+        if self.AttrList[attribute][0] == 'D':
+            print "Attribute type:",attribute,attrType
+            print "Value",value
+            print "variable typecode:",var.typecode()
+
+            if type(value) == type(Numeric.array([])):
+                print "Element type is",type(value[0])
+
 
         if self.AttrList[attribute][0] != attrType:
             print "ERROR: Attribute",attribute,"of incorrect type"
@@ -1065,7 +1088,8 @@ class CFChecker:
             return 0
 
 
-        stdName=var.attributes['standard_name']
+        stdName=string.split(var.attributes['standard_name'])[0]
+        
         if not self.alias.has_key(stdName):
             print "ERROR (4.3.2): No formula defined for standard name:",stdName
             self.err = self.err+1
@@ -1150,7 +1174,7 @@ class CFChecker:
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
               if var.attributes.has_key('standard_name'):
-                  stdName = var.attributes['standard_name']
+                  stdName = string.split(var.attributes['standard_name'])[0]
                   if stdName in self.std_name_dh.dict.keys():
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
@@ -1410,19 +1434,33 @@ class CFChecker:
               self.warn = self.warn+1
               
       if var.attributes.has_key('standard_name'):
-          # Check if valid by the standard_name table
-          name=var.attributes['standard_name']
-          if re.match(".* .?",name) :
-              print "ERROR: Whitespace not allowed in standard_name: '"+name+"'"
-              self.err = self.err + 1
-              rc=0
-              
-          elif not name in self.std_name_dh.dict.keys():
-              if chkDerivedName(name):
-                  print "ERROR (3.3): Invalid standard_name:",name
-                  self.err = self.err + 1
-                  rc=0
+          # Check if valid by the standard_name table and allowed modifiers
+          std_name=var.attributes['standard_name']
 
+          # standard_name attribute can comprise a standard_name only or a standard_name
+          # followed by a modifier (E.g. atmosphere_cloud_liquid_water_content status_flag)
+          std_name_el=string.split(std_name)
+          if not self.parseBlankSeparatedList(std_name) or len(std_name_el) > 2:
+              print "ERROR (3.3): Invalid syntax for 'standard_name' attribute: '"+std_name+"'"
+              self.err = self.err+1
+              rc=0
+
+          else:
+              # Validate standard_name
+              name=std_name_el[0]
+              if not name in self.std_name_dh.dict.keys():
+                  if chkDerivedName(name):
+                      print "ERROR (3.3): Invalid standard_name:",name
+                      self.err = self.err + 1
+                      rc=0
+
+              if len(std_name_el) == 2:
+                  # Validate modifier
+                  modifier=std_name_el[1]
+                  if not modifier in ['detection_minimum','number_of_observations','standard_error','status_flag']:
+                      print "ERROR (3.3): Invalid standard_name modifier: "+modifier
+                      rc=0
+                      
       return rc
 
 
@@ -1586,6 +1624,8 @@ def getargs(arglist):
     useFileName="yes"
     badc=None
     coards=None
+    version=CFVersions[-1]
+    
     # set to environment variables
     if environ.has_key(udunitskey):
         udunits=environ[udunitskey]
@@ -1593,7 +1633,7 @@ def getargs(arglist):
         standardname=environ[standardnamekey]
 
     try:
-        (opts,args)=getopt(arglist[1:],'bchlnu:s:',['badc','coards','help','uploader','noname','udunits=','cf_standard_names='])
+        (opts,args)=getopt(arglist[1:],'bchlnu:s:v:',['badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version='])
     except GetoptError:
         stderr.write('%s\n'%__doc__)
         exit(1)
@@ -1620,12 +1660,19 @@ def getargs(arglist):
         if a in ('-s','--cf_standard_names'):
             standardname=v
             continue
+        if a in ('-v','--version'):
+            version="CF-"+v
+            if "CF-"+v not in CFVersions:
+                print "WARNING: CF-"+v+" is not a valid CF version."
+                print "Performing check against newest version",CFVersions[-1]
+                version=CFVersions[-1]
+            continue
             
     if len(args) == 0:
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(2)
 
-    return (badc,coards,uploader,useFileName,standardname.strip(),udunits.strip(),args)
+    return (badc,coards,uploader,useFileName,standardname.strip(),udunits.strip(),version.strip(),args)
 
 
 #--------------------------
@@ -1636,9 +1683,9 @@ if __name__ == '__main__':
 
     from sys import argv
 
-    (badc,coards,uploader,useFileName,standardName,udunitsDat,files)=getargs(argv)
+    (badc,coards,uploader,useFileName,standardName,udunitsDat,version,files)=getargs(argv)
     
-    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, udunitsDat=udunitsDat)
+    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, udunitsDat=udunitsDat, version=version)
     for file in files:
         inst.checker(file)
 
