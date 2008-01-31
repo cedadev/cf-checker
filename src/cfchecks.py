@@ -239,7 +239,6 @@ class CFChecker:
     self.setUpFormulas()
     axes=self.f.axes.keys()
 
-    
     # Check each variable
     for var in self.f._file_.variables.keys():
         print ""
@@ -710,6 +709,7 @@ class CFChecker:
 
         if conventions != version:
             print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF version",version
+            self.warn = self.warn+1
             
     else:
         print "WARNING (2.6.1): No 'Conventions' attribute present"
@@ -848,8 +848,6 @@ class CFChecker:
     rc=1
     var=self.f[varName]
 
-##    print "%%%",type(varName)
-    
     if not self.validName(attribute):
         print "ERROR: Invalid attribute name -",attribute
         self.err = self.err+1
@@ -877,18 +875,17 @@ class CFChecker:
             print "Unknown Type for attribute:",attribute,attrType
 
 
-        # Special case for 'D' as they will always be satisfied by one of the cases
-        # above.
-        if self.AttrList[attribute][0] == 'D':
-            print "Attribute type:",attribute,attrType
-            print "Value",value
-            print "variable typecode:",var.typecode()
+        if attrType != "S" and self.AttrList[attribute][0] == 'D':
+            # Special case for 'D' as these attributes will always be of numeric type
+            # and be caught by one of the cases above.
+            # Attributes of type 'D' should be the same type as the data variable.
 
-            if type(value) == type(Numeric.array([])):
-                print "Element type is",type(value[0])
+                if var.typecode() != var.attributes[attribute].typecode():
+                    print "ERROR: Attribute",attribute,"of incorrect type"
+                    self.err = self.err+1
+                    rc=0
 
-
-        if self.AttrList[attribute][0] != attrType:
+        elif self.AttrList[attribute][0] != attrType:
             print "ERROR: Attribute",attribute,"of incorrect type"
             self.err = self.err+1
             rc=0
@@ -1330,6 +1327,11 @@ class CFChecker:
               self.err = self.err+1
               return 0
 
+          if varName in self.auxCoordVars:
+              print "ERROR (4): Axis attribute is not allowed for auxillary coordinate variables."
+              self.err = self.err+1
+              return 0
+          
           # Check that axis attribute is consistent with the coordinate type
           # deduced from units and positive.
           if hasattr(var,'positive'): 
