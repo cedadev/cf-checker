@@ -8,7 +8,7 @@
 #
 # Date: February 2003
 #
-# Version: 1.9
+# Version: 1.10
 #
 #-------------------------------------------------------------
 ''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] file1 [file2...]
@@ -34,8 +34,9 @@ from cdms.axis import FileAxis
 from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
-checkerVersion=1.9
+checkerVersion=1.10
 CFVersions=['CF-1.0','CF-1.1']
+Versions=[1.0,1.1]
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -167,7 +168,7 @@ def chkDerivedName(name):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, udunitsDat='', version=''):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, udunitsDat='', version=Versions[-1]):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
@@ -332,7 +333,7 @@ class CFChecker:
       self.AttrList['compress']=['S','C']
       self.AttrList['Conventions']=['S','G']
       self.AttrList['coordinates']=['S','D']
-      self.AttrList['_FillValue']=['N','D']
+      self.AttrList['_FillValue']=['D','D']
       self.AttrList['flag_meanings']=['S','D']
       self.AttrList['flag_values']=['D','D']
       self.AttrList['formula_terms']=['S','C']
@@ -342,7 +343,7 @@ class CFChecker:
       self.AttrList['leap_month']=['N','C']
       self.AttrList['leap_year']=['N','C']
       self.AttrList['long_name']=['S',('C','D')]
-      self.AttrList['missing_value']=['N','D']
+      self.AttrList['missing_value']=['D','D']
       self.AttrList['month_lengths']=['N','C']
       self.AttrList['positive']=['S','C']
       self.AttrList['references']=['S',('G','D')]
@@ -707,8 +708,8 @@ class CFChecker:
             self.err = self.err+1
             rc=0
 
-        if conventions != version:
-            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF version",version
+        if conventions != 'CF-'+str(self.version):
+            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF version",self.version
             self.warn = self.warn+1
             
     else:
@@ -870,27 +871,35 @@ class CFChecker:
         elif attrType == type(Numeric.array([])):
             attrType='N'
         elif attrType == types.NoneType:
-            attrType=self.AttrList[attribute][0]
+            #attrType=self.AttrList[attribute][0]
+            attrType='NoneType'
         else:
             print "Unknown Type for attribute:",attribute,attrType
 
+        # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
+        typeError=0
+        if attrType != 'NoneType':
+            if self.AttrList[attribute][0] == 'D':
+                # Special case for 'D' as these attributes will always be caught
+                # by one of the above cases.
+                # Attributes of type 'D' should be the same type as the data variable
+                # they are attached to.
+                if attrType == 'S':
+                    # Note: A string is an array of chars
+                    if var.typecode() != 'c':
+                        typeError=1
+                else:
+                    if var.typecode() != var.attributes[attribute].typecode():
+                        typeError=1
+                    
+            elif self.AttrList[attribute][0] != attrType:
+                typeError=1
 
-        if attrType != "S" and self.AttrList[attribute][0] == 'D':
-            # Special case for 'D' as these attributes will always be of numeric type
-            # and be caught by one of the cases above.
-            # Attributes of type 'D' should be the same type as the data variable.
-
-                if var.typecode() != var.attributes[attribute].typecode():
-                    print "ERROR: Attribute",attribute,"of incorrect type"
-                    self.err = self.err+1
-                    rc=0
-
-        elif self.AttrList[attribute][0] != attrType:
-            print "ERROR: Attribute",attribute,"of incorrect type"
-            self.err = self.err+1
-            rc=0
-
-
+            if typeError:
+                print "ERROR: Attribute",attribute,"of incorrect type"
+                self.err = self.err+1
+                rc=0
+                        
         # Attribute attached to the wrong kind of variable
         uses=self.AttrList[attribute][1]
         usesLen=len(uses)
@@ -1266,10 +1275,18 @@ class CFChecker:
     varType=var.typecode()
     if var.__dict__.has_key('_FillValue'):
         fillValue=var.__dict__['_FillValue']
-        if varType != fillValue.typecode():
-            print "ERROR (2.5.1): _FillValue of different type to variable"
-            self.err = self.err+1
-            rc=0
+        
+## 05.02.08 No longer needed as this is now detected by chkAttribute as _FillValue
+## has an attribute type of 'D'. See Trac #022
+##         if varType == 'c' or varType == types.StringType:
+##             if type(fillValue) != types.StringType:
+##                 print "ERROR (2.5.1): _FillValue of different type to variable"
+##                 self.err = self.err+1
+##                 rc=0
+##         elif varType != fillValue.typecode():
+##             print "ERROR (2.5.1): _FillValue of different type to variable"
+##             self.err = self.err+1
+##             rc=0
             
         if var.attributes.has_key('valid_range'):
             # Check _FillValue is outside valid_range
@@ -1298,12 +1315,20 @@ class CFChecker:
                 # _FillValue not present
                 print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
                 self.warn = self.warn+1
+                
+## 05.02.08 No longer needed as this is now detected by chkAttribute as missing_value
+## has an attribute type of 'D'. See Trac #022
+##             typeError = 0
+##             if varType == 'c':
+##                 if type(missingValue) != types.StringType:
+##                     typeError = 1
+##             elif varType != missingValue.typecode():
+##                 typeError = 1
 
-            missingValueType=missingValue.typecode()
-            if varType != missingValueType:
-                print "ERROR (2.5.1): missing_value of different type to variable"
-                self.err = self.err+1
-                rc=0
+##             if typeError:
+##                 print "ERROR (2.5.1): missing_value of different type to variable"
+##                 self.err = self.err+1
+##                 rc=0
 
             if var.id in self.boundsVars:
                 print "WARNING (7.1): Boundary Variable",var.id,"should not have missing_value attribute"
@@ -1327,7 +1352,7 @@ class CFChecker:
               self.err = self.err+1
               return 0
 
-          if varName in self.auxCoordVars:
+          if self.version >= 1.1 and varName in self.auxCoordVars:
               print "ERROR (4): Axis attribute is not allowed for auxillary coordinate variables."
               self.err = self.err+1
               return 0
@@ -1626,7 +1651,7 @@ def getargs(arglist):
     useFileName="yes"
     badc=None
     coards=None
-    version=CFVersions[-1]
+    version=Versions[-1]
     
     # set to environment variables
     if environ.has_key(udunitskey):
@@ -1663,18 +1688,18 @@ def getargs(arglist):
             standardname=v
             continue
         if a in ('-v','--version'):
-            version="CF-"+v
+            version=float(v)
             if "CF-"+v not in CFVersions:
                 print "WARNING: CF-"+v+" is not a valid CF version."
                 print "Performing check against newest version",CFVersions[-1]
-                version=CFVersions[-1]
+                version=Versions[-1]
             continue
             
     if len(args) == 0:
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(2)
 
-    return (badc,coards,uploader,useFileName,standardname.strip(),udunits.strip(),version.strip(),args)
+    return (badc,coards,uploader,useFileName,standardname.strip(),udunits.strip(),version,args)
 
 
 #--------------------------
