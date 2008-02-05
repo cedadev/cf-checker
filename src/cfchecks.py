@@ -34,7 +34,7 @@ from cdms.axis import FileAxis
 from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
-checkerVersion=1.10
+checkerVersion="1.10"
 CFVersions=['CF-1.0','CF-1.1']
 Versions=[1.0,1.1]
 
