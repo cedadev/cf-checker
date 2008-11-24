@@ -617,7 +617,7 @@ class CFChecker:
                     print "ERROR (7.4): climatology attribute referencing non-existent variable"
                     self.err = self.err+1
 
-        #-----------------------x1-------------------
+        #------------------------------------------
         # Is there a grid_mapping variable?
         #------------------------------------------
         if self.f[var].attributes.has_key('grid_mapping'):
