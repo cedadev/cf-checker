@@ -389,7 +389,20 @@ class CFChecker:
           rc=0
       return rc
 
-
+  #-------------------------
+  def getStdName(self, var):
+  #-------------------------
+      """Get standard_name of variable (i.e. just first part of standard_name attribute, without modifier)"""
+      attName = 'standard_name'
+      attDict = var.attributes
+      if attName not in attDict.keys():
+          return None
+      bits = string.split(attDict[attName])
+      if bits:
+          return bits[0]
+      else:
+          return ""
+      
   #--------------------------------------------------
   def getInterpretation(self, units, positive=None):
   #--------------------------------------------------
@@ -1104,7 +1117,7 @@ class CFChecker:
             return 0
 
 
-        stdName=string.split(var.attributes['standard_name'])[0]
+        stdName = self.getStdName(var)
         
         if not self.alias.has_key(stdName):
             print "ERROR (4.3.2): No formula defined for standard name:",stdName
@@ -1191,7 +1204,7 @@ class CFChecker:
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
               if var.attributes.has_key('standard_name'):
-                  stdName = string.split(var.attributes['standard_name'])[0]
+                  stdName = self.getStdName(var)
                   if stdName in self.std_name_dh.dict.keys():
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
@@ -1478,9 +1491,14 @@ class CFChecker:
           # standard_name attribute can comprise a standard_name only or a standard_name
           # followed by a modifier (E.g. atmosphere_cloud_liquid_water_content status_flag)
           std_name_el=string.split(std_name)
-          if not self.parseBlankSeparatedList(std_name) or len(std_name_el) > 2:
+          if not std_name_el:
+              print "ERROR (3.3): Empty string for 'standard_name' attribute"
+              self.err = self.err + 1
+              rc=0
+              
+          elif not self.parseBlankSeparatedList(std_name) or len(std_name_el) > 2:
               print "ERROR (3.3): Invalid syntax for 'standard_name' attribute: '"+std_name+"'"
-              self.err = self.err+1
+              self.err = self.err + 1
               rc=0
 
           else:
@@ -1644,6 +1662,7 @@ class CFChecker:
                 return 1
 
             lastVal=val
+
 
 def getargs(arglist):
     
