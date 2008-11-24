@@ -8,10 +8,12 @@
 #
 # Date: February 2003
 #
-# Version: 1.10
+# File Revision: $Revision$
+#
+# CF Checker Version: 1.10
 #
 #-------------------------------------------------------------
-''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] file1 [file2...]
+''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
 
 Description:
  The cfchecker checks NetCDF files for compliance to the CF standard.
@@ -25,6 +27,8 @@ Options:
 
  -h or --help: Prints this help text.
 
+ -v or --version: CF version to check against.
+
 '''
 
 from sys import *
@@ -35,8 +39,8 @@ from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
 checkerVersion="1.10"
-CFVersions=['CF-1.0','CF-1.1']
-Versions=[1.0,1.1]
+CFVersions=['CF-1.0','CF-1.1','CF-1.2']
+Versions=[1.0,1.1,1.2]
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -237,7 +241,9 @@ class CFChecker:
     
     allCoordVars=coordVars[:]
     allCoordVars[len(allCoordVars):]=auxCoordVars[:]
+
     self.setUpFormulas()
+    
     axes=self.f.axes.keys()
 
     # Check each variable
@@ -598,7 +604,7 @@ class CFChecker:
                     print "ERROR (7.4): climatology attribute referencing non-existent variable"
                     self.err = self.err+1
 
-        #------------------------------------------
+        #-----------------------x1-------------------
         # Is there a grid_mapping variable?
         #------------------------------------------
         if self.f[var].attributes.has_key('grid_mapping'):
@@ -630,6 +636,10 @@ class CFChecker:
                         'lambert_conformal_conic','polar_stereographic','rotated_latitude_longitude',
                         'stereographic','transverse_mercator']
           
+          if self.version >= 1.2:
+              # Extra grid_mapping_names at vn1.2
+              validNames[len(validNames):] = ['latitude_longitude','vertical_perspective']
+
           if var.grid_mapping_name not in validNames:
               print "ERROR (5.6): Invalid grid_mapping_name:",var.grid_mapping_name
               self.err = self.err+1
@@ -684,7 +694,7 @@ class CFChecker:
                                                       ,'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
                                                       ,'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
 
-
+      
   #----------------------------------------
   def parseBlankSeparatedList(self, list):
   #----------------------------------------
@@ -709,7 +719,7 @@ class CFChecker:
             rc=0
 
         if conventions != 'CF-'+str(self.version):
-            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF version",self.version
+            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF",self.version
             self.warn = self.warn+1
             
     else:
@@ -1142,14 +1152,15 @@ class CFChecker:
       """Check units attribute"""
       rc=1
       var=self.f[varName]
-
+      
       if self.badc:
           rc = self.chkBADCUnits(var)
           # If unit is a BADC unit then no need to check via udunits
           if rc:
               return rc
 
-      if var.attributes.has_key('units'):
+      # Test for blank since coordinate variables have 'units' defined even if not specifically defined in the file
+      if var.attributes.has_key('units') and var.attributes['units'] != '':
           # Type of units is a string
           units = var.attributes['units']
           if type(units) != types.StringType:
@@ -1218,9 +1229,9 @@ class CFChecker:
                       if not var.axis == 'Z':
                           print "WARNING (3.1): units attribute should be present"
                           self.warn = self.warn+1
-                      elif not var.attributes.has_key('positive') and not var.attributes.has_key('formula_terms'):
-                          print "WARNING (3.1): units attribute should be present"
-                          self.warn = self.warn+1
+                  elif not var.attributes.has_key('positive') and not var.attributes.has_key('formula_terms'):
+                      print "WARNING (3.1): units attribute should be present"
+                      self.warn = self.warn+1
                 
       return rc
 
