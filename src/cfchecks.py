@@ -10,7 +10,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 1.10
+# CF Checker Version: 1.3.0
 #
 #-------------------------------------------------------------
 ''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -39,8 +39,8 @@ from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
 checkerVersion="1.10"
-CFVersions=['CF-1.0','CF-1.1','CF-1.2']
-Versions=[1.0,1.1,1.2]
+CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3']
+Versions=[1.0,1.1,1.2,1.3]
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -295,6 +295,10 @@ class CFChecker:
 
         if not self.chkPackedData(var): rc=0
 
+        if self.version >= 1.3:
+            # Additional conformance checks from CF-1.3 onwards
+            if not self.chkFlags(var): rc=0
+
         if var in coordVars:
             if not self.chkMultiDimCoord(var, axes): rc=0
             if not self.chkValuesMonotonic(var): rc=0
@@ -340,6 +344,10 @@ class CFChecker:
       self.AttrList['Conventions']=['S','G']
       self.AttrList['coordinates']=['S','D']
       self.AttrList['_FillValue']=['D','D']
+
+      if self.version >= 1.3:
+          self.AttrList['flag_masks']=['D','D']
+          
       self.AttrList['flag_meanings']=['S','D']
       self.AttrList['flag_values']=['D','D']
       self.AttrList['formula_terms']=['S','C']
@@ -370,12 +378,14 @@ class CFChecker:
   def uniqueList(self, list):
   #---------------------------
       """Determine if list has any repeated elements."""
-      seen={}
+      # Rewrite to allow list to be either a list or a Numeric array
+      seen=[]
+
       for x in list:
-          if seen.has_key(x):
+          if x in seen:
               return 0
           else:
-              seen[x]=1
+              seen.append(x)        
       return 1
 
 
@@ -1601,6 +1611,127 @@ class CFChecker:
             
     return rc
 
+  #----------------------------
+  def chkFlags(self, varName):
+  #----------------------------
+      var=self.f[varName]
+
+      if var.attributes.has_key('flag_meanings'):
+          # Flag to indicate whether one of flag_values or flag_masks present
+          values_or_masks=0
+          meanings = var.attributes['flag_meanings']
+
+          if not self.parseBlankSeparatedList(meanings):
+                print "ERROR (3.5): Invalid syntax for 'flag_meanings' attribute"
+                self.err = self.err+1
+                
+          if var.attributes.has_key('flag_values'):
+              values_or_masks=1
+              values = var.attributes['flag_values']
+              
+              # If values is a string of chars, split it up into a list of chars
+              if type(values) == str:
+                  values = values.split()
+                  
+              retcode = self.equalNumOfValues(values,meanings)
+              if retcode == -1:
+                  print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+              elif not retcode:
+                  print "ERROR (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings"
+                  self.err = self.err + 1
+
+              # flag_values values must be mutually exclusive
+              if not self.uniqueList(values):
+                  print "ERROR (3.5): flag_values attribute must contain a list of unique values"
+                  self.err = self.err + 1
+                  
+          if var.attributes.has_key('flag_masks'):
+              values_or_masks=1
+              masks = var.attributes['flag_masks']
+
+              retcode = self.equalNumOfValues(masks,meanings)
+              if retcode == -1:
+                  print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+              elif not retcode:
+                  print "ERROR (3.5): Number of flag_masks values must equal the number or words/phrases in flag_meanings"
+                  self.err = self.err + 1
+
+              # flag_values values must be non-zero
+              for v in masks:
+                  if v == 0:
+                      print "ERROR (3.5): flag_masks values must be non-zero"
+                      self.err = self.err + 1
+
+          # Doesn't make sense to do bitwise comparision for char variable
+          if var.typecode() != 'c':
+              if var.attributes.has_key('flag_values') and var.attributes.has_key('flag_masks'):
+                  # Both flag_values and flag_masks present
+                  # Do a bitwise AND of each flag_value and its corresponding flag_mask value,
+                  # the result must be equal to the flag_values entry
+                  i=0
+                  for v in values:
+                      bitwise_AND = v & masks[i]
+
+                      if bitwise_AND != v:
+                          print "WARNING (3.5): Bitwise AND of flag_value",v,"and corresponding flag_mask",masks[i],"doesn't match flag_value."
+                          self.warn = self.warn + 1
+                      i=i+1
+                 
+          if values_or_masks == 0:
+              # flag_meanings attribute present, but no flag_values or flag_masks
+              print "WARNING (3.5): flag_meanings present, but no flag_values or flag_masks specified"
+              self.warn = self.warn + 1
+          
+
+  #-----------------------
+  def getType(self, arg):
+  #-----------------------
+      if type(arg) == type(Numeric.array([])):
+          return "array"
+
+      elif type(arg) == str:
+          return "str"
+
+      elif type(arg) == list:
+          return "list"
+
+      else:
+          print "<cfchecker> ERROR: Unknown Type in getType("+arg+")"
+          return 0
+  
+  
+  
+  #----------------------------------------    
+  def equalNumOfValues(self, arg1, arg2):
+  #----------------------------------------
+      """ Check that arg1 and arg2 contain the same number of blank-separated elements."""
+
+      # Determine the type of both arguments.  strings and arrays need to be handled differently
+      type_arg1 = self.getType(arg1)
+      type_arg2 = self.getType(arg2)
+      
+      if not type_arg1 or not type_arg2:
+          return -1
+          
+      if type_arg1 == "str":
+          len_arg1 = len(arg1.split())
+      else:
+          len_arg1 = len(arg1)
+
+      if type_arg2 == "str":
+          len_arg2 = len(arg2.split())
+      else:
+          len_arg2 = len(arg2)
+      
+      
+      if len_arg1 != len_arg2:
+          return 0
+
+      return 1
+
+      
+      
+      
   #------------------------------------------
   def chkMultiDimCoord(self, varName, axes):
   #------------------------------------------
