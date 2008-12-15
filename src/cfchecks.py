@@ -1615,7 +1615,8 @@ class CFChecker:
   def chkFlags(self, varName):
   #----------------------------
       var=self.f[varName]
-
+      rc=1
+      
       if var.attributes.has_key('flag_meanings'):
           # Flag to indicate whether one of flag_values or flag_masks present
           values_or_masks=0
@@ -1624,7 +1625,8 @@ class CFChecker:
           if not self.parseBlankSeparatedList(meanings):
                 print "ERROR (3.5): Invalid syntax for 'flag_meanings' attribute"
                 self.err = self.err+1
-                
+                rc=0
+          
           if var.attributes.has_key('flag_values'):
               values_or_masks=1
               values = var.attributes['flag_values']
@@ -1636,14 +1638,17 @@ class CFChecker:
               retcode = self.equalNumOfValues(values,meanings)
               if retcode == -1:
                   print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+                  rc = 0
               elif not retcode:
                   print "ERROR (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings"
                   self.err = self.err + 1
-
+                  rc = 0
+                  
               # flag_values values must be mutually exclusive
               if not self.uniqueList(values):
                   print "ERROR (3.5): flag_values attribute must contain a list of unique values"
                   self.err = self.err + 1
+                  rc = 0
                   
           if var.attributes.has_key('flag_masks'):
               values_or_masks=1
@@ -1652,16 +1657,19 @@ class CFChecker:
               retcode = self.equalNumOfValues(masks,meanings)
               if retcode == -1:
                   print "ERROR (3.5): Problem in subroutine equalNumOfValues"
+                  rc = 0
               elif not retcode:
                   print "ERROR (3.5): Number of flag_masks values must equal the number or words/phrases in flag_meanings"
                   self.err = self.err + 1
-
+                  rc = 0
+                  
               # flag_values values must be non-zero
               for v in masks:
                   if v == 0:
                       print "ERROR (3.5): flag_masks values must be non-zero"
                       self.err = self.err + 1
-
+                      rc = 0
+                      
           # Doesn't make sense to do bitwise comparision for char variable
           if var.typecode() != 'c':
               if var.attributes.has_key('flag_values') and var.attributes.has_key('flag_masks'):
@@ -1679,9 +1687,16 @@ class CFChecker:
                  
           if values_or_masks == 0:
               # flag_meanings attribute present, but no flag_values or flag_masks
-              print "WARNING (3.5): flag_meanings present, but no flag_values or flag_masks specified"
-              self.warn = self.warn + 1
-          
+              print "ERROR (3.5): flag_meanings present, but no flag_values or flag_masks specified"
+              self.err = self.err + 1
+              rc = 0
+
+          if var.attributes.has_key('flag_values') and not var.attributes.has_key('flag_meanings'):
+              print "ERROR (3.5): flag_meanings attribute is missing"
+              self.err = self.err + 1
+              rc = 0
+              
+      return rc
 
   #-----------------------
   def getType(self, arg):
@@ -1730,8 +1745,6 @@ class CFChecker:
       return 1
 
       
-      
-      
   #------------------------------------------
   def chkMultiDimCoord(self, varName, axes):
   #------------------------------------------
@@ -1748,6 +1761,7 @@ class CFChecker:
               print "WARNING (5): The name of a multi-dimensional coordinate variable"
               print "             should not match the name of any of its dimensions."
               self.warn = self.warn + 1
+
 
   #--------------------------------------
   def chkValuesMonotonic(self, varName):
