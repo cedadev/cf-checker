@@ -13,12 +13,14 @@
 # CF Checker Version: 1.4.0
 #
 #-------------------------------------------------------------
-''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
+''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
 
 Description:
  The cfchecker checks NetCDF files for compliance to the CF standard.
  
 Options:
+ -a or --area_types:
+       the location of the CF area types table (xml)
  -s or --cf_standard_names:
        the location of the CF standard name table (xml)
        
