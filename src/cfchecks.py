@@ -1196,12 +1196,12 @@ class CFChecker:
             if self.version >= 1.4:
                 if s.group('type1'):
                     if not self.isValidCellMethodTypeValue('type1', s.group('type1')):
-                        print "ERROR (7.3): Invalid <type1> '"+s.group('type1')+"' - must be the name of a string-valued auxiliary or scalar coordinate variable with a standard_name of area_type, or any string value permitted for a variable with standard_name of area_type"
+                        print "ERROR (7.3): Invalid type1: '"+s.group('type1')+"' - must be a variable name or valid area_type"
                         self.err = self.err + 1
 
                 if s.group('type2'):
                     if not self.isValidCellMethodTypeValue('type2', s.group('type2')):
-                        print "ERROR (7.3): Invalid <type2> '"+s.group('type2')+"' - must be the name of a string-valued auxiliary or scalar coordinate variable with a standard_name of area_type, or any string value permitted for a variable with standard_name of area_type"
+                        print "ERROR (7.3): Invalid type2: '"+s.group('type2')+"' - must be a variable name or valid area_type"
                         self.err = self.err + 1
                                                       
             # Validate dim and check that it only appears once unless it is 'time'
