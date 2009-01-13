@@ -10,7 +10,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 1.3.0
+# CF Checker Version: 1.4.0
 #
 #-------------------------------------------------------------
 ''' cfchecker [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -38,9 +38,10 @@ from cdms.axis import FileAxis
 from cdms.auxcoord import FileAuxAxis1D
 
 STANDARDNAME="./standard_name.xml"
-checkerVersion="1.10"
-CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3']
-Versions=[1.0,1.1,1.2,1.3]
+AREATYPES=".area-type-table.xml"
+checkerVersion="1.4.0"
+CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4']
+Versions=[1.0,1.1,1.2,1.3,1.4]
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -127,7 +128,48 @@ class ConstructDict(ContentHandler):
             self.inLastModifiedContent = 0
             self.last_modified = normalize_whitespace(self.last_modified)
 
+class ConstructList(ContentHandler):
+    """Parse the xml area_type table, reading all area_types 
+       into a list.
+    """
+    def __init__(self):
+        self.inVersionNoContent = 0
+        self.inLastModifiedContent = 0
+        self.list = []
+        
+    def startElement(self, name, attrs):
+        # If it's an entry element, save the id
+        if name == 'entry':
+            id = normalize_whitespace(attrs.get('id', ""))
+            self.list.append(id)
 
+        elif name == 'version_number':
+            self.inVersionNoContent = 1
+            self.version_number = ""
+
+        elif name == 'date':
+            self.inLastModifiedContent = 1
+            self.last_modified = ""
+
+    def characters(self, ch):
+        if self.inVersionNoContent:
+            self.version_number = self.version_number + ch
+
+        elif self.inLastModifiedContent:
+            self.last_modified = self.last_modified + ch
+
+    def endElement(self, name):
+        # If it's the end of the version_number element, save it
+        if name == 'version_number':
+            self.inVersionNoContent = 0
+            self.version_number = normalize_whitespace(self.version_number)
+
+        # If it's the end of the date element, save the last modified date
+        elif name == 'date':
+            self.inLastModifiedContent = 0
+            self.last_modified = normalize_whitespace(self.last_modified)
+
+            
 def chkDerivedName(name):
     """Checks whether name is a derived standard name and adheres
        to the transformation rules. See CF standard names document
@@ -172,17 +214,17 @@ def chkDerivedName(name):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, udunitsDat='', version=Versions[-1]):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat='', version=Versions[-1]):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
       self.coards = coards
       self.standardNames = cfStandardNamesXML
+      self.areaTypes = cfAreaTypesXML
       self.udunits = udunitsDat
       self.version = version
       self.err = 0
       self.warn = 0
-      #rc = self.Checker(file)
 
   def checker(self, file):
     # Set up dictionary of all valid attributes, their type and use
@@ -217,8 +259,16 @@ class CFChecker:
     parser.setContentHandler(self.std_name_dh)
     parser.parse(self.standardNames)
 
+    if self.version >= 1.4:
+        # Set up list of valid area_types
+        self.area_type_lh = ConstructList()
+        parser.setContentHandler(self.area_type_lh)
+        parser.parse(self.areaTypes)
+    
     print "Using CF Checker version",checkerVersion
     print "Using Standard Name Table Version "+self.std_name_dh.version_number+" ("+self.std_name_dh.last_modified+")"
+    if self.version >= 1.4:
+        print "Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")"
     print ""
     
     # Read in netCDF file
@@ -508,13 +558,21 @@ class CFChecker:
                         # Is the auxillary coordinate var actually a label?
                         if self.f[dataVar].typecode() == 'c':
                             # Label variable
-                            if not len(self.f[dataVar].getAxisIds()) == 2:
-                                print "ERROR (6.1): Label variable",dataVar,"must have 2 dimensions only"
-                                self.err = self.err+1
+                            num_dimensions = len(self.f[dataVar].getAxisIds())
+                            if self.version < 1.4:
+                                if not num_dimensions == 2:
+                                    print "ERROR (6.1): Label variable",dataVar,"must have 2 dimensions only"
+                                    self.err = self.err+1
 
-                            if self.f[dataVar].getAxisIds()[0] not in self.f[var].getAxisIds():
-                                print "ERROR (6.1): Leading dimension of",dataVar,"must match one of those for",var
-                                self.err = self.err+1
+                            if self.version >= 1.4:
+                                if num_dimensions != 1 and num_dimensions != 2:
+                                    print "ERROR (6.1): Label variable",dataVar,"must have 1 or 2 dimensions, but has",num_dimensions
+                                    self.err = self.err+1
+
+                            if num_dimensions == 2:
+                                if self.f[dataVar].getAxisIds()[0] not in self.f[var].getAxisIds():
+                                    print "ERROR (6.1): Leading dimension of",dataVar,"must match one of those for",var
+                                    self.err = self.err+1
                         else:
                             # Not a label variable
                             for dim in self.f[dataVar].getAxisIds():
@@ -663,6 +721,10 @@ class CFChecker:
               # Extra grid_mapping_names at vn1.2
               validNames[len(validNames):] = ['latitude_longitude','vertical_perspective']
 
+          if self.version >= 1.4:
+              # Extra grid_mapping_names at vn1.4
+              validNames[len(validNames):] = ['lambert_cylindrical_equal_area','mercator','orthographic']
+              
           if var.grid_mapping_name not in validNames:
               print "ERROR (5.6): Invalid grid_mapping_name:",var.grid_mapping_name
               self.err = self.err+1
@@ -1036,6 +1098,170 @@ class CFChecker:
             self.err = self.err + 1
             rc=0
 
+    return rc
+
+
+#----------------------------------
+  def isValidUdunitsUnit(self,unit):
+  #----------------------------------
+      # units must be recognizable by udunits package
+      unitPtr=udunits.utUnit()
+      if udunits.utScan(unit,unitPtr):
+          rc=0
+      else:
+          rc=1
+
+      return rc
+
+
+  #---------------------------------------------------
+  def isValidCellMethodTypeValue(self, type, value):
+  #---------------------------------------------------
+      """ Is <type1> or <type2> in the cell_methods attribute a valid value"""
+      rc=1
+      # Is it a string-valued aux coord var with standard_name of area_type?
+      if value in self.auxCoordVars:
+          if self.f[value].typecode() != 'c':
+              rc=0
+          elif type == "type2":
+              # <type2> has the addition requirement that it is not allowed a leading dimension of more than one
+              leadingDim = self.f[value].getAxisIds()[0]
+              # Must not be a value of more than one
+              if self.f.dimensions[leadingDim] > 1:
+                  print "ERROR (7.3):",value,"is not allowed a leading dimension of more than one."
+                  self.err = self.err + 1
+
+          if self.f[value].attributes.has_key('standard_name'):
+              if self.f[value].attributes['standard_name'] != 'area_type':
+                  rc=0
+                  
+      # Is type a valid area_type according to the area_type table
+      elif value not in self.area_type_lh.list:
+          rc=0
+
+      return rc
+
+
+  #----------------------------------
+  def chkCellMethods(self,varName):
+  #----------------------------------
+    """Checks on cell_methods attribute
+       dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [ (comment) ]
+       where comment is of the form:  ([interval: value unit [interval: ...] comment:] remainder)
+    """
+    
+    rc=1
+    error = 0  # Flag to indicate validity of cell_methods string syntax
+    varDimensions={}
+    var=self.f[varName]
+    
+    if var.attributes.has_key('cell_methods'):
+        cellMethods=var.attributes['cell_methods']
+
+#        cellMethods="lat: area: maximum (interval: 1 hours interval: 3 hours comment: fred)"
+
+        pr1=re.compile(r'^'
+                      r'(\s*\S+\s*:\s*(\S+\s*:\s*)*'
+                      r'([a-z_]+)'
+                      r'(\s+where\s+\S+(\s+over\s+\S+)?)?'
+                      r'(\s+(over|within)\s+(days|years))?\s*'
+                      r'(\((interval:\s+\d+\s+\S+\s*)*(comment: .+)?\))?)'
+                      r'+$')
+        
+        # Validate the entire string
+        m = pr1.match(cellMethods)
+        if not m:
+            print "ERROR (7.3) Invalid syntax for cell_methods attribute"
+            self.err = self.err + 1
+            rc=0
+
+        # Grab each word-list - dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [within|over days|years] [(comment)]
+        pr2=re.compile(r'(?P<dimensions>\s*\S+\s*:\s*(\S+\s*:\s*)*'
+                      r'(?P<method>[a-z_]+)'
+                      r'(?:\s+where\s+(?P<type1>\S+)(?:\s+over\s+(?P<type2>\S+))?)?'
+                      r'(?:\s+(?:over|within)\s+(?:days|years))?\s*)'
+                      r'(?P<comment>\([^)]+\))?')
+
+        substr_iter=pr2.finditer(cellMethods)
+        
+        # Validate each substring
+        for s in substr_iter:
+            if not re.match(r'point|sum|maximum|median|mid_range|minimum|mean|mode|standard_deviation|variance',s.group('method')):
+                print "ERROR (7.3): Invalid cell_method:",s.group('method')
+                self.err = self.err + 1
+                rc=0
+
+            if self.version >= 1.4:
+                if s.group('type1'):
+                    if not self.isValidCellMethodTypeValue('type1', s.group('type1')):
+                        print "ERROR (7.3): Invalid <type1> '"+s.group('type1')+"' - must be the name of a string-valued auxiliary or scalar coordinate variable with a standard_name of area_type, or any string value permitted for a variable with standard_name of area_type"
+                        self.err = self.err + 1
+
+                if s.group('type2'):
+                    if not self.isValidCellMethodTypeValue('type2', s.group('type2')):
+                        print "ERROR (7.3): Invalid <type2> '"+s.group('type2')+"' - must be the name of a string-valued auxiliary or scalar coordinate variable with a standard_name of area_type, or any string value permitted for a variable with standard_name of area_type"
+                        self.err = self.err + 1
+                                                      
+            # Validate dim and check that it only appears once unless it is 'time'
+            allDims=re.findall(r'\S+\s*:',s.group('dimensions'))
+            dc=0          # Number of dims
+            
+            for part in allDims:
+                dims=re.split(':',part)
+
+                for d in dims:
+                    if d:
+                        dc=dc+1
+                        if var.getAxisIndex(d) == -1 and not d in self.std_name_dh.dict.keys():
+                            if self.version >= 1.4:
+                                # Extra constraints at CF-1.4 and above
+                                if d != "area":
+                                    print "ERROR (7.3): Invalid 'name' in cell_methods attribute:",d
+                                    self.err = self.err+1
+                                    rc=0
+                            else:
+                                print "ERROR (7.3): Invalid 'name' in cell_methods attribute:",d
+                                self.err = self.err+1
+                                rc=0
+                                
+                        else:
+                            # dim is a variable dimension
+                            if varDimensions.has_key(d) and d != "time":
+                                print "ERROR (7.3): Multiple cell_methods entries for dimension:",d
+                                self.err = self.err+1
+                                rc=0
+                            else:
+                                varDimensions[d]=1
+                                
+                            if self.version >= 1.4:
+                                # If dim is a coordinate variable and cell_method is not 'point' check
+                                # if the coordinate variable has either bounds or climatology attributes
+                                if d in self.coordVars and s.group('method') != 'point':
+                                    if not self.f[d].attributes.has_key('bounds') and not self.f[d].attributes.has_key('climatology'):
+                                        print "WARNING (7.3): Coordinate variable",d,"should have bounds or climatology attribute"
+                                        self.warn = self.warn + 1
+                                                
+            # Validate the comment associated with this method, if present
+            comment = s.group('comment')
+            if comment:
+                getIntervals = re.compile(r'(?P<interval>interval:\s+\d+\s+(?P<unit>\S+)\s*)')
+                allIntervals = getIntervals.finditer(comment)
+
+                # There must be zero, one or exactly as many interval clauses as there are dims
+                i=0   # Number of intervals present
+                for m in allIntervals:
+                    i=i+1
+                    unit=m.group('unit')
+                    if not self.isValidUdunitsUnit(unit):
+                        print "ERROR (7.3): Invalid unit",unit,"in cell_methods comment"
+                        self.err = self.err + 1
+                        rc=0
+
+                if i > 1 and i != dc:
+                    print "ERROR (7.3): Incorrect number or interval clauses in cell_methods attribute"
+                    self.err = self.err + 1
+                    rc=0
+                    
     return rc
 
 
@@ -1819,9 +2045,11 @@ def getargs(arglist):
 
     udunitskey='UDUNITS'
     standardnamekey='CF_STANDARD_NAMES'
+    areatypeskey='CF_AREA_TYPES'
     # set defaults
     udunits=''
     standardname=STANDARDNAME
+    areatypes=AREATYPES
     uploader=None
     useFileName="yes"
     badc=None
@@ -1833,14 +2061,19 @@ def getargs(arglist):
         udunits=environ[udunitskey]
     if environ.has_key(standardnamekey):
         standardname=environ[standardnamekey]
+    if environ.has_key(areatypeskey):
+        areatypes=environ[areatypeskey]
 
     try:
-        (opts,args)=getopt(arglist[1:],'bchlnu:s:v:',['badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version='])
+        (opts,args)=getopt(arglist[1:],'a:bchlnu:s:v:',['area_types=','badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version='])
     except GetoptError:
         stderr.write('%s\n'%__doc__)
         exit(1)
     
     for a, v in opts:
+        if a in ('-a','--area_types'):
+            areatypes=v
+            continue
         if a in ('-b','--badc'):
             badc="yes"
             continue
@@ -1874,7 +2107,7 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(2)
 
-    return (badc,coards,uploader,useFileName,standardname.strip(),udunits.strip(),version,args)
+    return (badc,coards,uploader,useFileName,standardname.strip(),areatypes.strip(),udunits.strip(),version,args)
 
 
 #--------------------------
@@ -1885,9 +2118,9 @@ if __name__ == '__main__':
 
     from sys import argv
 
-    (badc,coards,uploader,useFileName,standardName,udunitsDat,version,files)=getargs(argv)
+    (badc,coards,uploader,useFileName,standardName,areaTypes,udunitsDat,version,files)=getargs(argv)
     
-    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, udunitsDat=udunitsDat, version=version)
+    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
         inst.checker(file)
 
