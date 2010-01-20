@@ -10,7 +10,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 1.4.0
+# CF Checker Version: 1.4.2
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -620,7 +620,7 @@ class CFChecker:
                         if self.f[bounds].attributes['units'] != self.f[var].attributes['units']:
                             print "ERROR (7.1): Boundary var",bounds,"has inconsistent units to",var
                             self.err = self.err+1
-                    if self.f[bounds].attributes.has_key('standard_name'):
+                    if self.f[bounds].attributes.has_key('standard_name') and self.f[var].attributes.has_key('standard_name'):
                         if self.f[bounds].attributes['standard_name'] != self.f[var].attributes['standard_name']:
                             print "ERROR (7.1): Boundary var",bounds,"has inconsistent std_name to",var
                             self.err = self.err+1
