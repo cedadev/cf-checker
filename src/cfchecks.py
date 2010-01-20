@@ -792,6 +792,17 @@ class CFChecker:
           return 0
 
 
+  #-------------------------------------------
+  def extendedBlankSeparatedList(self, list):
+  #--------------------------------------------
+      """Check list is a blank separated list of words containing alphanumeric characters
+      plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
+      if re.match("^[a-zA-Z0-9_ @\-\+\.]*$",list):
+          return 1
+      else:
+          return 0
+         
+  
   #------------------------------
   def chkGlobalAttributes(self):
   #------------------------------
@@ -1850,7 +1861,8 @@ class CFChecker:
           values_or_masks=0
           meanings = var.attributes['flag_meanings']
 
-          if not self.parseBlankSeparatedList(meanings):
+#          if not self.parseBlankSeparatedList(meanings):
+          if not self.extendedBlankSeparatedList(meanings):
                 print "ERROR (3.5): Invalid syntax for 'flag_meanings' attribute"
                 self.err = self.err+1
                 rc=0
