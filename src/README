@@ -1,19 +1,13 @@
-#==============================================================================
-# RCS Header:
-#   File         [$Source: /home/ros/SRCE_projects/CF_Checker_A/README,v $]
-#   Revision     [$Revision: 1.4 $]     Named [$Name: head#main $]
-#   Last checkin [$Date: 2005/10/17 14:43:06 $]
-#   Author       [$Author: ros $]
-#==============================================================================
-
 README
+===========================================================================
 
 To run the CF file conformance checker you must have the following 
-non-standard python modules installed on your system:
+installed on your system:
 
-     - UDUNITS
-     - CDMS
-     - Numeric
+     - UDUNITS2
+     - CDMS (part of CDAT-5.x)
+
+
 
 How to install CDMS:
 ---------------------
@@ -31,38 +25,26 @@ the installation process will be made more modular/flexible allowing
 CDMS alone to be installed and making it easier to use your own version
 of python.  This is being actively raised with PCMDI.
 
+
 How to install UDUNITS:
 ------------------------
 
-*****************************************************************************
-IMPORTANT:  
 
-You must have the version of udunits shipped with the CF checker
-for it to work.  This version of udunits contains the python interface to
-the package which is not part of any other udunits release.
-*****************************************************************************
 
-After unpacking the tar file go into the src directory. General 
-Instructions for installation are in the INSTALL file.  The 
-HOW_TO_INSTALL_ON_HPS file details the changes that have been made for 
-the python interface. There are a couple of hard wires to the Hadley Centre 
-paths which will obviously need to be changed. (Eventually, the installation 
-procedure will be more generic.) Basically, you will need to run the usual 
-./configure and then make.
 
-If you are installing UDUNITS on LINUX:
-----------------------------------------
-To install on a Linux system you will need to make the following few 
-changes to the src/lib/Makefile.in file.
 
-1. Instead of creating a _udunits.sl file you will need to change this to
-   have the extension .so.
-
-2. In the python_build target the options to the 'ld' command will be
-   different.  Remove the -b and replace with -shared.
 
 To run the CF checker:
 -----------------------
+
+1. Make sure that the cdms library is in your PYTHONPATH
+   export PYTHONPATH=
+
+2. Make sure that the path to the udunits libraries are in the system 
+   library path or alternatively set the environment variable LD_LIBRARY_PATH
+   E.g. $PREFIX/lib    where $PREFIX is the --prefix option you passed to the configure script when installing udunits.
+3. Edit setting for
+
 1. Change the line 
        udunits.utInit("/opt/ukmo/hadley/etc/udunits.dat") 
    to point to the location of udunits.dat on your system. It should be

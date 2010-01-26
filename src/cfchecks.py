@@ -1,4 +1,6 @@
+#!/home/ros/software/CDAT-5.2-cdms/bin/python
 #!/usr/bin/env python
+# Adapted for numpy/ma/cdms2 by convertcdms.py
 #-------------------------------------------------------------
 # Name: cfchecks.py
 #
@@ -10,7 +12,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 1.4.2
+# CF Checker Version: 2.0.0
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -21,6 +23,7 @@ Description:
 Options:
  -a or --area_types:
        the location of the CF area types table (xml)
+       
  -s or --cf_standard_names:
        the location of the CF standard name table (xml)
        
@@ -34,14 +37,19 @@ Options:
 '''
 
 from sys import *
-import cdms, re, string, types, Numeric, udunits
+import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric
 
-from cdms.axis import FileAxis
-from cdms.auxcoord import FileAuxAxis1D
+from cdms2.axis import FileAxis
+from cdms2.auxcoord import FileAuxAxis1D
 
-STANDARDNAME="./standard_name.xml"
-AREATYPES=".area-type-table.xml"
-checkerVersion="1.4.0"
+# Use ctypes to interface to the UDUNITS-2 shared library
+# The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
+from ctypes import *
+udunits=CDLL("libudunits2.so")
+ 
+STANDARDNAME="./cf-standard-name-table.xml"
+AREATYPES="./area-type-table.xml"
+checkerVersion="2.0.0"
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4']
 Versions=[1.0,1.1,1.2,1.3,1.4]
 
@@ -216,7 +224,7 @@ def chkDerivedName(name):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat='', version=Versions[-1]):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat=None, version=Versions[-1]):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
@@ -251,8 +259,21 @@ class CFChecker:
         print "ERROR (2.1): Filename must have .nc suffix"
         exit(0)
 
-    # Initialisation of udunits package
-    udunits.utInit(self.udunits)
+    # Initialize udunits-2 package
+    # (Temporarily ignore messages to std error stream to prevent "Definition override" warnings
+    # being dislayed see Trac #50)
+    # Use ctypes callback functions to declare ut_error_message_handler (uemh)
+    # Don't fully understand why this works!  Solution supplied by ctypes-mailing-list. 19.01.10
+    uemh = CFUNCTYPE(c_int,c_char_p)
+    ut_set_error_message_handler = CFUNCTYPE(uemh,uemh)(("ut_set_error_message_handler",udunits))
+    ut_write_to_stderr = uemh(("ut_write_to_stderr",udunits))
+    ut_ignore = uemh(("ut_ignore",udunits))
+
+    old_handler = ut_set_error_message_handler(ut_ignore)
+                                           
+    self.unitSystem=udunits.ut_read_xml(self.udunits)
+
+    old_handler = ut_set_error_message_handler(ut_write_to_stderr)
 
     # Set up dictionary of standard_names and their assoc. units
     parser = make_parser()
@@ -267,7 +288,7 @@ class CFChecker:
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
     
-    print "Using CF Checker version",checkerVersion
+    print "Using CF Checker Version",checkerVersion
     print "Using Standard Name Table Version "+self.std_name_dh.version_number+" ("+self.std_name_dh.last_modified+")"
     if self.version >= 1.4:
         print "Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")"
@@ -447,7 +468,7 @@ class CFChecker:
       """Determine if variable is of Numeric data type."""
       types=['i','f','d']
       rc=1 
-      if self.f[var].typecode() not in types:
+      if self.f[var].dtype.char not in types:
           rc=0
       return rc
 
@@ -470,12 +491,14 @@ class CFChecker:
   #--------------------------------------------------
     """Determine the interpretation (time - T, height or depth - Z,
     latitude - Y or longitude - X) of a dimension."""
-    
-    udunitsPtr = udunits.utUnit()
+
     if units in ['level','layer','sigma_level']:
         # Dimensionless vertical coordinate
         return "Z"
-    if udunits.utScan(units,udunitsPtr):
+
+    # Parse the string representation of units into its binary representation for use by udunits
+    binaryUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
+    if not binaryUnit:
         # Don't print this message out o/w it is repeated for every variable
         # that has this dimension.  CRM033 return "None" instead
         # print "ERROR: Invalid units:",units
@@ -483,7 +506,7 @@ class CFChecker:
         return None
     
     # Time Coordinate
-    if udunits.utIsTime(udunitsPtr):
+    if udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "second", "UT_ASCII")):
         return "T"
     
     # Vertical Coordinate
@@ -492,11 +515,7 @@ class CFChecker:
 
     # Variable is a vertical coordinate if the units are dimensionally
     # equivalent to Pressure
-    fromPtr=udunits.utUnit()
-    toPascalPtr=udunits.utUnit()
-    udunits.utScan("Pa",toPascalPtr)
-    udunits.utScan(units,fromPtr)
-    if not udunits.utConvert(fromPtr,toPascalPtr)[0]:
+    if udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "Pa", "UT_ASCII")):
         return "Z"
         
     # Latitude Coordinate
@@ -558,7 +577,7 @@ class CFChecker:
                         auxCoordVars.append(dataVar)
 
                         # Is the auxillary coordinate var actually a label?
-                        if self.f[dataVar].typecode() == 'c':
+                        if self.f[dataVar].dtype.char == 'c':
                             # Label variable
                             num_dimensions = len(self.f[dataVar].getAxisIds())
                             if self.version < 1.4:
@@ -957,7 +976,7 @@ class CFChecker:
     rc=1
     var=self.f[varName]
 
-    if not self.validName(attribute):
+    if not self.validName(attribute) and attribute != "_FillValue":
         print "ERROR: Invalid attribute name -",attribute
         self.err = self.err+1
         return 0
@@ -994,10 +1013,10 @@ class CFChecker:
                 # they are attached to.
                 if attrType == 'S':
                     # Note: A string is an array of chars
-                    if var.typecode() != 'c':
+                    if var.dtype.char != 'c':
                         typeError=1
                 else:
-                    if var.typecode() != var.attributes[attribute].typecode():
+                    if var.dtype.char != var.attributes[attribute].dtype.char:
                         typeError=1
                     
             elif self.AttrList[attribute][0] != attrType:
@@ -1032,12 +1051,17 @@ class CFChecker:
         if attribute in TimeAttributes:
 
             if var.attributes.has_key('units'):
-                udunitsPtr=udunits.utUnit()
-                udunits.utScan(var.attributes['units'],udunitsPtr)
-                if not udunits.utIsTime(udunitsPtr):
+                varUnits = udunits.ut_parse(self.unitSystem, var.attributes['units'], "UT_ASCII")
+                secsSinceEpoch = udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
+                if not udunits.ut_are_convertible(varUnits, secsSinceEpoch) :
                     print "ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable"
                     self.err = self.err+1
                     rc=0
+
+                # Free up resources associated with varUnits
+                udunits.ut_free(varUnits)
+                udunits.ut_free(secsSinceEpoch)
+                
             else:        
                 print "ERROR (4.4.1): Attribute",attribute,"may only be attached to time coordinate variable"
                 self.err = self.err+1
@@ -1118,12 +1142,17 @@ class CFChecker:
   def isValidUdunitsUnit(self,unit):
   #----------------------------------
       # units must be recognizable by udunits package
-      unitPtr=udunits.utUnit()
-      if udunits.utScan(unit,unitPtr):
-          rc=0
-      else:
+      udunitsUnit = udunits.ut_parse(self.unitSystem, unit, "UT_ASCII")
+      if udunitsUnit:
+          # Valid unit
           rc=1
+      else:
+          # Invalid unit
+          rc=0
 
+      # Free up resources associated with udunitsUnit
+      udunits.ut_free(udunitsUnit)
+      
       return rc
 
 
@@ -1134,10 +1163,10 @@ class CFChecker:
       rc=1
       # Is it a string-valued aux coord var with standard_name of area_type?
       if value in self.auxCoordVars:
-          if self.f[value].typecode() != 'c':
+          if self.f[value].dtype.char != 'c':
               rc=0
           elif type == "type2":
-              # <type2> has the addition requirement that it is not allowed a leading dimension of more than one
+              # <type2> has the additional requirement that it is not allowed a leading dimension of more than one
               leadingDim = self.f[value].getAxisIds()[0]
               # Must not be a value of more than one
               if self.f.dimensions[leadingDim] > 1:
@@ -1414,7 +1443,7 @@ class CFChecker:
       """Check units attribute"""
       rc=1
       var=self.f[varName]
-      
+
       if self.badc:
           rc = self.chkBADCUnits(var)
           # If unit is a BADC unit then no need to check via udunits
@@ -1443,10 +1472,11 @@ class CFChecker:
               print "WARNING (4.4): The unit 'year', defined by udunits to be exactly 365.242198781 days,"
               print "         should be used with caution. It is not a calendar year."
           else:
+              
               # units must be recognizable by udunits package
-              varUnitPtr=udunits.utUnit()
-              if udunits.utScan(var.attributes['units'],varUnitPtr):
-                  print "ERROR (3.1): Invalid units: ",var.attributes['units']
+              varUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
+              if not varUnit:
+                  print "ERROR (3.1): Invalid units: ",units
                   self.err = self.err+1
                   rc=0
         
@@ -1457,9 +1487,19 @@ class CFChecker:
                   if stdName in self.std_name_dh.dict.keys():
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
-                      canonicalUnitPtr=udunits.utUnit()
-                      udunits.utScan(stdNameUnits,canonicalUnitPtr)
 
+                      # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
+                      stdNameUnits=stdNameUnits.encode('ascii')
+                      
+                      canonicalUnit = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
+
+                      # To compare units we need to remove the reference time from the variable units
+                      if re.search("since",units):
+                          # unit attribute contains a reference time - remove it
+                          udunits.ut_free(varUnit)
+                          varUnit = udunits.ut_parse(self.unitSystem, units.split()[0], "UT_ASCII")
+
+                      # If variable has cell_methods=variance we need to square standard_name table units
                       if var.attributes.has_key('cell_methods'):
                           # Remove comments from the cell_methods string - no need to search these
                           getComments=re.compile(r'\([^)]+\)')
@@ -1467,24 +1507,28 @@ class CFChecker:
 
                           if re.search(r'(\s+|:)variance',noComments):
                               # Variance method so standard_name units need to be squared.
-                              unitPtr=udunits.utUnit()
-                              udunits.utScan(stdNameUnits,unitPtr)
-                              udunits.utMultiply(unitPtr,unitPtr,canonicalUnitPtr)
-                              units=udunits.utPrint(canonicalUnitPtr)
+                              unit1 = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
+                              canonicalUnit = udunits.ut_multiply(unit1,unit1)
+                              udunits.ut_free(unit1)
 
-                      udunits.utScan(var.attributes['units'],varUnitPtr)
-                      equiv = udunits.utConvert(varUnitPtr,canonicalUnitPtr)
-                      if equiv[0] != 0:
+                      if not udunits.ut_are_convertible(varUnit, canonicalUnit):
                           # Conversion unsuccessful
                           print "ERROR (3.1): Units are not consistent with those given in the standard_name table."
                           self.err = self.err+1
                           rc=0
 
+                      # Free resources associated with canonicalUnit
+                      udunits.ut_free(canonicalUnit)
+
+              # Free resources associated with udunitsUnit
+              udunits.ut_free(varUnit)
+              
       else:
 
           # No units attribute - is this a coordinate variable or
           # dimensionless vertical coordinate var
           if var.id in allCoordVars:
+              
               # Label variables do not require units attribute
               if self.f[var.id].typecode() != 'c':
                   if var.attributes.has_key('axis'):
@@ -1494,7 +1538,7 @@ class CFChecker:
                   elif not var.attributes.has_key('positive') and not var.attributes.has_key('formula_terms'):
                       print "WARNING (3.1): units attribute should be present"
                       self.warn = self.warn+1
-                
+
       return rc
 
 
@@ -1545,7 +1589,9 @@ class CFChecker:
     4) flag use of missing_value as deprecated"""
     rc=1
     var=self.f[varName]
-    varType=var.typecode()
+
+##    varType=var.dtype.char
+
     if var.__dict__.has_key('_FillValue'):
         fillValue=var.__dict__['_FillValue']
         
@@ -1556,7 +1602,7 @@ class CFChecker:
 ##                 print "ERROR (2.5.1): _FillValue of different type to variable"
 ##                 self.err = self.err+1
 ##                 rc=0
-##         elif varType != fillValue.typecode():
+##         elif varType != fillValue.dtype.char:
 ##             print "ERROR (2.5.1): _FillValue of different type to variable"
 ##             self.err = self.err+1
 ##             rc=0
@@ -1595,7 +1641,7 @@ class CFChecker:
 ##             if varType == 'c':
 ##                 if type(missingValue) != types.StringType:
 ##                     typeError = 1
-##             elif varType != missingValue.typecode():
+##             elif varType != missingValue.dtype.char:
 ##                 typeError = 1
 
 ##             if typeError:
@@ -1684,13 +1730,13 @@ class CFChecker:
             
     if var.attributes.has_key('month_lengths'):
         if len(var.attributes['month_lengths']) != 12 and \
-           var.attributes['month_lengths'].typecode() != 'i':
+           var.attributes['month_lengths'].dtype.char != 'i':
             print "ERROR (4.4.1): Attribute 'month_lengths' should be an integer array of size 12"
             self.err = self.err+1
             rc=0
 
     if var.attributes.has_key('leap_year'):
-        if var.attributes['leap_year'].typecode() != 'i' and \
+        if var.attributes['leap_year'].dtype.char != 'i' and \
            len(var.attributes['leap_year']) != 1:
             print "ERROR (4.4.1): leap_year should be a scalar value"
             self.err = self.err+1
@@ -1708,11 +1754,17 @@ class CFChecker:
             self.warn = self.warn+1
 
     # Time units must contain a reference time
-    udunitsPtr=udunits.utUnit()
-    udunits.utScan(var.units,udunitsPtr)
-    if udunits.utCalendar(1,udunitsPtr)[0]:
+    # To do this; test if the "unit" in question is convertible with a known timestamp "unit".
+    varUnits=udunits.ut_parse(self.unitSystem, var.units, "UT_ASCII")
+    secsSinceEpoch=udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
+    
+    if not udunits.ut_are_convertible(secsSinceEpoch, varUnits):
         print "ERROR (4.4): Invalid units and/or reference time"
         self.err = self.err+1
+
+    # Free resources used by varUnits and secsSinceEpoch
+    udunits.ut_free(varUnits)
+    udunits.ut_free(secsSinceEpoch)
         
     return rc
 
@@ -1790,9 +1842,10 @@ class CFChecker:
             dimProduct=1
             for x in dimensions:
                 found='false'
-                if x in self.f.dimensions.keys():
+                if x in self.f.axes.keys():
                     # Get product of compressed dimension sizes for use later
-                    dimProduct=dimProduct*self.f.dimensions[x]
+                    #dimProduct=dimProduct*self.f.dimensions[x]
+                    dimProduct=dimProduct*len(self.f.axes[x])
                     found='true'
 
                 if found != 'true':
@@ -1818,33 +1871,33 @@ class CFChecker:
     rc=1
     var=self.f[varName]
     if var.attributes.has_key('scale_factor') and var.attributes.has_key('add_offset'):
-        if var.attributes['scale_factor'].typecode() != var.attributes['add_offset'].typecode():
+        if var.attributes['scale_factor'].dtype.char != var.attributes['add_offset'].dtype.char:
             print "ERROR (8.1): scale_factor and add_offset must be the same numeric data type"
             self.err = self.err+1
             # No point running rest of packed data tests
             return 0
 
     if var.attributes.has_key('scale_factor'):
-        type=var.attributes['scale_factor'].typecode()
+        type=var.attributes['scale_factor'].dtype.char
     elif var.attributes.has_key('add_offset'):
-        type=var.attributes['add_offset'].typecode()
+        type=var.attributes['add_offset'].dtype.char
     else:
         # No packed Data attributes present
         return 1
 
     # One or other attributes present; run remaining checks
-    if var.typecode() != type:
+    if var.dtype.char != type:
         if type != 'f' and type != 'd':
             print "ERROR (8.1): scale_factor and add_offset must be of type float or double"
             self.err = self.err+1
             rc=0
 
-        if var.typecode() != '1' and  var.typecode() != 's' and var.typecode() != 'i':
+        if var.dtype.char != 'b' and  var.dtype.char != 'h' and var.dtype.char != 'i':
             print "ERROR (8.1):",var.id,"must be of type byte, short or int"
             self.err = self.err+1
             rc=0
 
-        if type == 'f' and var.typecode() == 'i':
+        if type == 'f' and var.dtype.char == 'i':
             print "WARNING (8.1): scale_factor/add_offset are type float, therefore",var.id,"should not be of type int"
             self.warn = self.warn+1
             
@@ -1911,7 +1964,7 @@ class CFChecker:
                       rc = 0
                       
           # Doesn't make sense to do bitwise comparision for char variable
-          if var.typecode() != 'c':
+          if var.dtype.char != 'c':
               if var.attributes.has_key('flag_values') and var.attributes.has_key('flag_masks'):
                   # Both flag_values and flag_masks present
                   # Do a bitwise AND of each flag_value and its corresponding flag_mask value,
@@ -2137,4 +2190,5 @@ if __name__ == '__main__':
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
         inst.checker(file)
+
 
