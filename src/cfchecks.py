@@ -37,7 +37,7 @@ Options:
 '''
 
 from sys import *
-import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric
+import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric, numpy
 
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
@@ -1628,8 +1628,10 @@ class CFChecker:
         if missingValue:
             if var.__dict__.has_key('_FillValue'):
                 if fillValue != missingValue:
-                    print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
-                    self.warn = self.warn+1
+                    # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
+                    if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
+                        print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
+                        self.warn = self.warn+1
             else:
                 # _FillValue not present
                 print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
