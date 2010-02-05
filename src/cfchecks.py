@@ -257,7 +257,7 @@ class CFChecker:
     # Check for valid filename
     if not fileSuffix.match(file):
         print "ERROR (2.1): Filename must have .nc suffix"
-        exit(0)
+        exit(1)
 
     # Initialize udunits-2 package
     # (Temporarily ignore messages to std error stream to prevent "Definition override" warnings
@@ -300,7 +300,7 @@ class CFChecker:
     except:
         print "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
         print "ERRORS detected:",1
-        exit()
+        exit(1)
 
     # Check global attributes
     if not self.chkGlobalAttributes(): rc=0
@@ -394,6 +394,16 @@ class CFChecker:
     print ""
     print "ERRORS detected:",self.err
     print "WARNINGS given:",self.warn
+
+    if self.err:
+        # Return number of errors found
+        return self.err
+    elif self.warn:
+        # No errors, but some warnings found
+        return -(self.warn)
+    else:
+        # No errors or warnings - return success!
+        return 0
 
 
   #-----------------------------
@@ -923,7 +933,7 @@ class CFChecker:
             except AttributeError:
                 print "ERROR: Problem accessing variable:",dim,"(May not exist in file)."
                 self.err = self.err+1
-                exit(0)
+                exit(self.err)
             except ValueError:
                 # Dimension is not T,Z,Y or X axis
                 nonSpaceDimensions.append(dim)
@@ -2174,7 +2184,7 @@ def getargs(arglist):
             
     if len(args) == 0:
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
-        exit(2)
+        exit(1)
 
     return (badc,coards,uploader,useFileName,standardname.strip(),areatypes.strip(),udunits.strip(),version,args)
 
@@ -2185,12 +2195,13 @@ def getargs(arglist):
 
 if __name__ == '__main__':
 
-    from sys import argv
+    from sys import argv,exit
 
     (badc,coards,uploader,useFileName,standardName,areaTypes,udunitsDat,version,files)=getargs(argv)
     
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
-        inst.checker(file)
+        rc = inst.checker(file)
+        exit (rc)
 
 
