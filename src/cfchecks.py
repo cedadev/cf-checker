@@ -823,7 +823,7 @@ class CFChecker:
 
   #-------------------------------------------
   def extendedBlankSeparatedList(self, list):
-  #--------------------------------------------
+  #-------------------------------------------
       """Check list is a blank separated list of words containing alphanumeric characters
       plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
       if re.match("^[a-zA-Z0-9_ @\-\+\.]*$",list):
@@ -1026,8 +1026,17 @@ class CFChecker:
                     if var.dtype.char != 'c':
                         typeError=1
                 else:
-                    if var.dtype.char != var.attributes[attribute].dtype.char:
-                        typeError=1
+                    # 26.02.10 - CDAT-5.2 - An inconsistency means that determining the type of
+                    # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
+                    # make this more uniform (Raised on the cdat mailing list) CF Trac #
+                    if varName in self.f.axes.keys():
+                        # FileAxis Variable
+                        if var.typecode() != var.attributes[attribute].dtype.char:
+                            typeError=1
+                    else:
+                        # FileVariable
+                        if var.dtype.char != var.attributes[attribute].dtype.char:
+                            typeError=1
                     
             elif self.AttrList[attribute][0] != attrType:
                 typeError=1
@@ -1148,7 +1157,7 @@ class CFChecker:
     return rc
 
 
-#----------------------------------
+  #----------------------------------
   def isValidUdunitsUnit(self,unit):
   #----------------------------------
       # units must be recognizable by udunits package
