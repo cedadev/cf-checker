@@ -1497,7 +1497,8 @@ class CFChecker:
               if not varUnit:
                   print "ERROR (3.1): Invalid units: ",units
                   self.err = self.err+1
-                  rc=0
+                  # Invalid units so no point continuing with further unit checks
+                  return 0
         
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
@@ -1509,7 +1510,7 @@ class CFChecker:
 
                       # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
                       stdNameUnits=stdNameUnits.encode('ascii')
-                      
+
                       canonicalUnit = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
 
                       # To compare units we need to remove the reference time from the variable units
