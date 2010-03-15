@@ -272,6 +272,8 @@ class CFChecker:
     old_handler = ut_set_error_message_handler(ut_ignore)
                                            
     self.unitSystem=udunits.ut_read_xml(self.udunits)
+    if not self.unitSystem:
+        exit("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
 
     old_handler = ut_set_error_message_handler(ut_write_to_stderr)
 
