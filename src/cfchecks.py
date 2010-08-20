@@ -12,7 +12,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 2.0.0
+# CF Checker Version: 2.0.1
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -49,7 +49,7 @@ udunits=CDLL("libudunits2.so")
  
 STANDARDNAME="./cf-standard-name-table.xml"
 AREATYPES="./area-type-table.xml"
-checkerVersion="2.0.0"
+checkerVersion="2.0.1"
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4']
 Versions=[1.0,1.1,1.2,1.3,1.4]
 
@@ -235,6 +235,7 @@ class CFChecker:
       self.version = version
       self.err = 0
       self.warn = 0
+      self.info = 0
 
   def checker(self, file):
     # Set up dictionary of all valid attributes, their type and use
@@ -299,9 +300,14 @@ class CFChecker:
     # Read in netCDF file
     try:
         self.f=cdms.open(file,"r")
+
+    except AttributeError:
+        print "NetCDF Attribute Error:"
+        raise
     except:
         print "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
         print "ERRORS detected:",1
+        raise
         exit(1)
 
     # Check global attributes
@@ -313,7 +319,7 @@ class CFChecker:
     self.boundsVars = boundsVars
     self.climatologyVars = climatologyVars
     self.gridMappingVars = gridMappingVars
-    
+
     allCoordVars=coordVars[:]
     allCoordVars[len(allCoordVars):]=auxCoordVars[:]
 
@@ -364,7 +370,7 @@ class CFChecker:
 
         if not self.chkCellMeasures(var): rc=0
         
-        if not self.chkFormulaTerms(var): rc=0
+        if not self.chkFormulaTerms(var,allCoordVars): rc=0
 
         if not self.chkCompressAttr(var): rc=0
 
@@ -396,6 +402,7 @@ class CFChecker:
     print ""
     print "ERRORS detected:",self.err
     print "WARNINGS given:",self.warn
+    print "INFORMATION messages:",self.info
 
     if self.err:
         # Return number of errors found
@@ -516,9 +523,15 @@ class CFChecker:
         # print "ERROR: Invalid units:",units
         #self.err = self.err+1
         return None
+
+#    print "here"
     
     # Time Coordinate
+    # 19.08.10 - Workaround since udunits2 deems a unit without reference time not convertible to a
+    # unit with reference time and vice versa
     if udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "second", "UT_ASCII")):
+        return "T"
+    elif udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "seconds since 1-1-1 0:0:0", "UT_ASCII")):
         return "T"
     
     # Vertical Coordinate
@@ -1060,9 +1073,16 @@ class CFChecker:
                 # Valid association
                 break
             elif i == usesLen:
-                if attribute == "missing_value" and var.missing_value:
-                    print "WARNING: attribute",attribute,"attached to wrong kind of variable"
-                    self.warn = self.warn+1
+                if attribute == "missing_value":
+                    # Special case since missing_value attribute is present for all
+                    # variables whether set explicitly or not. Is this a cdms thing?
+                    # Using var.missing_value is null then missing_value not set in the file
+                    if var.missing_value:
+                        print "WARNING: attribute",attribute,"attached to wrong kind of variable"
+                        self.warn = self.warn+1
+                else:
+                    print "INFO: attribute '" + attribute + "' is being used in a non-standard way"
+                    self.info = self.info+1
             else:
                 i=i+1
 
@@ -1396,7 +1416,7 @@ class CFChecker:
 
 
   #----------------------------------
-  def chkFormulaTerms(self,varName):
+  def chkFormulaTerms(self,varName,allCoordVars):
   #----------------------------------
     """Checks on formula_terms attribute (CF Section 4.3.2):
     formula_terms = var: term var: term ...
@@ -1408,6 +1428,11 @@ class CFChecker:
     var=self.f[varName]
     
     if var.attributes.has_key('formula_terms'):
+
+        if varName not in allCoordVars:
+            print "ERROR (4.3.2): formula_terms attribute only allowed on coordinate variables"
+            self.err = self.err+1
+            
         # Get standard_name to determine which formula is to be used
         if not var.attributes.has_key('standard_name'):
             print "ERROR (4.3.2): Cannot get formula definition as no standard_name"
@@ -1557,9 +1582,18 @@ class CFChecker:
                       if not var.axis == 'Z':
                           print "WARNING (3.1): units attribute should be present"
                           self.warn = self.warn+1
-                  elif not var.attributes.has_key('positive') and not var.attributes.has_key('formula_terms'):
+                  elif not hasattr(var,'positive') and not hasattr(var,'formula_terms') and not hasattr(var,'compress'):
                       print "WARNING (3.1): units attribute should be present"
                       self.warn = self.warn+1
+
+          elif var.id not in self.boundsVars and var.id not in self.climatologyVars and var.id not in self.gridMappingVars:
+              # Variable is not a boundary or climatology variable
+
+              if not hasattr(var,'flag_values'):
+                  # Variable is not a flag variable
+                  
+                  print "ERROR (3.1): No units attribute set"
+                  self.err = self.err+1 
 
       return rc
 
@@ -1707,6 +1741,9 @@ class CFChecker:
           else:
               interp=self.getInterpretation(var.units)
 
+#          print "interp:",interp
+#          print "axis:",var.axis
+
           if interp != None:
               # It was possible to deduce axis interpretation from units/positive
               if interp != var.axis:
@@ -1751,7 +1788,12 @@ class CFChecker:
                 print "ERROR (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' must not appear when 'calendar' is present."
                 self.err = self.err+1
                 rc=0
-            
+
+    if not var.attributes.has_key('calendar') and not var.attributes.has_key('month_lengths'):
+        print "WARNING (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables"
+        self.warn = self.warn+1
+        rc=0
+        
     if var.attributes.has_key('month_lengths'):
         if len(var.attributes['month_lengths']) != 12 and \
            var.attributes['month_lengths'].dtype.char != 'i':
@@ -1987,7 +2029,7 @@ class CFChecker:
                       self.err = self.err + 1
                       rc = 0
                       
-          # Doesn't make sense to do bitwise comparision for char variable
+          # Doesn't make sense to do bitwise comparison for char variable
           if var.dtype.char != 'c':
               if var.attributes.has_key('flag_values') and var.attributes.has_key('flag_masks'):
                   # Both flag_values and flag_masks present
@@ -2014,6 +2056,7 @@ class CFChecker:
               rc = 0
               
       return rc
+
 
   #-----------------------
   def getType(self, arg):
