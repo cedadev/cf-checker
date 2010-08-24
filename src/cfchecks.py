@@ -916,10 +916,6 @@ class CFChecker:
         firstST=-1
         lastNonST=-1
         nonSpaceDimensions=[]
-        
-## Commented out for CRM #022
-##        validTrailing=self.boundsVars[:]
-##        validTrailing[len(validTrailing):]=self.climatologyVars[:]
 
         for dim in dimensions:
             i=i+1
@@ -966,6 +962,8 @@ class CFChecker:
         # As per CRM #022 
         # This check should only be applied for COARDS conformance.
         if self.coards:
+            validTrailing=self.boundsVars[:]
+            validTrailing[len(validTrailing):]=self.climatologyVars[:]
             if lastNonST > firstST and firstST != -1:
                 if len(trailingVars) == 1:
                     if var.id not in validTrailing:
