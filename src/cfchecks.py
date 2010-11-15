@@ -12,7 +12,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 2.0.1
+# CF Checker Version: 2.0.2
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -62,6 +62,7 @@ from xml.sax.handler import feature_namespaces
 def normalize_whitespace(text):
     "Remove redundant whitespace from a string."
     return ' '.join(text.split())
+
 
 class ConstructDict(ContentHandler):
     """Parse the xml standard_name table, reading all entries
@@ -1026,6 +1027,7 @@ class CFChecker:
         else:
             print "Unknown Type for attribute:",attribute,attrType
 
+
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
         if attrType != 'NoneType':
@@ -1372,8 +1374,9 @@ class CFChecker:
                     variable=splitIter.next()
 
                     if variable not in self.f.variables.keys():
-                        print "ERROR (7.2): cell_measures referring to variable that doesn't exist"
-                        self.err = self.err+1
+                        print "WARNING (7.2): cell_measures referring to variable '"+variable+"' that doesn't exist in this netCDF file."
+                        print "INFO (7.2): This is strictly an error if the cell_measures variable is not included in the dataset."
+                        self.warn = self.warn+1
                         rc=0
                         
                     else:
@@ -1699,7 +1702,7 @@ class CFChecker:
 ##                     typeError = 1
 ##             elif varType != missingValue.dtype.char:
 ##                 typeError = 1
-
+##
 ##             if typeError:
 ##                 print "ERROR (2.5.1): missing_value of different type to variable"
 ##                 self.err = self.err+1
