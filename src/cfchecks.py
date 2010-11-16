@@ -1248,7 +1248,7 @@ class CFChecker:
                       r'([a-z_]+)'
                       r'(\s+where\s+\S+(\s+over\s+\S+)?)?'
                       r'(\s+(over|within)\s+(days|years))?\s*'
-                      r'(\((interval:\s+\d+\s+\S+\s*)*(comment: .+)?\))?)'
+                      r'(\((interval:\s+\d+\s+\S+\s*)*(comment: .+)?.*\))?)'
                       r'+$')
         
         # Validate the entire string
