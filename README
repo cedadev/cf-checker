@@ -1,6 +1,7 @@
-===========================================================================
+
+===================================
 README  -  CF Checker version 2.0.0
-===========================================================================
+===================================
 
 To run the CF file conformance checker you must have the following 
 installed on your system:
@@ -10,25 +11,27 @@ installed on your system:
      - CDMS (part of CDAT-5.x)
 
 
-Notes on CDMS install:
------------------------
+Notes on CDMS install
+---------------------
+
 The CDMS module is part of the CDAT distribution available from the
 PCMDI software portal (http://www2-pcmdi.llnl.gov/cdat/).
 
 You can either install the entire CDAT distribution or alternatively 
-use the --enable-cdms-only option to the configure script to install 
-a minimal configuration supporting CDMS only (See CDAT express install 
-instructions for further details).
+use the CDAT-lite_ package.
+
+.. _CDAT-lite: http://pypi.python.org/pypi/cdat-lite
 
 
-Notes on UDUNITS-2 install:
+Notes on UDUNITS-2 install
 --------------------------
 The UDUNITS-2 package can be obtained from the unidata website
 (http://www.unidata.ucar.edu/software/udunits)
 
 
-To run the CF checker:
------------------------
+To run the CF checker
+---------------------
+
 Once you have both UDUNITS-2 and CDMS installed you need to complete the 
 following steps in order to run the CF Checker.
 
