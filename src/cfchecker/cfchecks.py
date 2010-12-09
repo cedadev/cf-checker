@@ -12,7 +12,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 2.0.2
+# CF Checker Version: 2.0.3
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -50,8 +50,8 @@ udunits=CDLL("libudunits2.so")
 STANDARDNAME="./cf-standard-name-table.xml"
 AREATYPES="./area-type-table.xml"
 checkerVersion="2.0.2"
-CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4']
-Versions=[1.0,1.1,1.2,1.3,1.4]
+CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4','CF-1.5']
+Versions=[1.0,1.1,1.2,1.3,1.4,1.5]
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -1590,8 +1590,10 @@ class CFChecker:
           elif var.id not in self.boundsVars and var.id not in self.climatologyVars and var.id not in self.gridMappingVars:
               # Variable is not a boundary or climatology variable
 
-              if not hasattr(var,'flag_values'):
-                  # Variable is not a flag variable
+              dimensions = self.f[var.id].getAxisIds()
+
+              if not hasattr(var,'flag_values') and len(dimensions) != 0:
+                  # Variable is not a flag variable and is not dimensionless
                   
                   print "ERROR (3.1): No units attribute set"
                   self.err = self.err+1 
@@ -1688,11 +1690,14 @@ class CFChecker:
                     # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
                     if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
                         print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
+
                         self.warn = self.warn+1
-            else:
-                # _FillValue not present
-                print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
-                self.warn = self.warn+1
+
+## 08.12.10 missing_value is no longer deprecated by the NUG
+##            else:
+##                # _FillValue not present
+##                print "WARNING (2.5.1): Use of 'missing_value' attribute is deprecated"
+##                self.warn = self.warn+1
                 
 ## 05.02.08 No longer needed as this is now detected by chkAttribute as missing_value
 ## has an attribute type of 'D'. See Trac #022
