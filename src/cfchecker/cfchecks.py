@@ -493,7 +493,7 @@ class CFChecker:
       return rc
 
   #-------------------------
-  def getStdName(self, var):
+  def getStdNameOld(self, var):
   #-------------------------
       """Get standard_name of variable (i.e. just first part of standard_name attribute, without modifier)"""
       attName = 'standard_name'
@@ -505,7 +505,30 @@ class CFChecker:
           return bits[0]
       else:
           return ""
+ 
+  #-------------------------
+  def getStdName(self, var):
+  #-------------------------
+      """Get standard_name of variable.  Return it as 2 parts - the standard name and the modifier, if present."""
+      attName = 'standard_name'
+      attDict = var.attributes
+
+      if attName not in attDict.keys():
+          return None
+
+      bits = string.split(attDict[attName])
       
+      if len(bits) == 1:
+          # Only standard_name part present
+          return (bits[0],"")
+      elif len(bits) == 0:
+          # Standard Name is blank
+          return ("","")
+      else:
+          # At least 2 elements so return the first 2.  
+          # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
+          return (bits[0],bits[1])
+    
   #--------------------------------------------------
   def getInterpretation(self, units, positive=None):
   #--------------------------------------------------
@@ -683,7 +706,9 @@ class CFChecker:
                     varData=self.f[var].getValue()
                     boundsData=self.f[bounds].getValue()
 ##                    if len(varData) == 1:
-                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
+
+#                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
+                    if isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
@@ -1442,7 +1467,7 @@ class CFChecker:
             return 0
 
 
-        stdName = self.getStdName(var)
+        (stdName,modifier) = self.getStdName(var)
         
         if not self.alias.has_key(stdName):
             print "ERROR (4.3.2): No formula defined for standard name:",stdName
@@ -1531,8 +1556,16 @@ class CFChecker:
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
               if var.attributes.has_key('standard_name'):
-                  stdName = self.getStdName(var)
-                  if stdName in self.std_name_dh.dict.keys():
+                  (stdName,modifier) = self.getStdName(var)
+
+                  # Is the Standard Name modifier number_of_observations being used.
+                  if modifier == 'number_of_observations':
+                      # Standard Name modifier is number_of_observations therefore units should be "1".  See Appendix C
+                      if not units == "1":
+                          print "ERROR (3.3): Standard Name modifier 'number_of_observations' present therefore units must be set to 1."
+                          self.err = self.err + 1
+                  
+                  elif stdName in self.std_name_dh.dict.keys():
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
 
@@ -1592,11 +1625,11 @@ class CFChecker:
 
               dimensions = self.f[var.id].getAxisIds()
 
-              if not hasattr(var,'flag_values') and len(dimensions) != 0:
-                  # Variable is not a flag variable and is not dimensionless
+              if not hasattr(var,'flag_values') and len(dimensions) != 0 and self.f[var.id].typecode() != 'c':
+                  # Variable is not a flag variable or a scalar or a label
                   
-                  print "ERROR (3.1): No units attribute set"
-                  self.err = self.err+1 
+                  print "INFO (3.1): No units attribute set.  Please consider adding a units attribute for completeness."
+                  self.info = self.info+1 
 
       return rc
 
