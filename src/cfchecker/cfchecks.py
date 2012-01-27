@@ -49,7 +49,7 @@ udunits=CDLL("libudunits2.so")
  
 STANDARDNAME="./cf-standard-name-table.xml"
 AREATYPES="./area-type-table.xml"
-checkerVersion="2.0.2"
+checkerVersion="2.0.3"
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4','CF-1.5']
 Versions=[1.0,1.1,1.2,1.3,1.4,1.5]
 
