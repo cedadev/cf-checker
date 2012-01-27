@@ -12,7 +12,7 @@
 #
 # File Revision: $Revision$
 #
-# CF Checker Version: 2.0.3
+# CF Checker Version: See __version__
 #
 #-------------------------------------------------------------
 ''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
@@ -42,6 +42,10 @@ import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric, numpy
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
 
+
+# Version is imported from the package module cfchecker/__init__.py
+from cfchecker import __version__
+
 # Use ctypes to interface to the UDUNITS-2 shared library
 # The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
 from ctypes import *
@@ -49,7 +53,6 @@ udunits=CDLL("libudunits2.so")
  
 STANDARDNAME="./cf-standard-name-table.xml"
 AREATYPES="./area-type-table.xml"
-checkerVersion="2.0.3"
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4','CF-1.5']
 Versions=[1.0,1.1,1.2,1.3,1.4,1.5]
 
@@ -292,7 +295,7 @@ class CFChecker:
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
     
-    print "Using CF Checker Version",checkerVersion
+    print "Using CF Checker Version",__version__
     print "Using Standard Name Table Version "+self.std_name_dh.version_number+" ("+self.std_name_dh.last_modified+")"
     if self.version >= 1.4:
         print "Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")"

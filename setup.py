@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-__version__ = '2.0.3'
+__version__ = __import__('cfchecker').__version__
 __description__ = "\n"+open(os.path.join(os.path.dirname(__file__), 'README')).read()
 
 setup(name='cfchecker',
