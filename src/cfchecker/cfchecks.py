@@ -142,6 +142,7 @@ class ConstructDict(ContentHandler):
             self.inLastModifiedContent = 0
             self.last_modified = normalize_whitespace(self.last_modified)
 
+
 class ConstructList(ContentHandler):
     """Parse the xml area_type table, reading all area_types 
        into a list.
@@ -1720,14 +1721,18 @@ class CFChecker:
     if var.attributes.has_key('missing_value'):
         missingValue=var.attributes['missing_value']
 
-        if missingValue:
-            if var.__dict__.has_key('_FillValue'):
-                if fillValue != missingValue:
-                    # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
-                    if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
-                        print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
+#        print type(missingValue)
+#        print type(Numeric.array([]))
 
-                        self.warn = self.warn+1
+        try:
+            if missingValue:
+                if var.__dict__.has_key('_FillValue'):
+                    if fillValue != missingValue:
+                        # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
+                        if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
+                            print "WARNING (2.5.1): missing_value and _FillValue set to differing values"
+                            
+                            self.warn = self.warn+1
 
 ## 08.12.10 missing_value is no longer deprecated by the NUG
 ##            else:
@@ -1749,13 +1754,25 @@ class CFChecker:
 ##                 self.err = self.err+1
 ##                 rc=0
 
-            if var.id in self.boundsVars:
-                print "WARNING (7.1): Boundary Variable",var.id,"should not have missing_value attribute"
-                self.warn = self.warn+1
-            elif var.id in self.climatologyVars:
-                print "ERROR (7.4): Climatology Variable",var.id,"must not have missing_value attribute"
-                self.err = self.err+1
-                rc=0
+                if var.id in self.boundsVars:
+                    print "WARNING (7.1): Boundary Variable",var.id,"should not have missing_value attribute"
+                    self.warn = self.warn+1
+                elif var.id in self.climatologyVars:
+                    print "ERROR (7.4): Climatology Variable",var.id,"must not have missing_value attribute"
+                    self.err = self.err+1
+                    rc=0
+
+        except ValueError:
+#            if type(missingValue) == type(Numeric.array([])):
+#                print "ERROR (2.5.1): missing_value should be a scalar value"
+#                self.err = self.err+1
+#                rc=0
+#            else:
+            print "ValueError:", exc_info()[1]
+            print "INFO: Could not complete tests on missing_value attribute"
+            raise
+            rc=0
+                
     return rc
         
 
@@ -1778,10 +1795,14 @@ class CFChecker:
           
           # Check that axis attribute is consistent with the coordinate type
           # deduced from units and positive.
-          if hasattr(var,'positive'): 
-              interp=self.getInterpretation(var.units,var.positive)
+          if hasattr(var,'units'):
+              if hasattr(var,'positive'): 
+                  interp=self.getInterpretation(var.units,var.positive)
+              else:
+                  interp=self.getInterpretation(var.units)
           else:
-              interp=self.getInterpretation(var.units)
+              # Variable does not have a units attribute so a consistency check cannot be made
+              interp=None
 
 #          print "interp:",interp
 #          print "axis:",var.axis
