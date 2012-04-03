@@ -247,9 +247,6 @@ class CFChecker:
     self.setUpAttributeList()
     fileSuffix = re.compile('^\S+\.nc$')
 
-    lowerVars=[]
-    rc=1
-
     print ""
     if self.uploader:
         realfile = string.split(file,".nc")[0]+".nc"
@@ -313,7 +310,18 @@ class CFChecker:
         print "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
         print "ERRORS detected:",1
         raise
-        exit(1)
+
+    try:
+        return self._checker()
+    finally:
+        self.f.close()
+  
+  def _checker(self):
+    """
+    Main implementation of checker assuming self.f exists.
+    """
+    lowerVars=[]
+    rc=1
 
     # Check global attributes
     if not self.chkGlobalAttributes(): rc=0
