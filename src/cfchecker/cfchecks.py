@@ -2014,19 +2014,30 @@ class CFChecker:
         # No packed Data attributes present
         return 1
 
+    # 30.01.13 - CDAT-5.2 - An inconsistency means that determining the type of
+    # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
+    # make this more uniform (Raised on the cdat mailing list) CF Trac #
+    if varName in self.f.axes.keys():
+        # FileAxis Variable
+        varType=var.typecode()
+    else:
+        # FileVariable
+        varType=var.dtype.char
+ 
+
     # One or other attributes present; run remaining checks
-    if var.dtype.char != type:
+    if varType != type:
         if type != 'f' and type != 'd':
             print "ERROR (8.1): scale_factor and add_offset must be of type float or double"
             self.err = self.err+1
             rc=0
 
-        if var.dtype.char != 'b' and  var.dtype.char != 'h' and var.dtype.char != 'i':
+        if varType != 'b' and  varType != 'h' and varType != 'i':
             print "ERROR (8.1):",var.id,"must be of type byte, short or int"
             self.err = self.err+1
             rc=0
 
-        if type == 'f' and var.dtype.char == 'i':
+        if type == 'f' and varType == 'i':
             print "WARNING (8.1): scale_factor/add_offset are type float, therefore",var.id,"should not be of type int"
             self.warn = self.warn+1
             
