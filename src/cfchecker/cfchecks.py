@@ -130,7 +130,13 @@ class ConstructDict(ContentHandler):
         elif name == 'entry_id':
             self.inEntryIdContent = 0
             self.entry_id = normalize_whitespace(self.entry_id)
-            self.dict[self.this_id] = self.dict[self.entry_id]
+            try: 
+                self.dict[self.this_id] = self.dict[self.entry_id]
+            except KeyError:
+                print ""
+                print "**WARNING** Error in standard_name table:  entry_id '"+self.entry_id+"' not found"
+                print "Please contact Rosalyn Hatcher (r.s.hatcher@reading.ac.uk)"
+                print ""
 
         # If it's the end of the version_number element, save it
         elif name == 'version_number':
