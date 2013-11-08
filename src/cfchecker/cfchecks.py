@@ -470,6 +470,9 @@ class CFChecker:
     print "WARNINGS given:",self.warn
     print "INFORMATION messages:",self.info
 
+    # Close file
+    self.f.close()
+
     if self.err:
         # Return number of errors found
         return self.err
