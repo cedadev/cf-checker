@@ -60,6 +60,15 @@ following steps in order to run the CF Checker.
 5. Run the checker by typing:
       cfchecks.py <netCDF_file.nc>
 
+Environment Variables
+---------------------
+
+The following parameters can be set on the command-line or through environment variables:
+
+ 1. UDUNITS : The path to udunits2.xml.  Usually $UDUNITS_HOME/share/udunits/udunits2.xml
+ 2. CF_STANDARD_NAMES : The path or URL to the CF standard names table
+ 3. CF_AREA_TYPES : The path or URL to the CF area types tables
+
 
 If you have any problems or comments please contact Rosalyn Hatcher
 (r.s.hatcher@reading.ac.uk)
