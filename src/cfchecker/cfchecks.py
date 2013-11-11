@@ -282,7 +282,8 @@ class CFChecker:
     ut_ignore = uemh(("ut_ignore",udunits))
 
     old_handler = ut_set_error_message_handler(ut_ignore)
-                                           
+                                       
+    # if self.udunits=None this will load the UDUNITS2 xml file from the default place
     self.unitSystem=udunits.ut_read_xml(self.udunits)
     if not self.unitSystem:
         exit("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
@@ -2466,7 +2467,7 @@ def getargs(arglist):
     standardnamekey='CF_STANDARD_NAMES'
     areatypeskey='CF_AREA_TYPES'
     # set defaults
-    udunits=''
+    udunits=None
     standardname=STANDARDNAME
     areatypes=AREATYPES
     uploader=None
@@ -2491,7 +2492,7 @@ def getargs(arglist):
     
     for a, v in opts:
         if a in ('-a','--area_types'):
-            areatypes=v
+            areatypes=v.strip()
             continue
         if a in ('-b','--badc'):
             badc="yes"
@@ -2509,10 +2510,10 @@ def getargs(arglist):
             useFileName="no"
             continue
         if a in ('-u','--udunits'):
-            udunits=v
+            udunits=v.strip()
             continue
         if a in ('-s','--cf_standard_names'):
-            standardname=v
+            standardname=v.strip()
             continue
         if a in ('-v','--version'):
             if v == 'auto':
@@ -2529,7 +2530,7 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(1)
 
-    return (badc,coards,uploader,useFileName,standardname.strip(),areatypes.strip(),udunits.strip(),version,args)
+    return (badc,coards,uploader,useFileName,standardname,areatypes,udunits,version,args)
 
 
 #--------------------------
