@@ -10,7 +10,7 @@
 #
 # Date: February 2003
 #
-# File Revision: $Revision$
+# File Revision: $Revision: 200 $
 #
 # CF Checker Version: See __version__
 #
@@ -51,8 +51,10 @@ from cfchecker import __version__
 from ctypes import *
 udunits=CDLL("libudunits2.so")
  
-STANDARDNAME="./cf-standard-name-table.xml"
-AREATYPES="./area-type-table.xml"
+STANDARDNAME = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/current/cf-standard-name-table.xml'
+AREATYPES = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/current/area-type-table.xml'
+
+
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4','CF-1.5','CF-1.6']
 Versions=[1.0,1.1,1.2,1.3,1.4,1.5,1.6]
 
@@ -254,9 +256,6 @@ class CFChecker:
 
     fileSuffix = re.compile('^\S+\.nc$')
 
-    lowerVars=[]
-    rc=1
-
     print ""
     if self.uploader:
         realfile = string.split(file,".nc")[0]+".nc"
@@ -283,7 +282,8 @@ class CFChecker:
     ut_ignore = uemh(("ut_ignore",udunits))
 
     old_handler = ut_set_error_message_handler(ut_ignore)
-                                           
+                                       
+    # if self.udunits=None this will load the UDUNITS2 xml file from the default place
     self.unitSystem=udunits.ut_read_xml(self.udunits)
     if not self.unitSystem:
         exit("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
@@ -340,6 +340,30 @@ class CFChecker:
         print "Using Area Type Table Version "+self.area_type_lh.version_number+" ("+self.area_type_lh.last_modified+")"
     print ""
     
+    # Read in netCDF file
+    try:
+        self.f=cdms.open(file,"r")
+
+    except AttributeError:
+        print "NetCDF Attribute Error:"
+        raise
+    except:
+        print "\nCould not open file, please check that NetCDF is formatted correctly.\n".upper()
+        print "ERRORS detected:",1
+        raise
+
+    try:
+        return self._checker()
+    finally:
+        self.f.close()
+  
+  def _checker(self):
+    """
+    Main implementation of checker assuming self.f exists.
+    """
+    lowerVars=[]
+    rc=1
+
     # Check global attributes
     if not self.chkGlobalAttributes(): rc=0
         
@@ -469,9 +493,6 @@ class CFChecker:
     print "ERRORS detected:",self.err
     print "WARNINGS given:",self.warn
     print "INFORMATION messages:",self.info
-
-    # Close file
-    self.f.close()
 
     if self.err:
         # Return number of errors found
@@ -806,7 +827,15 @@ class CFChecker:
 ##                    if len(varData) == 1:
 
 ##                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
-                    if isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
+
+# 09.05.14
+# Temporary workaround to fix crash when a variable is of type <class 'cdms2.auxcoord.TransientAuxAxis1D'>
+# and len(varData) then returns 0!!!
+                    if len(varData) ==0:
+                        print "WARNING: Problem with variable: '" + var + "' - Skipping check that data lies within cell boundaries."
+                        self.warn = self.warn+1
+                 
+                    elif isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
@@ -2443,7 +2472,7 @@ def getargs(arglist):
     standardnamekey='CF_STANDARD_NAMES'
     areatypeskey='CF_AREA_TYPES'
     # set defaults
-    udunits=''
+    udunits=None
     standardname=STANDARDNAME
     areatypes=AREATYPES
     uploader=None
@@ -2468,7 +2497,7 @@ def getargs(arglist):
     
     for a, v in opts:
         if a in ('-a','--area_types'):
-            areatypes=v
+            areatypes=v.strip()
             continue
         if a in ('-b','--badc'):
             badc="yes"
@@ -2486,10 +2515,10 @@ def getargs(arglist):
             useFileName="no"
             continue
         if a in ('-u','--udunits'):
-            udunits=v
+            udunits=v.strip()
             continue
         if a in ('-s','--cf_standard_names'):
-            standardname=v
+            standardname=v.strip()
             continue
         if a in ('-v','--version'):
             if v == 'auto':
@@ -2506,7 +2535,7 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(1)
 
-    return (badc,coards,uploader,useFileName,standardname.strip(),areatypes.strip(),udunits.strip(),version,args)
+    return (badc,coards,uploader,useFileName,standardname,areatypes,udunits,version,args)
 
 
 #--------------------------
