@@ -132,7 +132,7 @@ class CfchecksWrapper(object):
             if arg in ("-a", "--area_types"):
                 self.area_types_url = val
             elif arg in ("-s", "--cf_standard_names"):
-                self,standard_names_url = val
+                self.standard_names_url = val
             elif arg in ("-u", "--udunits"):
                 self.udunits_path = val
             elif arg in ("-v", "--version"):
