@@ -10,14 +10,22 @@ import getopt
 
 class CfchecksWrapper(object):
 
-    """cf-checker [options] [files]
+    """
+    cf-checker [options] file1 [file2...]
+    cf-checker [options] --update_only
+    cf-checker -h|--help
 
     Description:
       A wrapper to the CF checker, which will keep local copies of the area 
       types and standard name tables, and fetch fresh copies as required if 
       the local copies are too old.
- 
-      Options:
+
+      If --update_only is specified, then it will update the area
+      types and standard name tables without checking any data files.
+      In this case the tables are updated regardless of their timestamp
+      (though this can be overridden with the -t flag - see below).
+
+      Other options:
 
           -a|--area_types <path or url>:
               location of the CF area types table
@@ -34,28 +42,28 @@ class CfchecksWrapper(object):
           -t|--max_age <days>
               maximum allowable age of the tables before downloading
               a fresh copy (floating point number permitted).
-              (e.g. 0 to force a download)
-              default = 1 day
+              The default is 1 day when checking data files, 
+              and is 0 if --update_only is specified.
 
           -d|--spool_dir <path>:
               directory to use for local copies of the area-types
               and standard-name tables
               default = /var/spool/cf-checker
 
+          --verbose:
+              increase verbosity
+
           -h|--help:
               prints this help text and the help text for the 
               underlying checker
-
-          --verbose:
-              increase verbosity
 
       Note that the datafiles to check are optional: the wrapper can be run 
       without them to just download the table files as necessary.
 
       On a multi-user system, it may be desirable to remove world write 
       permission from the spool directory and to set up a cron job to 
-      run this wrapper (with "-t 0" and no data files) as a user that
-      has write access to it.
+      run this wrapper with --update_only as a user that has write
+      access to it.
 """
 
     def __init__(self,
@@ -75,7 +83,8 @@ class CfchecksWrapper(object):
         self.standard_names_url = standard_names_url
         self.area_types_key = area_types_key
         self.area_types_url = area_types_url
-        self.max_table_age = default_max_table_age
+        self.default_max_table_age = default_max_table_age
+        self.max_table_age = None
         self.udunits_key = udunits_key,
         self.udunits_path = udunits_path
         self.checker_command = checker_command
@@ -112,10 +121,13 @@ class CfchecksWrapper(object):
             (opts, args) = getopt.getopt(
                 cmd_args,
                 'a:s:u:v:t:d:h', 
-                ['area_types=', 'cf_standard_names=', 'udunits=', 'version=', 'max_age=', 'spool_dir=', "verbose"])
+                ['area_types=', 'cf_standard_names=', 'udunits=',
+                 'version=', 'max_age=', 'spool_dir=', "verbose",
+                 'update_only'])
         except getopt.GetoptError:
             self.usage(status = 1)
 
+        update_only = False
         for arg, val in opts:
             if arg in ("-a", "--area_types"):
                 self.area_types_url = val
@@ -136,10 +148,23 @@ class CfchecksWrapper(object):
                 self.usage(show_checker_usage=True, status=0)
             elif arg in ("--verbose"):
                 self.verbose = True
+            elif arg in ("--update_only"):
+                update_only = True
             else:
                 print "unrecognised option %s (coding bug?)" % arg
 
+        if self.max_table_age == None:
+            if update_only:
+                self.max_table_age = 0
+            else:
+                self.max_table_age = self.default_max_table_age
+
         self.files_to_check = args
+        if not update_only and not self.files_to_check:
+            print "Error: no files to check and --update_only not given"
+            print "run with --help (or -h) for a full usage message"
+            sys.exit(1)
+
         self.set_table_paths()
                 
     def set_values_from_env(self):
@@ -166,8 +191,8 @@ class CfchecksWrapper(object):
         print self.__doc__
         if show_checker_usage:
             print "\nUsage message from underlying checker (%s) follows:" % self.checker_command
-            print "-----------------------------------------------------"
-            subprocess.call([self.checker_command, "-h"])
+            print "-----------------------------------------------------\n"
+            self.run_command([self.checker_command, "-h"])
         if status != None:
             sys.exit(status)
 
@@ -241,10 +266,17 @@ class CfchecksWrapper(object):
         # for clarity, flush before running command
         sys.stdout.flush()
         sys.stderr.flush()
-        status = subprocess.call(command)
+        status = self.run_command(command)
         if self.verbose:
             print "checker returned status %s" % status
         return status
+
+    def run_command(self, command):
+        "run command, return status"
+        # for clarity, flush before running command
+        sys.stdout.flush()
+        sys.stderr.flush()
+        return subprocess.call(command)
 
 
 if __name__ == '__main__':
