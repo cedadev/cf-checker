@@ -51,8 +51,8 @@ from cfchecker import __version__
 from ctypes import *
 udunits=CDLL("libudunits2.so")
  
-STANDARDNAME = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/current/cf-standard-name-table.xml'
-AREATYPES = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/current/area-type-table.xml'
+STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
+AREATYPES = 'http://cfconventions.org/Data/cf-standard-names/current/src/area-type-table.xml'
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
