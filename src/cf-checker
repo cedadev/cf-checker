@@ -66,7 +66,7 @@ class CfchecksWrapper(object):
                  area_types_url = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/current/area-type-table.xml',
                  udunits_key = 'UDUNITS',
                  udunits_path = '/usr/share/udunits/udunits2.xml',
-                 checker_path = '/usr/bin/cfchecks',
+                 checker_command = 'cfchecks',
                  default_max_table_age = 1.,
                  verbose = False):
 
@@ -78,7 +78,7 @@ class CfchecksWrapper(object):
         self.max_table_age = default_max_table_age
         self.udunits_key = udunits_key,
         self.udunits_path = udunits_path
-        self.checker_path = checker_path
+        self.checker_command = checker_command
         self.verbose = verbose
         self.cf_version = None
 
@@ -165,9 +165,9 @@ class CfchecksWrapper(object):
         "Print a usage message, and exit if status passed"
         print self.__doc__
         if show_checker_usage:
-            print "\nUsage message from underlying checker (%s) follows:" % self.checker_path
+            print "\nUsage message from underlying checker (%s) follows:" % self.checker_command
             print "-----------------------------------------------------"
-            subprocess.call([self.checker_path, "-h"])
+            subprocess.call([self.checker_command, "-h"])
         if status != None:
             sys.exit(status)
 
@@ -229,7 +229,7 @@ class CfchecksWrapper(object):
 
     def run_checker(self, data_file, cf_version=None):
         "Run the CF checker on specified file against specified CF version"
-        command = [self.checker_path,
+        command = [self.checker_command,
                    "-s", self.standard_names_path,
                    "-a", self.area_types_path,
                    "-u", self.udunits_path]
