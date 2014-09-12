@@ -632,7 +632,7 @@ class CFChecker:
       """Determine if variable is of Numeric data type."""
       types=['i','f','d']
       rc=1 
-      if self.f[var].dtype.char not in types:
+      if self.getTypeCode(self.f[var]) not in types:
           rc=0
       return rc
 
@@ -773,7 +773,7 @@ class CFChecker:
                             auxCoordVars.append(dataVar)
 
                             # Is the auxillary coordinate var actually a label?
-                            if self.f[dataVar].dtype.char == 'c':
+                            if self.getTypeCode(self.f[dataVar]) == 'c':
                                 # Label variable
                                 num_dimensions = len(self.f[dataVar].getAxisIds())
                                 if self.version < vn1_4:
@@ -1219,6 +1219,27 @@ class CFChecker:
 ##                 print "WARNING: Dimension:",dim,"does not have an associated coordinate variable"
 ##                 self.warn = self.warn+1
 
+  #-------------------------------------------------------
+  def getTypeCode(self, obj):
+  #-------------------------------------------------------
+      """
+      Get the type, as a 1-character code, of an object that may be a 
+      CDMS FileAxis, a CDMS FileVariable, or a numpy.ndarray
+      """
+      # A previous comment in the code claimed:
+      # 
+      # # 26.02.10 - CDAT-5.2 - An inconsistency means that determining the type of
+      # # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
+      # # make this more uniform (Raised on the cdat mailing list) CF Trac #
+      #
+      # in fact it seems that both cdms.axis.FileAxis and cdms.fvariable.FileVariable
+      # support obj.typecode() (although the FileVariable also supports obj.dtype.char,
+      # so obj.typecode() will work for both of these.  However, numpy.ndarray only 
+      # supports obj.dtype.char
+      
+      if isinstance(obj, numpy.ndarray):
+          return obj.dtype.char
+      return obj.typecode()
 
   #-------------------------------------------------------
   def chkAttribute(self, attribute,varName,allCoordVars):
@@ -1266,19 +1287,10 @@ class CFChecker:
                 # they are attached to.
                 if attrType == 'S':
                     # Note: A string is an array of chars
-                    if var.dtype.char != 'c':
+                    if self.getTypeCode(var) != 'c':
                         typeError=1
                 else:
-                    # 26.02.10 - CDAT-5.2 - An inconsistency means that determining the type of
-                    # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
-                    # make this more uniform (Raised on the cdat mailing list) CF Trac #
-                    if varName in self.f.axes.keys():
-                        # FileAxis Variable
-                        if var.typecode() != var.attributes[attribute].dtype.char:
-                            typeError=1
-                    else:
-                        # FileVariable
-                        if var.dtype.char != var.attributes[attribute].dtype.char:
+                    if self.getTypeCode(var) != self.getTypeCode(var.attributes[attribute]):
                             typeError=1
                     
             elif self.AttrList[attribute][0] != attrType:
@@ -1439,7 +1451,7 @@ class CFChecker:
           #print varName," is a count variable (Discrete Geometries)"
           self.raggedArrayFlag = 1
           
-          if var.dtype.char != 'i':
+          if self.getTypeCode(var) != 'i':
               print "ERROR (9.3): count variable '"+varName+"' must be of type integer"
               self.err = self.err + 1
 
@@ -1448,7 +1460,7 @@ class CFChecker:
           #print varName," is an index variable (Discrete Geometries)"
           self.raggedArrayFlag = 1
 
-          if var.dtype.char != 'i':
+          if self.getTypeCode(var) != 'i':
               print "ERROR (9.3): index variable '"+varName+"' must be of type integer"
               self.err = self.err + 1
 
@@ -1478,7 +1490,7 @@ class CFChecker:
       rc=1
       # Is it a string-valued aux coord var with standard_name of area_type?
       if value in self.auxCoordVars:
-          if self.f[value].dtype.char != 'c':
+          if self.getTypeCode(self.f[value]) != 'c':
               rc=0
           elif type == "type2":
               # <type2> has the additional requirement that it is not allowed a leading dimension of more than one
@@ -1931,7 +1943,7 @@ class CFChecker:
     rc=1
     var=self.f[varName]
 
-##    varType=var.dtype.char
+##    varType = self.getTypeCode(var)
 
     if var.__dict__.has_key('_FillValue'):
         fillValue=var.__dict__['_FillValue']
@@ -1943,7 +1955,7 @@ class CFChecker:
 ##                 print "ERROR (2.5.1): _FillValue of different type to variable"
 ##                 self.err = self.err+1
 ##                 rc=0
-##         elif varType != fillValue.dtype.char:
+##         elif varType != self.getTypeCode(fillValue):
 ##             print "ERROR (2.5.1): _FillValue of different type to variable"
 ##             self.err = self.err+1
 ##             rc=0
@@ -1991,7 +2003,7 @@ class CFChecker:
 ##             if varType == 'c':
 ##                 if type(missingValue) != types.StringType:
 ##                     typeError = 1
-##             elif varType != missingValue.dtype.char:
+##             elif varType != self.getTypeCode(missingValue):
 ##                 typeError = 1
 ##
 ##             if typeError:
@@ -2105,13 +2117,13 @@ class CFChecker:
         
     if var.attributes.has_key('month_lengths'):
         if len(var.attributes['month_lengths']) != 12 and \
-           var.attributes['month_lengths'].dtype.char != 'i':
+           self.getTypeCode(var.attributes['month_lengths']) != 'i':
             print "ERROR (4.4.1): Attribute 'month_lengths' should be an integer array of size 12"
             self.err = self.err+1
             rc=0
 
     if var.attributes.has_key('leap_year'):
-        if var.attributes['leap_year'].dtype.char != 'i' and \
+        if self.getTypeCode(var.attributes['leap_year']) != 'i' and \
            len(var.attributes['leap_year']) != 1:
             print "ERROR (4.4.1): leap_year should be a scalar value"
             self.err = self.err+1
@@ -2246,30 +2258,21 @@ class CFChecker:
     rc=1
     var=self.f[varName]
     if var.attributes.has_key('scale_factor') and var.attributes.has_key('add_offset'):
-        if var.attributes['scale_factor'].dtype.char != var.attributes['add_offset'].dtype.char:
+        if self.getTypeCode(var.attributes['scale_factor']) != self.getTypeCode(var.attributes['add_offset']):
             print "ERROR (8.1): scale_factor and add_offset must be the same numeric data type"
             self.err = self.err+1
             # No point running rest of packed data tests
             return 0
 
     if var.attributes.has_key('scale_factor'):
-        type=var.attributes['scale_factor'].dtype.char
+        type = self.getTypeCode(var.attributes['scale_factor'])
     elif var.attributes.has_key('add_offset'):
-        type=var.attributes['add_offset'].dtype.char
+        type = self.getTypeCode(var.attributes['add_offset'])
     else:
         # No packed Data attributes present
         return 1
 
-    # 30.01.13 - CDAT-5.2 - An inconsistency means that determining the type of
-    # a FileAxis or FileVariable is different.  C.Doutriaux will hopefully
-    # make this more uniform (Raised on the cdat mailing list) CF Trac #
-    if varName in self.f.axes.keys():
-        # FileAxis Variable
-        varType=var.typecode()
-    else:
-        # FileVariable
-        varType=var.dtype.char
- 
+    varType = self.getTypeCode(var)
 
     # One or other attributes present; run remaining checks
     if varType != type:
@@ -2360,7 +2363,7 @@ class CFChecker:
                       rc = 0
                       
           # Doesn't make sense to do bitwise comparison for char variable
-          if var.dtype.char != 'c':
+          if self.getTypeCode(var) != 'c':
               if var.attributes.has_key('flag_values') and var.attributes.has_key('flag_masks'):
                   # Both flag_values and flag_masks present
                   # Do a bitwise AND of each flag_value and its corresponding flag_mask value,
