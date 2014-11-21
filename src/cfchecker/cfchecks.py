@@ -51,8 +51,8 @@ from cfchecker import __version__
 from ctypes import *
 udunits=CDLL("libudunits2.so")
  
-STANDARDNAME = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/current/cf-standard-name-table.xml'
-AREATYPES = 'http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/current/area-type-table.xml'
+STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
+AREATYPES = 'http://cfconventions.org/Data/cf-standard-names/current/src/area-type-table.xml'
 
 
 CFVersions=['CF-1.0','CF-1.1','CF-1.2','CF-1.3','CF-1.4','CF-1.5','CF-1.6']
@@ -998,6 +998,16 @@ class CFChecker:
           return 1
       else:
           return 0
+
+  #-------------------------------------------
+  def commaOrBlankSeparatedList(self, list):
+  #-------------------------------------------
+      """Check list is a blank or comma separated list of words containing alphanumeric 
+      characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
+      if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$",list):
+          return 1
+      else:
+          return 0
          
   
   #------------------------------
@@ -1008,21 +1018,38 @@ class CFChecker:
     if self.f.attributes.has_key('Conventions'):
         conventions = self.f.attributes['Conventions']
         
-        if conventions not in CFVersions:
-            print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
+        # Conventions attribute can be a blank separated (or comma separated) list of conforming conventions
+        if not self.commaOrBlankSeparatedList(conventions):
+            print "ERROR(2.6.1): Conventions attribute must be a blank (or comma) separated list of convention names"
             self.err = self.err+1
             rc=0
+        else:
+            # Split string up into component parts
+            # If a comma is present we assume a comma separated list as names cannot contain commas
+            if re.match("^.*,.*$",conventions):
+                conventionList = string.split(conventions,",")
+            else:
+                conventionList = string.split(conventions)
+            
+            found = 0
+            for convention in conventionList:
+                if convention.strip() in CFVersions:
+                    found = 1
+                    break
+        
+            if found != 1:
+                print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
+                self.err = self.err+1
+                rc=0
 
-        if conventions != 'CF-'+str(self.version):
-            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against CF",self.version
-            self.warn = self.warn+1
+            if convention.strip() != 'CF-'+str(self.version):
+                print "WARNING: Inconsistency - The conventions attribute is set to "+convention+", but you've requested a validity check against CF",self.version
+                self.warn = self.warn+1
             
     else:
         print "WARNING (2.6.1): No 'Conventions' attribute present"
         self.warn = self.warn+1
         rc=1
-
-
 
     # Discrete geometries
     if self.version >= 1.6 and self.f.attributes.has_key('featureType'):
@@ -1032,8 +1059,6 @@ class CFChecker:
             print "ERROR (9.4): Global attribute 'featureType' contains invalid value"
 
         #self.chkFeatureType()
-
-
 
     for attribute in ['title','history','institution','source','reference','comment']:
         if self.f.attributes.has_key(attribute):
@@ -1117,7 +1142,7 @@ class CFChecker:
                         self.err = self.err+1
                     else:
                         axesFound[pos] = 1
-                elif hasattr(self.f[dim],'units'):
+                elif hasattr(self.f[dim],'units') and self.f[dim].units != "":
                     # Determine interpretation of variable by units attribute
                     if hasattr(self.f[dim],'positive'):
                         interp=self.getInterpretation(self.f[dim].units,self.f[dim].positive)
