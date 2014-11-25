@@ -10,7 +10,7 @@
 #
 # Date: February 2003
 #
-# File Revision: $Revision$
+# File Revision: $Revision: 200 $
 #
 # CF Checker Version: See __version__
 #
@@ -116,6 +116,7 @@ vn1_5 = CFVersion((1, 5))
 vn1_6 = CFVersion((1, 6))
 cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6]
 newest_version = max(cfVersions)
+
 
 class ConstructDict(ContentHandler):
     """Parse the xml standard_name table, reading all entries
@@ -351,12 +352,16 @@ class CFChecker:
         raise
         exit(1)
 
+
     #if 'auto' version, check the CF version in the file
     #if none found, use the default
     if not self.version:
         self.version = self.getFileCFVersion()
         if not self.version:
+            print "WARNING: Cannot determine CF version from the Conventions attribute; checking against latest CF version:",newest_version
+            self.warn = self.warn+1
             self.version = newest_version
+
 
     # Set up dictionary of all valid attributes, their type and use
     self.setUpAttributeList()
@@ -540,9 +545,6 @@ class CFChecker:
     print "ERRORS detected:",self.err
     print "WARNINGS given:",self.warn
     print "INFORMATION messages:",self.info
-
-    # Close file
-    self.f.close()
 
     if self.err:
         # Return number of errors found
@@ -877,7 +879,15 @@ class CFChecker:
 ##                    if len(varData) == 1:
 
 ##                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
-                    if isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
+
+# 09.05.14
+# Temporary workaround to fix crash when a variable is of type <class 'cdms2.auxcoord.TransientAuxAxis1D'>
+# and len(varData) then returns 0!!!
+                    if len(varData) ==0:
+                        print "WARNING: Problem with variable: '" + var + "' - Skipping check that data lies within cell boundaries."
+                        self.warn = self.warn+1
+                 
+                    elif isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
@@ -1040,6 +1050,16 @@ class CFChecker:
           return 1
       else:
           return 0
+
+  #-------------------------------------------
+  def commaOrBlankSeparatedList(self, list):
+  #-------------------------------------------
+      """Check list is a blank or comma separated list of words containing alphanumeric 
+      characters plus underscore '_', period '.', plus '+', hyphen '-', or "at" sign '@'."""
+      if re.match("^[a-zA-Z0-9_ @\-\+\.,]*$",list):
+          return 1
+      else:
+          return 0
          
   
   #------------------------------
@@ -1050,21 +1070,38 @@ class CFChecker:
     if self.f.attributes.has_key('Conventions'):
         conventions = self.f.attributes['Conventions']
         
-        if conventions not in map(str, cfVersions):
-            print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
+        # Conventions attribute can be a blank separated (or comma separated) list of conforming conventions
+        if not self.commaOrBlankSeparatedList(conventions):
+            print "ERROR(2.6.1): Conventions attribute must be a blank (or comma) separated list of convention names"
             self.err = self.err+1
             rc=0
-
-        if conventions != str(self.version):
-            print "WARNING: Inconsistency - The conventions attribute is set to "+conventions+", but you've requested a validity check against",self.version
-            self.warn = self.warn+1
+        else:
+            # Split string up into component parts
+            # If a comma is present we assume a comma separated list as names cannot contain commas
+            if re.match("^.*,.*$",conventions):
+                conventionList = string.split(conventions,",")
+            else:
+                conventionList = string.split(conventions)
             
+            found = 0
+            for convention in conventionList:
+                if convention.strip() in map(str, cfVersions):
+                    found = 1
+                    break
+        
+            if found != 1:
+                print "ERROR (2.6.1): This netCDF file does not appear to contain CF Convention data."
+                self.err = self.err+1
+                rc=0
+            else:
+                if convention.strip() != str(self.version):
+                    print "WARNING: Inconsistency - This netCDF file appears to contain "+convention+" data, but you've requested a validity check against %s" % self.version
+                    self.warn = self.warn+1
+
     else:
         print "WARNING (2.6.1): No 'Conventions' attribute present"
         self.warn = self.warn+1
         rc=1
-
-
 
     # Discrete geometries
     if self.version >= vn1_6 and self.f.attributes.has_key('featureType'):
@@ -1074,8 +1111,6 @@ class CFChecker:
             print "ERROR (9.4): Global attribute 'featureType' contains invalid value"
 
         #self.chkFeatureType()
-
-
 
     for attribute in ['title','history','institution','source','reference','comment']:
         if self.f.attributes.has_key(attribute):
@@ -1096,12 +1131,27 @@ class CFChecker:
     if self.f.attributes.has_key('Conventions'):
         conventions = self.f.attributes['Conventions']
         
-        if conventions == 'COARDS':
-            print "WARNING: The conventions attribute is set to "+conventions+", assuming CF-1.0"
-            rc = CFVersion((1, 0))
-        elif conventions in map(str, cfVersions):
-            rc = CFVersion(conventions)
+        # Split string up into component parts
+        # If a comma is present we assume a comma separated list as names cannot contain commas
+        if re.match("^.*,.*$",conventions):
+            conventionList = string.split(conventions,",")
+        else:
+            conventionList = string.split(conventions)
 
+        found = 0
+        coards = 0
+        for convention in conventionList:
+            if convention.strip() in map(str, cfVersions):
+                found = 1
+                rc = CFVersion(convention.strip())
+                break
+            elif convention.strip() == 'COARDS':
+                coards = 1
+
+        if not found and coards:
+            print "WARNING: The conventions attribute specifies COARDS, assuming CF-1.0"
+            rc = CFVersion((1, 0))
+                
     return rc
 
   #--------------------------
@@ -1156,7 +1206,7 @@ class CFChecker:
                         self.err = self.err+1
                     else:
                         axesFound[pos] = 1
-                elif hasattr(self.f[dim],'units'):
+                elif hasattr(self.f[dim],'units') and self.f[dim].units != "":
                     # Determine interpretation of variable by units attribute
                     if hasattr(self.f[dim],'positive'):
                         interp=self.getInterpretation(self.f[dim].units,self.f[dim].positive)
