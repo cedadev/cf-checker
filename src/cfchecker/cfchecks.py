@@ -52,7 +52,7 @@ from ctypes import *
 udunits=CDLL("libudunits2.so")
  
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
-AREATYPES = 'http://cfconventions.org/Data/cf-standard-names/current/src/area-type-table.xml'
+AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -2282,7 +2282,7 @@ class CFChecker:
                 if x in self.f.axes.keys():
                     # Get product of compressed dimension sizes for use later
                     #dimProduct=dimProduct*self.f.dimensions[x]
-                    dimProduct=dimProduct*len(self.f.axes[x])
+                    dimProduct=dimProduct*len(self.f.dimensionarray(x))
                     found='true'
 
                 if found != 'true':
