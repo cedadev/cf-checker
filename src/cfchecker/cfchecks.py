@@ -37,7 +37,7 @@ Options:
 '''
 
 from sys import *
-import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric, numpy
+import cdms2 as cdms, re, string, types, numpy
 
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
@@ -1319,7 +1319,7 @@ class CFChecker:
             attrType='S'
         elif attrType == types.IntType or attrType == types.FloatType:
             attrType='N'
-        elif attrType == type(Numeric.array([])):
+        elif attrType == type(numpy.array([])):
             attrType='N'
         elif attrType == types.NoneType:
             #attrType=self.AttrList[attribute][0]
@@ -2444,7 +2444,7 @@ class CFChecker:
   #-----------------------
   def getType(self, arg):
   #-----------------------
-      if type(arg) == type(Numeric.array([])):
+      if type(arg) == type(numpy.array([])):
           return "array"
 
       elif type(arg) == str:
