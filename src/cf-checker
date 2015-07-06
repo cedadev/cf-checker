@@ -71,7 +71,7 @@ class CfchecksWrapper(object):
                  standard_names_key = 'CF_STANDARD_NAMES',
                  standard_names_url = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml',
                  area_types_key = 'CF_AREA_TYPES',
-                 area_types_url = 'http://cfconventions.org/Data/cf-standard-names/current/src/area-type-table.xml',
+                 area_types_url = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml',
                  udunits_key = 'UDUNITS',
                  udunits_path = '/usr/share/udunits/udunits2.xml',
                  checker_command = 'cfchecks',
