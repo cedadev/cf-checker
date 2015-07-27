@@ -22,14 +22,10 @@ setup(name='cfchecker',
       author='Rosalyn Hatcher',
       author_email='r.s.hatcher@reading.ac.uk',
 
-      #!TODO: Maintainer becomes author in PKG-INFO so disable this for now
-      #       This is a known Python issue that may be fixed in the future.
-      #maintainer='Stephen Pascoe',
-      #maintainer_email='Stephen.Pascoe@stfc.ac.uk',
-
-      url='http://cf-pcmdi.llnl.gov/conformance/compliance-checker/',
+      url='http://cfconventions.org/compliance-checker.html',
       package_dir = {'': 'src'},
       packages=find_packages('src'),
+
       include_package_data=True,
       zip_safe=False,
       install_requires=[

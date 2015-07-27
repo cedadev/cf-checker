@@ -3,7 +3,7 @@ import os
 import os.path as op
 
 
-__version__ = '2.0.7'
+__version__ = '2.0.8'
 
 from cfchecker.cfchecks import getargs, CFChecker
 
