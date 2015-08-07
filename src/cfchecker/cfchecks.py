@@ -880,14 +880,18 @@ class CFChecker:
 
 ##                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
 
+                    try:
+                        length = len(varData)
+                    except TypeError:
+                        length = 1  # scalar (no len); treat as length 1
 # 09.05.14
 # Temporary workaround to fix crash when a variable is of type <class 'cdms2.auxcoord.TransientAuxAxis1D'>
 # and len(varData) then returns 0!!!
-                    if len(varData) ==0:
+                    if length == 0:
                         print "WARNING: Problem with variable: '" + var + "' - Skipping check that data lies within cell boundaries."
                         self.warn = self.warn+1
-                 
-                    elif isinstance(varData,(int,long,float,numpy.floating)) or len(varData) == 1:
+                  
+                    elif length == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
                         # Bounds array will be 1 dimensional
