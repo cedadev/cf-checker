@@ -876,17 +876,12 @@ class CFChecker:
                 if len(self.f[bounds].getAxisIds()) <= 2:
                     varData=self.f[var].getValue()
                     boundsData=self.f[bounds].getValue()
-##                    if len(varData) == 1:
-
-##                    if type(varData) == type(1) or type(varData) == type(1.00) or len(varData) == 1:
 
                     try:
                         length = len(varData)
                     except TypeError:
                         length = 1  # scalar (no len); treat as length 1
-# 09.05.14
-# Temporary workaround to fix crash when a variable is of type <class 'cdms2.auxcoord.TransientAuxAxis1D'>
-# and len(varData) then returns 0!!!
+
                     if length == 0:
                         print "WARNING: Problem with variable: '" + var + "' - Skipping check that data lies within cell boundaries."
                         self.warn = self.warn+1
@@ -894,7 +889,7 @@ class CFChecker:
                     elif length == 1:
                         # Gone for belts and braces approach here!!
                         # Variable contains only one value
-                        # Bounds array will be 1 dimensional
+                        # Bounds array will be 1-dimensional
                         if not ((varData <= boundsData[0] and varData >= boundsData[1])
                                 or (varData >= boundsData[0] and varData <= boundsData[1])):
                             print "WARNING (7.1): Data for variable",var,"lies outside cell boundaries"
