@@ -34,7 +34,7 @@ setup(name='cfchecker',
         #       cdat_lite.  Therefore don't use dependency management.
       ],
       entry_points= {
-        'console_scripts': ['cfchecks = cfchecker:cfchecks_main'],
+        'console_scripts': ['cfchecks = cfchecker:main'],
         },
       test_suite='nose.collector',
       )
