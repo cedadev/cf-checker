@@ -37,6 +37,7 @@ Options:
 '''
 
 from sys import *
+from collections import OrderedDict
 import cdms2 as cdms, re, string, types, numpy
 
 from cdms2.axis import FileAxis
@@ -295,9 +296,7 @@ class CFChecker:
       self.areaTypes = cfAreaTypesXML
       self.udunits = udunitsDat
       self.version = version
-      self.err = 0
-      self.warn = 0
-      self.info = 0
+      self._init_results()
       self.cf_roleCount = 0          # Number of occurences of the cf_role attribute in the file
       self.raggedArrayFlag = 0       # Flag to indicate if file contains any ragged array representations
 
@@ -358,8 +357,7 @@ class CFChecker:
     if not self.version:
         self.version = self.getFileCFVersion()
         if not self.version:
-            print "WARNING: Cannot determine CF version from the Conventions attribute; checking against latest CF version:",newest_version
-            self.warn = self.warn+1
+            self.add_warning("Cannot determine CF version from the Conventions attribute; checking against latest CF version: %s" % newest_version)
             self.version = newest_version
 
 
@@ -408,58 +406,82 @@ class CFChecker:
         return self._checker()
     finally:
         self.f.close()
-  
-  def _checker(self):
-    """
-    Main implementation of checker assuming self.f exists.
-    """
-    lowerVars=[]
-    rc=1
 
-    # Check global attributes
-    if not self.chkGlobalAttributes(): rc=0
+    categories = ("ERROR", "WARN", "INFO")
+
+    def _init_results(self):
+        self.results = {"global": self._new_results(),
+                        "variables": OrderedDict()}
+
+    def _new_results(self):
+        return dict([(cat, []) for cat in self.categories])
+
+    def _init_var_results(self, var):
+        vars_dict = self.results["variables"]
+        if var not in vars_dict:
+            vars_dict[var] = self._new_results()
         
-    (coordVars,auxCoordVars,boundsVars,climatologyVars,gridMappingVars)=self.getCoordinateDataVars()
-    self.coordVars = coordVars
-    self.auxCoordVars = auxCoordVars
-    self.boundsVars = boundsVars
-    self.climatologyVars = climatologyVars
-    self.gridMappingVars = gridMappingVars
+    def _add_error(self, *args, **kwargs):
+        self._add_result("ERROR", *args, **kwargs)
 
-    #print "Auxillary Coordinate Vars:",auxCoordVars
-    #print "Coordinate Vars: ",coordVars
+    def _add_warn(self, *args, **kwargs):
+        self._add_result("WARN", *args, **kwargs)
 
-    allCoordVars=coordVars[:]
-    allCoordVars[len(allCoordVars):]=auxCoordVars[:]
+    def _add_info(self, *args, **kwargs):
+        self._add_result("INFO", *args, **kwargs)
+        
+    def _add_result(self, category, msg, var=None, code=None):
+        assert category in self.categories
+        if code:
+            msg = "(%s) %s" % (code, msg)
+        if var:
+            results_dict = self.results["variables"][var]
+        else:
+            results_dict = self.results["global"]
+        results_dict[category].append(msg)
 
-    self.setUpFormulas()
-    
-    axes=self.f.axes.keys()
+    def _get_counts(self):
+        "get OrderedDict of number of errors, warnings, info messages"
+        counts = OrderedDict([(cat, 0) for cat in self.categories])
+        self._update_counts(counts, self.results["global"])
+        for res in self.results["variables"].values():
+            self._update_counts(counts, res)
+        return counts
 
-    # Check each variable
-    for var in self.f._file_.variables.keys():
-        print ""
-        print "------------------"
-        print "Checking variable:",var
-        print "------------------"
+    def _show_results(self):
+        pass
+
+    def _show_counts(self):
+        descriptions = {"ERROR": "ERRORS detected",
+                        "WARN": "WARNINGS given",
+                        "INFO": "INFORMATION messages"}
+        for category, count in self._get_counts().iteritems():
+            print "%s: %s" % (descriptions[category], count)
+
+    def _update_counts(self, counts, results):
+        "helper for _get_counts()"
+        for category in self.categories:
+            counts[category] += len(results[category])
+
+    def _check_variable(self, var):
+        
+        self._init_var_results(var)
 
         if not self.validName(var):
-            print "ERROR (2.3): Invalid variable name -",var
-            self.err = self.err+1
+            self._add_error("Invalid variable name", var, code='2.3')
             rc=0
 
         # Check to see if a variable with this name already exists (case-insensitive)
         lowerVar=var.lower()
         if lowerVar in lowerVars:
-            print "WARNING (2.3): variable clash:-",var
-            self.warn = self.warn + 1
+            self.add_warning("variable clash", var, code='2.3')
         else:
             lowerVars.append(lowerVar)
 
         if var not in axes:
             # Non-coordinate variable
             if not self.chkDimensions(var,allCoordVars): rc=0
-        
+            
         if not self.chkDescription(var): rc=0
 
         for attribute in self.f[var].attributes.keys():
@@ -508,11 +530,44 @@ class CFChecker:
             # or an axis that hasn't been identified through the coordinates attribute
             # CRM035 (17.04.07)
             if not (isinstance(self.f[var], FileAxis) or isinstance(self.f[var], FileAuxAxis1D)):
-                print "WARNING (5): Possible incorrect declaration of a coordinate variable."
-                self.warn = self.warn+1
+                self.add_warning('Possible incorrect declaration of a coordinate variable.', var, code='5')
             else:    
                 if self.f[var].isTime():
                     if not self.chkTimeVariableAttributes(var): rc=0
+
+  
+  def _checker(self):
+    """
+    Main implementation of checker assuming self.f exists.
+    """
+    lowerVars=[]
+    rc=1
+
+    # Check global attributes
+    if not self.chkGlobalAttributes(): rc=0
+        
+    (coordVars,auxCoordVars,boundsVars,climatologyVars,gridMappingVars)=self.getCoordinateDataVars()
+    self.coordVars = coordVars
+    self.auxCoordVars = auxCoordVars
+    self.boundsVars = boundsVars
+    self.climatologyVars = climatologyVars
+    self.gridMappingVars = gridMappingVars
+
+    #print "Auxillary Coordinate Vars:",auxCoordVars
+    #print "Coordinate Vars: ",coordVars
+
+    allCoordVars=coordVars[:]
+    allCoordVars[len(allCoordVars):]=auxCoordVars[:]
+
+    self.setUpFormulas()
+    
+    axes=self.f.axes.keys()
+
+    # Check each variable
+    for var in self.f._file_.variables.keys():
+        warnings = self._check_var(var, axes)
+        
+
 
     #print self.cf_roleCount,"variable(s) have the cf_role attribute set"
     if self.version >= vn1_6:
