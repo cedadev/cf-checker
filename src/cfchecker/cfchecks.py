@@ -36,9 +36,13 @@ Options:
 
 '''
 
-import string
 import sys
-from collections import OrderedDict
+
+if sys.version_info[:2] < (2,7):
+    from ordereddict import OrderedDict
+else:
+    from collections import OrderedDict
+
 import cdms2 as cdms, re, string, types, numpy
 
 from cdms2.axis import FileAxis
@@ -307,7 +311,7 @@ class CFChecker:
       self.debug = debug
       self.silent = silent
 
-      self.categories = ("FATAL", "ERROR", "WARN", "INFO")
+      self.categories = ("FATAL", "ERROR", "WARN", "INFO", "VERSION")
       if debug:
           self.categories += ("DEBUG",)
 
@@ -319,11 +323,11 @@ class CFChecker:
 
     if self.uploader:
         realfile = string.split(file,".nc")[0]+".nc"
-        self._add_info("CHECKING NetCDF FILE: %s" % realfile)
+        self._add_version("CHECKING NetCDF FILE: %s" % realfile)
     elif self.useFileName=="no":
-        self._add_info("CHECKING NetCDF FILE")
+        self._add_version("CHECKING NetCDF FILE")
     else:
-        self._add_info("CHECKING NetCDF FILE: %s" % file)
+        self._add_version("CHECKING NetCDF FILE: %s" % file)
     
     # Check for valid filename
     if not fileSuffix.match(file):
@@ -382,18 +386,17 @@ class CFChecker:
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
     
-    self._add_info("Using CF Checker Version %s" % __version__)
-
+    self._add_version("Using CF Checker Version %s" % __version__)
     if not self.version:
-        self._add_info("Checking against CF Version (auto)")
+        self._add_version("Checking against CF Version (auto)")
     else:
-        self._add_info("Checking against CF Version %s" % self.version)
+        self._add_version("Checking against CF Version %s" % self.version)
 
-    self._add_info("Using Standard Name Table Version %s (%s)" %
+    self._add_version("Using Standard Name Table Version %s (%s)" %
                    (self.std_name_dh.version_number, self.std_name_dh.last_modified))
 
     if self.version >= vn1_4:
-        self._add_info("Using Area Type Table Version %s (%s)" % 
+        self._add_version("Using Area Type Table Version %s (%s)" % 
                        (self.area_type_lh.version_number, self.area_type_lh.last_modified))
     
     # Read in netCDF file
@@ -459,6 +462,10 @@ class CFChecker:
   def _add_info(self, *args, **kwargs):
         "as _add_error but for informational messages"
         self._add_message("INFO", *args, **kwargs)
+
+  def _add_version(self, *args, **kwargs):
+        "as _add_error but for informational messages"
+        self._add_message("VERSION", *args, **kwargs)
         
   def _add_debug(self, *args, **kwargs):
         """
@@ -538,13 +545,18 @@ class CFChecker:
                         "ERROR": "ERRORS detected",
                         "WARN": "WARNINGS given",
                         "INFO": "INFORMATION messages",
-                        "DEBUG": "DEBUG messages"}
+                        "DEBUG": "DEBUG messages",
+                        "VERSION": "VERSION information"}
         for category, count in self.get_counts(results).iteritems():
             # A FATAL error is really the inability of the checker to perform the checks.
             # Only show this if it actually occurred.
             if category == "FATAL" and count == 0:
                 continue
+            if category == "VERSION":
+                continue
             line = "%s: %s" % (descriptions[category], count)
+            if not self.silent:
+                print line
             if append_to_all_messages:
                 self.all_messages.append(line)
   
@@ -626,6 +638,7 @@ class CFChecker:
             self.chkGridMappingVar(var)
 
         self._add_debug("Axes: %s" % axes)
+
         if var in axes:
             # Check var is a FileAxis.  If not then there may be a problem with its declaration.
             # I.e. Multi-dimensional coordinate var with a dimension of the same name
@@ -1818,7 +1831,7 @@ class CFChecker:
                 if not re.search("^[a-zA-Z0-9_]+:$", x):
                     # Variable - should be declared in netCDF file
                     if x not in self.f._file_.variables.keys():
-                        self._add_error("%s is not declared as a variable" % s, varName, code="4.3.2")
+                        self._add_error("%s is not declared as a variable" % x, varName, code="4.3.2")
                 else:
                     # Term - Should be present in formula
                     x=re.sub(':','',x)
@@ -1865,7 +1878,7 @@ class CFChecker:
               # units must be recognizable by udunits package
               varUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
               if not varUnit:
-                  self._add_error("Invalid units: ", varName, code="3.1")
+                  self._add_error("Invalid units: %s" % units, varName, code="3.1")
                   # Invalid units so no point continuing with further unit checks
                   return
         
@@ -2162,7 +2175,7 @@ class CFChecker:
               name=std_name_el[0]
               if not name in self.std_name_dh.dict.keys():
                   if chkDerivedName(name):
-                      self._add_error("Invalid standard_name:", varName, code="3.3")
+                      self._add_error("Invalid standard_name: %s" % name, varName, code="3.3")
 
               if len(std_name_el) == 2:
                   # Validate modifier
