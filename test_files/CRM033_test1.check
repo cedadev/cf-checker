@@ -1,0 +1,205 @@
+CHECKING NetCDF FILE: CRM033_test1.nc
+=====================
+Using CF Checker Version 2.0.9
+Checking against CF Version CF-1.0
+Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+
+WARN: (2.6.1): No 'Conventions' attribute present
+
+------------------
+Checking variable: va
+------------------
+ERROR: (3.1): Invalid units: M/S
+
+------------------
+Checking variable: di_heat
+------------------
+
+------------------
+Checking variable: zg
+------------------
+
+------------------
+Checking variable: hfss
+------------------
+ERROR: (3.1): Invalid units: W/M2
+
+------------------
+Checking variable: vort
+------------------
+
+------------------
+Checking variable: rtmt
+------------------
+
+------------------
+Checking variable: hfls
+------------------
+ERROR: (3.1): Invalid units: W/M2
+
+------------------
+Checking variable: albedo
+------------------
+
+------------------
+Checking variable: pr
+------------------
+ERROR: (3.1): Invalid units: MM/DAY
+
+------------------
+Checking variable: ps
+------------------
+
+------------------
+Checking variable: huss
+------------------
+ERROR: (3.1): Invalid units: KG/KG
+
+------------------
+Checking variable: rlus
+------------------
+
+------------------
+Checking variable: rlds
+------------------
+
+------------------
+Checking variable: u_cphase
+------------------
+ERROR: (3.1): Invalid units: M/S
+
+------------------
+Checking variable: ts
+------------------
+
+------------------
+Checking variable: cl_conv
+------------------
+
+------------------
+Checking variable: latitude
+------------------
+
+------------------
+Checking variable: mst_soil
+------------------
+ERROR: (3.1): Invalid units: M
+
+------------------
+Checking variable: ta
+------------------
+ERROR: (3.1): Invalid units: DEG C
+
+------------------
+Checking variable: cl_low
+------------------
+
+------------------
+Checking variable: snd
+------------------
+
+------------------
+Checking variable: psi
+------------------
+ERROR: (3.1): Invalid units: M2/S
+
+------------------
+Checking variable: pls
+------------------
+ERROR: (3.1): Invalid units: MM/DAY
+
+------------------
+Checking variable: psl
+------------------
+ERROR: (3.1): Invalid units: MB
+
+------------------
+Checking variable: pcon
+------------------
+ERROR: (3.1): Invalid units: MM/DAY
+
+------------------
+Checking variable: time
+------------------
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+ERROR: (4.4): Invalid units and/or reference time
+
+------------------
+Checking variable: srf_en_b
+------------------
+ERROR: (3.1): Invalid units: W/M2
+
+------------------
+Checking variable: rsdt
+------------------
+
+------------------
+Checking variable: t_soil
+------------------
+
+------------------
+Checking variable: rsds
+------------------
+
+------------------
+Checking variable: hus
+------------------
+ERROR: (3.1): Invalid units: G/KG
+
+------------------
+Checking variable: cl_mid
+------------------
+
+------------------
+Checking variable: cl_high
+------------------
+
+------------------
+Checking variable: ertel_pv
+------------------
+
+------------------
+Checking variable: pressure
+------------------
+
+------------------
+Checking variable: mrro
+------------------
+
+------------------
+Checking variable: longitude
+------------------
+
+------------------
+Checking variable: tauv
+------------------
+
+------------------
+Checking variable: tauu
+------------------
+
+------------------
+Checking variable: rsus
+------------------
+
+------------------
+Checking variable: div
+------------------
+
+------------------
+Checking variable: wap
+------------------
+ERROR: (3.1): Invalid units: MB/HR
+
+------------------
+Checking variable: ua
+------------------
+ERROR: (3.1): Invalid units: M/S
+
+------------------
+Checking variable: rsut
+------------------
+
+ERRORS detected: 17
+WARNINGS given: 2
+INFORMATION messages: 0

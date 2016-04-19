@@ -1,0 +1,34 @@
+CHECKING NetCDF FILE: CRM037.nc
+=====================
+Using CF Checker Version 2.0.9
+Checking against CF Version CF-1.0
+Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+
+
+------------------
+Checking variable: xc
+------------------
+
+------------------
+Checking variable: yc
+------------------
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: T
+------------------
+
+------------------
+Checking variable: lev
+------------------
+
+------------------
+Checking variable: lat
+------------------
+
+ERRORS detected: 0
+WARNINGS given: 0
+INFORMATION messages: 0

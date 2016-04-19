@@ -1,0 +1,75 @@
+CHECKING NetCDF FILE: cell_measures.nc
+=====================
+Using CF Checker Version 2.0.9
+Checking against CF Version CF-1.0
+Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+
+ERROR: (7.1): Incorrect dimensions for boundary variable: lon_vertices
+WARN: (7.1): Data for variable lon lies outside cell boundaries
+ERROR: (7.1): Incorrect dimensions for boundary variable: lat_vertices
+WARN: (7.1): Data for variable lat lies outside cell boundaries
+
+------------------
+Checking variable: PS
+------------------
+ERROR: (7.2): Must have square meters for area measure
+
+------------------
+Checking variable: precip4
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+ERROR: (7.2): Invalid cell_measures syntax
+
+------------------
+Checking variable: precip2
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+ERROR: (7.2): Dimensions of cell_area must be same or a subset of ['time', 'lat', 'lon']
+ERROR: (7.2): Invalid measure in attribute cell_measures
+
+------------------
+Checking variable: precip3
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+ERROR: (7.2): Dimensions of cell_vol must be same or a subset of ['time', 'lat', 'lon']
+ERROR: (7.2): Must have cubic meters for volume measure
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: lat_vertices
+------------------
+
+------------------
+Checking variable: cell_vol
+------------------
+
+------------------
+Checking variable: time
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+
+------------------
+Checking variable: lat
+------------------
+
+------------------
+Checking variable: cell_area
+------------------
+ERROR: (3.3): Invalid standard_name: area
+
+------------------
+Checking variable: lon_vertices
+------------------
+
+------------------
+Checking variable: precipitation
+------------------
+WARN: (7.2): cell_measures refers to variable freddy that doesn't exist in this netCDF file. This is strictly an error if the cell_measures variable is not included in the dataset.
+
+ERRORS detected: 10
+WARNINGS given: 4
+INFORMATION messages: 3

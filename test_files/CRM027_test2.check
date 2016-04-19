@@ -1,0 +1,39 @@
+CHECKING NetCDF FILE: CRM027_test2.nc
+=====================
+Using CF Checker Version 2.0.9
+Checking against CF Version CF-1.0
+Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+
+WARN: (7.1): Data for variable time lies outside cell boundaries
+
+------------------
+Checking variable: time_bnds
+------------------
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: ASOD_T
+------------------
+ERROR: Variable has more than 1 coordinate variable with same axis value
+
+------------------
+Checking variable: forecast
+------------------
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+ERROR: (4.4): Invalid units and/or reference time
+
+------------------
+Checking variable: time
+------------------
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+
+------------------
+Checking variable: lat
+------------------
+
+ERRORS detected: 2
+WARNINGS given: 3
+INFORMATION messages: 0

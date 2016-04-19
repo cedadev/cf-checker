@@ -1,0 +1,41 @@
+
+CHECKING NetCDF FILE: badc_units.nc
+=====================
+Using CF Checker Version 2.0.9
+Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+
+WARNING (7.1): Data for variable time lies outside cell boundaries
+
+------------------
+Checking variable: time_bnds
+------------------
+
+------------------
+Checking variable: badc_var
+------------------
+Valid units in BADC list: GHz
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: ASOD_T
+------------------
+ERROR (4): Variable has more than 1 coordinate variable with same axis value
+
+------------------
+Checking variable: forecast
+------------------
+ERROR (4.4): Invalid units and/or reference time
+
+------------------
+Checking variable: time
+------------------
+
+------------------
+Checking variable: lat
+------------------
+
+ERRORS detected: 2
+WARNINGS given: 1
