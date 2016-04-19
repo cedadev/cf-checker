@@ -329,6 +329,9 @@ class CFChecker:
     else:
         self._add_version("CHECKING NetCDF FILE: %s" % file)
     
+    if not self.silent:
+        print "====================="
+
     # Check for valid filename
     if not fileSuffix.match(file):
         self._fatal("Filename must have .nc suffix", code="2.1")
@@ -399,6 +402,9 @@ class CFChecker:
         self._add_version("Using Area Type Table Version %s (%s)" % 
                        (self.area_type_lh.version_number, self.area_type_lh.last_modified))
     
+    if not self.silent:
+        print ""
+
     # Read in netCDF file
     try:
         self.f=cdms.open(file,"r")
@@ -497,7 +503,12 @@ class CFChecker:
         results_dict[category].append(self._join_strings([code_report, msg]))
         msg_print = self._join_strings([category, code_report, var_report, msg])
         if not self.silent:
-            print msg_print
+            #print msg_print
+            if category == "VERSION":
+                print self._join_strings([code_report, msg])
+            else:
+                print self._join_strings([category, code_report, msg])
+
         self.all_messages.append(msg_print)
 
   def _join_strings(self, list_):
@@ -590,6 +601,13 @@ class CFChecker:
 
     # Check each variable
     for var in self.f._file_.variables.keys():
+
+        if not self.silent:
+            print ""
+            print "------------------"
+            print "Checking variable:",var
+            print "------------------"
+
 
         if not self.validName(var):
             self._add_error("Invalid variable name", var, code='2.3')
@@ -967,20 +985,20 @@ class CFChecker:
 
                         for dim in varDimensions:
                             if dim not in self.f[bounds].getAxisIds():
-                                self._add_error("Incorrect dimensions for boundary variable", bounds, code="7.1")
+                                self._add_error("Incorrect dimensions for boundary variable: %s" % bounds, bounds, code="7.1")
                     else:
-                        self._add_error("Incorrect number of dimensions for boundary variable:", bounds, code="7.1")
+                        self._add_error("Incorrect number of dimensions for boundary variable: %s" % bounds, bounds, code="7.1")
 
                     if self.f[bounds].attributes.has_key('units'):
                         if self.f[bounds].attributes['units'] != self.f[var].attributes['units']:
-                            self._add_error("Boundary var has inconsistent units to %s" % var,
+                            self._add_error("Boundary var %s has inconsistent units to %s" % (bounds, var),
                                             bounds, code="7.1")
                     if self.f[bounds].attributes.has_key('standard_name') and self.f[var].attributes.has_key('standard_name'):
                         if self.f[bounds].attributes['standard_name'] != self.f[var].attributes['standard_name']:
-                            self._add_error("Boundary var has inconsistent std_name to %s" % var,
+                            self._add_error("Boundary var %s has inconsistent std_name to %s" % (bounds, var),
                                             bounds, code="7.1")
                 else:
-                    self._add_error("bounds attribute referencing non-existent variable",
+                    self._add_error("bounds attribute referencing non-existent variable %s" % bounds,
                                     bounds, code="7.1")
                     
             # Check that points specified by a coordinate or auxilliary coordinate
@@ -1007,14 +1025,14 @@ class CFChecker:
                         # Bounds array will be 1-dimensional
                         if not ((varData <= boundsData[0] and varData >= boundsData[1])
                                 or (varData >= boundsData[0] and varData <= boundsData[1])):
-                            self._add_warn("Data for variable lies outside cell boundaries",
+                            self._add_warn("Data for variable %s lies outside cell boundaries" % var,
                                            var, code="7.1")
                     else:
                         i=0
                         for value in varData:
                             if not ((value <= boundsData[i][0] and value >= boundsData[i][1]) \
                                     or (value >= boundsData[i][0] and value <= boundsData[i][1])):
-                                self._add_warn("Data for variable lies outside cell boundaries",
+                                self._add_warn("Data for variable %s lies outside cell boundaries" % var,
                                                var, code="7.1")
                                 break
                             i=i+1
@@ -1056,7 +1074,7 @@ class CFChecker:
             grid_mapping = self.f[var].attributes['grid_mapping']
             # Check syntax of grid_mapping attribute: a string whose value is a single variable name.
             if not re.search("^[a-zA-Z0-9_]*$",grid_mapping):
-                self._add_error("Invalid syntax for 'grid_mapping' attribute", var, code="5.6")
+                self._add_error("%s - Invalid syntax for 'grid_mapping' attribute" % var, var, code="5.6")
             else:
                 if grid_mapping in variables:
                     gridMappingVars.append(grid_mapping)
@@ -1758,7 +1776,7 @@ class CFChecker:
                     variable=splitIter.next()
 
                     if variable not in self.f.variables.keys():
-                        self._add_warn("cell_measures referring to variable %s that doesn't exist in this netCDF file. " % variable + 
+                        self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
                                        "This is strictly an error if the cell_measures variable is not included in the dataset.", 
                                        varName, code="7.2")
                         
@@ -1815,7 +1833,7 @@ class CFChecker:
         (stdName,modifier) = self.getStdName(var)
         
         if not self.alias.has_key(stdName):
-            self._add_error("No formula defined for standard name:", varName, code="4.3.2")
+            self._add_error("No formula defined for standard name: %s" % stdName, varName, code="4.3.2")
             # No formula available so can't validate formula_terms
             return
 
