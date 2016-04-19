@@ -74,7 +74,7 @@ def _do_test(filename, checkfilename, version='1.0'):
     exe = sys.executable
     temp = tempfile.TemporaryFile()
 
-    p1 = Popen([exe, '-c', 'import cfchecker as c; c.cfchecks_main()'] + checker_args + ['-v', version] + [filename],
+    p1 = Popen([exe, '-c', 'import cfchecker as c; c.main()'] + checker_args + ['-v', version] + [filename],
                stdout=temp,
                )
     p1.communicate()
