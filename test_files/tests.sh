@@ -10,13 +10,18 @@ std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-st
 area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml
 
 # Python2.6, numpy1.8.0, udunits-2.1.19
-export PYTHONPATH=/home/ros/software/cf-checker/lib64/python2.6/site-packages:/home/ros/temp/cf-checker/lib/python2.6/site-packages
-export LD_LIBRARY_PATH=/usr/local/netcdf_gnu/lib:/home/ros/software/cf-checker/lib
-export UDUNITS=/home/ros/software/cf-checker/share/udunits/udunits2.xml
+#export PYTHONPATH=/home/ros/software/cf-checker/lib64/python2.6/site-packages:/home/ros/temp/cf-checker/lib/python2.6/site-packages
+#export LD_LIBRARY_PATH=/usr/local/netcdf_gnu/lib:/home/ros/software/cf-checker/lib
+#export UDUNITS=/home/ros/software/cf-checker/share/udunits/udunits2.xml
+
+
 
 #cfchecker="/usr/bin/python /home/ros/bin/cfchecks-2.0.6a.py"
 
-cfchecker="/usr/bin/python /home/ros/temp/cf-checker/bin/cfchecks"
+#cfchecker="/usr/bin/python /home/ros/temp/cf-checker/bin/cfchecks"
+
+cfchecker="/home/ros/bin/cfchecks"
+
 failed=0
 
 echo "Unzipping input netcdf files..."

@@ -15,7 +15,7 @@
 # CF Checker Version: See __version__
 #
 #-------------------------------------------------------------
-''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-u|--udunits udunits.dat] [-v|--version CFVersion] file1 [file2...]
+''' cfchecker [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-v|--version CFVersion] file1 [file2...]
 
 Description:
  The cfchecker checks NetCDF files for compliance to the CF standard.
@@ -26,9 +26,6 @@ Options:
        
  -s or --cf_standard_names:
        the location of the CF standard name table (xml)
-       
- -u or --udunits:
-       the location of the udunits.dat file
 
  -h or --help: Prints this help text.
 
@@ -48,15 +45,11 @@ import cdms2 as cdms, re, string, types, numpy
 from cdms2.axis import FileAxis
 from cdms2.auxcoord import FileAuxAxis1D
 
+from cfunits import Units
 
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
 
-# Use ctypes to interface to the UDUNITS-2 shared library
-# The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
-from ctypes import *
-udunits=CDLL("libudunits2.so")
- 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
 
@@ -294,14 +287,13 @@ class FatalCheckerError(Exception):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, udunitsDat=None, version=newest_version, debug=False, silent=False):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, version=newest_version, debug=False, silent=False):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
       self.coards = coards
       self.standardNames = cfStandardNamesXML
       self.areaTypes = cfAreaTypesXML
-      self.udunits = udunitsDat
       self.version = version
       self.all_results = OrderedDict()  # dictonary of results sorted by file and then by globals / variable 
                                         # and then by category
@@ -335,25 +327,6 @@ class CFChecker:
     # Check for valid filename
     if not fileSuffix.match(file):
         self._fatal("Filename must have .nc suffix", code="2.1")
-
-    # Initialize udunits-2 package
-    # (Temporarily ignore messages to std error stream to prevent "Definition override" warnings
-    # being dislayed see Trac #50)
-    # Use ctypes callback functions to declare ut_error_message_handler (uemh)
-    # Don't fully understand why this works!  Solution supplied by ctypes-mailing-list. 19.01.10
-    uemh = CFUNCTYPE(c_int,c_char_p)
-    ut_set_error_message_handler = CFUNCTYPE(uemh,uemh)(("ut_set_error_message_handler",udunits))
-    ut_write_to_stderr = uemh(("ut_write_to_stderr",udunits))
-    ut_ignore = uemh(("ut_ignore",udunits))
-
-    old_handler = ut_set_error_message_handler(ut_ignore)
-                                       
-    # if self.udunits=None this will load the UDUNITS2 xml file from the default place
-    self.unitSystem=udunits.ut_read_xml(self.udunits)
-    if not self.unitSystem:
-        self._fatal("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
-
-    old_handler = ut_set_error_message_handler(ut_write_to_stderr)
 
     # Read in netCDF file
     try:
@@ -820,42 +793,31 @@ class CFChecker:
     """Determine the interpretation (time - T, height or depth - Z,
     latitude - Y or longitude - X) of a dimension."""
 
-    if units in ['level','layer','sigma_level']:
-        # Dimensionless vertical coordinate
-        return "Z"
-
-    # Parse the string representation of units into its binary representation for use by udunits
-    binaryUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
-    if not binaryUnit:
-        # Don't print this message out o/w it is repeated for every variable
-        # that has this dimension.  CRM033 return "None" instead
-        # self._add_error("Invalid units: %s" % units)
+    try:
+        u = Units(units)
+    except:
+        # Don't catch invalid units here as already caught in a previous check
         return None
 
-    # Time Coordinate
-    # 19.08.10 - Workaround since udunits2 deems a unit without reference time not convertible to a
-    # unit with reference time and vice versa
-    if udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "second", "UT_ASCII")):
-        return "T"
-    elif udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "seconds since 1-1-1 0:0:0", "UT_ASCII")):
-        return "T"
+    if u.islongitude:
+        return "X"
+
+    if u.islatitude:
+        return "Y"
+
+    if u.ispressure:
+        return "Z"
+
+    # Dimensionless vertical coordinate
+    if units in ['level','layer','sigma_level']:
+        return "Z"
     
-    # Vertical Coordinate
     if positive and re.match('(up|down)',positive,re.I):
         return "Z"
 
-    # Variable is a vertical coordinate if the units are dimensionally
-    # equivalent to Pressure
-    if udunits.ut_are_convertible(binaryUnit, udunits.ut_parse(self.unitSystem, "Pa", "UT_ASCII")):
-        return "Z"
-        
-    # Latitude Coordinate
-    if re.match('(degrees_north|degree_north|degrees_N|degree_N|degreesN|degreeN)',units):
-        return "Y"
-        
-    # Longitude Coordinate
-    if re.match('(degrees_east|degree_east|degrees_E|degree_E|degreesE|degreeE)',units):
-        return "X"
+    
+    if u.istime or u.isreftime:
+        return "T"
 
     # Not possible to deduce interpretation
     return None
@@ -1481,16 +1443,14 @@ class CFChecker:
         if attribute in TimeAttributes:
 
             if var.attributes.has_key('units'):
-                varUnits = udunits.ut_parse(self.unitSystem, var.attributes['units'], "UT_ASCII")
-                secsSinceEpoch = udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
-                if not udunits.ut_are_convertible(varUnits, secsSinceEpoch) :
-                    self._add_error("Attribute %s may only be attached to time coordinate variable" % attribute,
-                                    varName, code="4.4.1")
 
-                # Free up resources associated with varUnits
-                udunits.ut_free(varUnits)
-                udunits.ut_free(secsSinceEpoch)
-                
+                varUnits = Units(var.attributes['units'])
+                secsSinceEpoch = Units('seconds since 1970-01-01')
+
+                if not varUnits.equivalent(secsSinceEpoch):
+
+                    self._add_error("Attribute %s may only be attached to time coordinate variable" % attribute,
+                                    varName, code="4.4.1")                
             else:        
                 self._add_error("Attribute %s may only be attached to time coordinate variable" % attribute,
                                 varName, code="4.4.1")
@@ -1600,17 +1560,12 @@ class CFChecker:
   def isValidUdunitsUnit(self,unit):
   #----------------------------------
       # units must be recognizable by udunits package
-      udunitsUnit = udunits.ut_parse(self.unitSystem, unit, "UT_ASCII")
-      if udunitsUnit:
-          # Valid unit
-          rc=1
-      else:
-          # Invalid unit
+      rc=1
+      try:
+          u = Units(unit)
+      except:
           rc=0
 
-      # Free up resources associated with udunitsUnit
-      udunits.ut_free(udunitsUnit)
-      
       return rc
 
 
@@ -1866,6 +1821,7 @@ class CFChecker:
   def chkUnits(self,varName,allCoordVars):
   #----------------------------------------
       """Check units attribute"""
+
       var=self.f[varName]
 
       if self.badc:
@@ -1894,12 +1850,14 @@ class CFChecker:
           else:
               
               # units must be recognizable by udunits package
-              varUnit = udunits.ut_parse(self.unitSystem, units, "UT_ASCII")
-              if not varUnit:
+
+              try:
+                  varUnit = Units(units)
+              except ValueError:
                   self._add_error("Invalid units: %s" % units, varName, code="3.1")
-                  # Invalid units so no point continuing with further unit checks
+                  # Invalid unit so no point continuing with further unit checks
                   return
-        
+
               # units of a variable that specifies a standard_name must
               # be consistent with units given in standard_name table
               if var.attributes.has_key('standard_name'):
@@ -1919,13 +1877,11 @@ class CFChecker:
                       # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
                       stdNameUnits=stdNameUnits.encode('ascii')
 
-                      canonicalUnit = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
-
+                      canonicalUnit = Units(stdNameUnits)
                       # To compare units we need to remove the reference time from the variable units
-                      if re.search("since",units):
+                      if re.search("since", units):
                           # unit attribute contains a reference time - remove it
-                          udunits.ut_free(varUnit)
-                          varUnit = udunits.ut_parse(self.unitSystem, units.split()[0], "UT_ASCII")
+                          varUnit = Units(units.split()[0])
 
                       # If variable has cell_methods=variance we need to square standard_name table units
                       if var.attributes.has_key('cell_methods'):
@@ -1935,20 +1891,13 @@ class CFChecker:
 
                           if re.search(r'(\s+|:)variance',noComments):
                               # Variance method so standard_name units need to be squared.
-                              unit1 = udunits.ut_parse(self.unitSystem, stdNameUnits, "UT_ASCII")
-                              canonicalUnit = udunits.ut_multiply(unit1,unit1)
-                              udunits.ut_free(unit1)
+                              unit1 = canonicalUnit
+                              canonicalUnit = unit1 * unit1
 
-                      if not udunits.ut_are_convertible(varUnit, canonicalUnit):
+                      if not varUnit.equivalent(canonicalUnit):
                           # Conversion unsuccessful
-                          self._add_error("Units are not consistent with those given in the standard_name table.",
-                                          varName, code="3.1")
-
-                      # Free resources associated with canonicalUnit
-                      udunits.ut_free(canonicalUnit)
-
-              # Free resources associated with udunitsUnit
-              udunits.ut_free(varUnit)
+                           self._add_error("Units are not consistent with those given in the standard_name table.",
+                                           varName, code="3.1")
               
       else:
 
@@ -2149,17 +2098,10 @@ class CFChecker:
             self._add_warn("leap_month is ignored as leap_year NOT specified", varName, code="4.4.1")
 
     # Time units must contain a reference time
-    # To do this; test if the "unit" in question is convertible with a known timestamp "unit".
-    varUnits=udunits.ut_parse(self.unitSystem, var.units, "UT_ASCII")
-    secsSinceEpoch=udunits.ut_parse(self.unitSystem, "seconds since 1970-01-01", "UT_ASCII")
-    
-    if not udunits.ut_are_convertible(secsSinceEpoch, varUnits):
+    varUnits = Units(var.units)
+    if not varUnits.isreftime:
         self._add_error("Invalid units and/or reference time", varName, code="4.4")
 
-    # Free resources used by varUnits and secsSinceEpoch
-    udunits.ut_free(varUnits)
-    udunits.ut_free(secsSinceEpoch)
-        
     
   #----------------------------------
   def chkDescription(self, varName):
@@ -2466,11 +2408,9 @@ def getargs(arglist):
     from os import environ
     from sys import stderr, exit
 
-    udunitskey='UDUNITS'
     standardnamekey='CF_STANDARD_NAMES'
     areatypeskey='CF_AREA_TYPES'
     # set defaults
-    udunits=None
     standardname=STANDARDNAME
     areatypes=AREATYPES
     uploader=None
@@ -2481,15 +2421,13 @@ def getargs(arglist):
     debug = False
     
     # set to environment variables
-    if environ.has_key(udunitskey):
-        udunits=environ[udunitskey]
     if environ.has_key(standardnamekey):
         standardname=environ[standardnamekey]
     if environ.has_key(areatypeskey):
         areatypes=environ[areatypeskey]
 
     try:
-        (opts,args)=getopt(arglist[1:],'a:bcdhlnu:s:v:',['area_types=','badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version=', 'debug'])
+        (opts,args)=getopt(arglist[1:],'a:bcdhlns:v:',['area_types=','badc','coards','help','uploader','noname','cf_standard_names=','version=', 'debug'])
     except GetoptError:
         stderr.write('%s\n'%__doc__)
         exit(1)
@@ -2516,9 +2454,6 @@ def getargs(arglist):
         if a in ('-n','--noname'):
             useFileName="no"
             continue
-        if a in ('-u','--udunits'):
-            udunits=v.strip()
-            continue
         if a in ('-s','--cf_standard_names'):
             standardname=v.strip()
             continue
@@ -2541,14 +2476,14 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(1)
 
-    return (badc,coards,uploader,useFileName,standardname,areatypes,udunits,version,args,debug)
+    return (badc,coards,uploader,useFileName,standardname,areatypes,version,args,debug)
 
 
 def main():
 
-    (badc,coards,uploader,useFileName,standardName,areaTypes,udunitsDat,version,files,debug)=getargs(sys.argv)
+    (badc,coards,uploader,useFileName,standardName,areaTypes,version,files,debug)=getargs(sys.argv)
     
-    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version, debug=debug)
+    inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, version=version, debug=debug)
     for file in files:
         #print
         try:
