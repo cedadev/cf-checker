@@ -2,7 +2,7 @@ CHECKING NetCDF FILE: CRM018_test1.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
 WARN: (2.6.1): No 'Conventions' attribute present
 ERROR: (7.1): bounds attribute referencing non-existent variable bounds_lat
@@ -12,21 +12,21 @@ Checking variable: lat
 ------------------
 
 ------------------
-Checking variable: level0
-------------------
-
-------------------
-Checking variable: tap
-------------------
-
-------------------
 Checking variable: lon
+------------------
+
+------------------
+Checking variable: level0
 ------------------
 
 ------------------
 Checking variable: time
 ------------------
 WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+
+------------------
+Checking variable: tap
+------------------
 
 ERRORS detected: 1
 WARNINGS given: 2

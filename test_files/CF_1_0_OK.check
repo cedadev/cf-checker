@@ -2,11 +2,43 @@ CHECKING NetCDF FILE: CF_1_0_OK.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
 
 ------------------
-Checking variable: VIL_FLAGS
+Checking variable: data_name
+------------------
+
+------------------
+Checking variable: class_name
+------------------
+
+------------------
+Checking variable: flags_name
+------------------
+
+------------------
+Checking variable: xml_metadata
+------------------
+
+------------------
+Checking variable: time
+------------------
+
+------------------
+Checking variable: start_time
+------------------
+
+------------------
+Checking variable: stop_time
+------------------
+
+------------------
+Checking variable: write_time
+------------------
+
+------------------
+Checking variable: valid_time
 ------------------
 
 ------------------
@@ -18,15 +50,7 @@ Checking variable: grid_reference_location
 ------------------
 
 ------------------
-Checking variable: class_name
-------------------
-
-------------------
-Checking variable: start_time
-------------------
-
-------------------
-Checking variable: data_name
+Checking variable: world_reference_location
 ------------------
 
 ------------------
@@ -34,39 +58,15 @@ Checking variable: projection_x_coordinate
 ------------------
 
 ------------------
-Checking variable: VIL
-------------------
-
-------------------
-Checking variable: xml_metadata
-------------------
-
-------------------
-Checking variable: world_reference_location
-------------------
-
-------------------
-Checking variable: stop_time
-------------------
-
-------------------
-Checking variable: time
-------------------
-
-------------------
-Checking variable: write_time
-------------------
-
-------------------
 Checking variable: projection_y_coordinate
 ------------------
 
 ------------------
-Checking variable: valid_time
+Checking variable: VIL
 ------------------
 
 ------------------
-Checking variable: flags_name
+Checking variable: VIL_FLAGS
 ------------------
 
 ERRORS detected: 0

@@ -1,39 +1,47 @@
 CHECKING NetCDF FILE: complex.nc
 =====================
-Warning: bounds variable not found in complex.nc: bounds_lat2d
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
-Warning: bounds variable not found in complex.nc: bounds_lat2d
 WARN: (2.6.1): No 'Conventions' attribute present
-ERROR: (7.1): bounds attribute referencing non-existent variable bounds_lat2d
 WARN: (7.1): Data for variable lat lies outside cell boundaries
+ERROR: (7.1): bounds attribute referencing non-existent variable bounds_lat2d
 
 ------------------
-Checking variable: precipitation
-------------------
-ERROR: (3.1): Units are not consistent with those given in the standard_name table.
-ERROR: (7.2): Must have square meters for area measure
-
-------------------
-Checking variable: PS
+Checking variable: lat
 ------------------
 
 ------------------
-Checking variable: PTOP
+Checking variable: bounds_lat
 ------------------
-WARN: (3): No standard_name or long_name attribute specified
 
 ------------------
-Checking variable: ctime
+Checking variable: lon
 ------------------
-WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: height
+------------------
 
 ------------------
 Checking variable: level
 ------------------
 ERROR: (3.3): Invalid standard_name: model_level
+
+------------------
+Checking variable: level_name
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: sigma
+------------------
+
+------------------
+Checking variable: time
+------------------
+ERROR: (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' must not appear when 'calendar' is present.
 
 ------------------
 Checking variable: lat2d
@@ -48,27 +56,10 @@ Checking variable: lon2d
 WARN: (3): No standard_name or long_name attribute specified
 
 ------------------
-Checking variable: cell_area
+Checking variable: x
 ------------------
 WARN: (3): No standard_name or long_name attribute specified
-
-------------------
-Checking variable: time
-------------------
-ERROR: (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' must not appear when 'calendar' is present.
-
-------------------
-Checking variable: lon
-------------------
-
-------------------
-Checking variable: height
-------------------
-
-------------------
-Checking variable: rh
-------------------
-WARN: (3): No standard_name or long_name attribute specified
+WARN: (3.1): units attribute should be present
 
 ------------------
 Checking variable: y
@@ -77,7 +68,25 @@ WARN: (3): No standard_name or long_name attribute specified
 WARN: (3.1): units attribute should be present
 
 ------------------
-Checking variable: sh
+Checking variable: cell_area
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: ctime
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: bounds_ctime
+------------------
+
+------------------
+Checking variable: PS
+------------------
+
+------------------
+Checking variable: PTOP
 ------------------
 WARN: (3): No standard_name or long_name attribute specified
 
@@ -86,31 +95,20 @@ Checking variable: uwind
 ------------------
 
 ------------------
-Checking variable: bounds_lat
+Checking variable: precipitation
 ------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+ERROR: (7.2): Must have square meters for area measure
 
 ------------------
-Checking variable: lat
-------------------
-
-------------------
-Checking variable: x
-------------------
-WARN: (3): No standard_name or long_name attribute specified
-WARN: (3.1): units attribute should be present
-
-------------------
-Checking variable: level_name
+Checking variable: rh
 ------------------
 WARN: (3): No standard_name or long_name attribute specified
 
 ------------------
-Checking variable: sigma
+Checking variable: sh
 ------------------
-
-------------------
-Checking variable: bounds_ctime
-------------------
+WARN: (3): No standard_name or long_name attribute specified
 
 ERRORS detected: 6
 WARNINGS given: 15

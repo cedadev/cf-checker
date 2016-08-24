@@ -2,18 +2,18 @@ CHECKING NetCDF FILE: Trac049_test2.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.4
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
-Using Area Type Table Version 3 (8 July 2015)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
+Using Area Type Table Version 4 (17 May 2016)
 
+
+------------------
+Checking variable: ecoregion
+------------------
 
 ------------------
 Checking variable: latitude
 ------------------
 ERROR: (5): co-ordinate variable not monotonic
-
-------------------
-Checking variable: ecoregion
-------------------
 
 ------------------
 Checking variable: flag_meanings_array
@@ -27,7 +27,8 @@ ERROR: (5): co-ordinate variable not monotonic
 ------------------
 Checking variable: time
 ------------------
+ERROR: (3.1): Invalid units: years since 0000-01-01 00:00:00
 
-ERRORS detected: 2
+ERRORS detected: 3
 WARNINGS given: 0
 INFORMATION messages: 0

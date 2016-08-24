@@ -2,13 +2,13 @@ CHECKING NetCDF FILE: flag_tests.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.3
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
 
 ------------------
-Checking variable: current_speed_qc
+Checking variable: lat
 ------------------
-ERROR: (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings
+ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lon
@@ -26,15 +26,15 @@ Checking variable: time
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
-Checking variable: lat
-------------------
-ERROR: (5): co-ordinate variable not monotonic
-
-------------------
 Checking variable: sensor_status_qc
 ------------------
 ERROR: (3.5): flag_values attribute must contain a list of unique values
 WARN: (3.5): Bitwise AND of flag_value 2 and corresponding flag_mask 12 doesn't match flag_value.
+
+------------------
+Checking variable: current_speed_qc
+------------------
+ERROR: (3.5): Number of flag_values values must equal the number or words/phrases in flag_meanings
 
 ERRORS detected: 6
 WARNINGS given: 1
