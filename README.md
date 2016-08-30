@@ -2,15 +2,15 @@
 
 The CF Checker is a utility that checks the contents of a NetCDF file complies with the Climate and Forecasts (CF) Metadata Convention.
 
-## Dependencies
+## Prerequisites
 
-* Requires [Python 2.6](https://www.python.org/) or newer (not yet tested with Python 3.x)
+* [Python 2.6](https://www.python.org/) or newer (not yet tested with Python 3.x)
 
-* Requires the [Python netCDF4 package](https://pypi.python.org/pypi/netCDF4)
+* [netcdf4-python](https://pypi.python.org/pypi/netCDF4)
 
-* Requires the [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 1.1.4 or newer
+* [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 1.1.4 or newer
 
-* Requires the [Python numpy package](https://pypi.python.org/pypi/numpy) version 1.7 or newer
+* [numpy](https://pypi.python.org/pypi/numpy) version 1.7 or newer
 
 ## Installation
 
@@ -31,14 +31,14 @@ Alternatively, to install from source:
 
    * To install to a central location:
 
-               python setup.py install
+            python setup.py install
 
    * To install to a non standard location:
 
-               python setup.py --prefix=<directory>
+            python setup.py --prefix=<directory>
 
 ## Running the CF Checker
 
-## Environment Variables
+### Environment Variables
 
-## Wrapper script
+### Wrapper script
