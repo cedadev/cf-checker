@@ -16,7 +16,7 @@ The CF Checker is a utility that checks the contents of a NetCDF file complies w
 
 To install from [PyPI](https://pypi.python.org/pypi/cfchecker):
 
-  pip install cfchecker
+    pip install cfchecker
 
 Alternatively, to install from source:
 
@@ -24,19 +24,18 @@ Alternatively, to install from source:
 
 2. Unpack the library:
 
-     tar -zxf cfchecker-3.0.0.tar.gz
-     cd cfchecker-3.0.0
+        tar -zxf cfchecker-3.0.0.tar.gz
+        cd cfchecker-3.0.0
 
 3. Install the package:
 
    * To install to a central location:
 
-       python setup.py install
-
+               python setup.py install
 
    * To install to a non standard location:
 
-       python setup.py --prefix=<directory>
+               python setup.py --prefix=<directory>
 
 ## Running the CF Checker
 
