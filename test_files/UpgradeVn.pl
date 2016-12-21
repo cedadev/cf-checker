@@ -14,7 +14,7 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="2.0.9";
-$standardNameVN="32 (2016-04-05T07:17:14Z)";
+$standardNameVN="34 (2016-06-13T10:23:54Z)";
 
 $TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";

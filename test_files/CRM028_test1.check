@@ -2,28 +2,13 @@ CHECKING NetCDF FILE: CRM028_test1.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
 WARN: (2.6.1): No 'Conventions' attribute present
 
 ------------------
-Checking variable: Temperature
+Checking variable: Lambert_Conformal
 ------------------
-ERROR: Attribute missing_value of incorrect type
-
-------------------
-Checking variable: lon
-------------------
-
-------------------
-Checking variable: lat
-------------------
-
-------------------
-Checking variable: time
-------------------
-ERROR: (5): co-ordinate variable not monotonic
-WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
 
 ------------------
 Checking variable: y
@@ -36,8 +21,23 @@ Checking variable: x
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
-Checking variable: Lambert_Conformal
+Checking variable: lat
 ------------------
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: time
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+
+------------------
+Checking variable: Temperature
+------------------
+ERROR: Attribute missing_value of incorrect type
 
 ERRORS detected: 4
 WARNINGS given: 2

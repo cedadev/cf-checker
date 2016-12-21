@@ -2,8 +2,24 @@ CHECKING NetCDF FILE: hfogo_O1_labelVariable_KT.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
+
+------------------
+Checking variable: lat
+------------------
+
+------------------
+Checking variable: lat_bnds
+------------------
+
+------------------
+Checking variable: geo_region
+------------------
+
+------------------
+Checking variable: time
+------------------
 
 ------------------
 Checking variable: time_bnds
@@ -13,22 +29,6 @@ Checking variable: time_bnds
 Checking variable: hfogo
 ------------------
 INFO: attribute history is being used in a non-standard way
-
-------------------
-Checking variable: lat_bnds
-------------------
-
-------------------
-Checking variable: time
-------------------
-
-------------------
-Checking variable: lat
-------------------
-
-------------------
-Checking variable: geo_region
-------------------
 
 ERRORS detected: 0
 WARNINGS given: 0

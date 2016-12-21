@@ -1,107 +1,9 @@
-ncvarget: ncid 131072; varid 0: NetCDF: Index exceeds dimension bound
 CHECKING NetCDF FILE: CRM041.nc
 =====================
 Using CF Checker Version 2.0.9
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 32 (2016-04-05T07:17:14Z)
+Using Standard Name Table Version 34 (2016-06-13T10:23:54Z)
 
-
-------------------
-Checking variable: QEVAP
-------------------
-
-------------------
-Checking variable: QLONG
-------------------
-
-------------------
-Checking variable: V
-------------------
-
-------------------
-Checking variable: QSOLAR
-------------------
-
-------------------
-Checking variable: zz
-------------------
-WARN: (3.1): units sigma_level is deprecated
-
-------------------
-Checking variable: TAUx
-------------------
-
-------------------
-Checking variable: TAUy
-------------------
-
-------------------
-Checking variable: dum
-------------------
-
-------------------
-Checking variable: lon
-------------------
-INFO: attribute comment is being used in a non-standard way
-
-------------------
-Checking variable: SSH
-------------------
-
-------------------
-Checking variable: lon_u
-------------------
-INFO: attribute comment is being used in a non-standard way
-
-------------------
-Checking variable: S
-------------------
-
-------------------
-Checking variable: U
-------------------
-
-------------------
-Checking variable: T
-------------------
-
-------------------
-Checking variable: dx
-------------------
-
-------------------
-Checking variable: dy
-------------------
-
-------------------
-Checking variable: lat
-------------------
-INFO: attribute comment is being used in a non-standard way
-
-------------------
-Checking variable: lat_v
-------------------
-INFO: attribute comment is being used in a non-standard way
-
-------------------
-Checking variable: dvm
-------------------
-
-------------------
-Checking variable: fsm
-------------------
-
-------------------
-Checking variable: QELAT
-------------------
-
-------------------
-Checking variable: depth
-------------------
-
-------------------
-Checking variable: QSENS
-------------------
 
 ------------------
 Checking variable: time
@@ -115,7 +17,104 @@ WARN: (3.1): units sigma_level is deprecated
 ERROR: (4.3.2): formula_terms attribute only allowed on coordinate variables
 
 ------------------
+Checking variable: zz
+------------------
+WARN: (3.1): units sigma_level is deprecated
+
+------------------
+Checking variable: dx
+------------------
+
+------------------
+Checking variable: dy
+------------------
+
+------------------
+Checking variable: lon
+------------------
+INFO: attribute comment is being used in a non-standard way
+
+------------------
+Checking variable: lat
+------------------
+INFO: attribute comment is being used in a non-standard way
+
+------------------
+Checking variable: lon_u
+------------------
+INFO: attribute comment is being used in a non-standard way
+
+------------------
+Checking variable: lat_v
+------------------
+INFO: attribute comment is being used in a non-standard way
+
+------------------
+Checking variable: depth
+------------------
+
+------------------
+Checking variable: fsm
+------------------
+
+------------------
+Checking variable: dum
+------------------
+
+------------------
+Checking variable: dvm
+------------------
+
+------------------
+Checking variable: SSH
+------------------
+
+------------------
 Checking variable: QTOT
+------------------
+
+------------------
+Checking variable: QSENS
+------------------
+
+------------------
+Checking variable: QSOLAR
+------------------
+
+------------------
+Checking variable: QLONG
+------------------
+
+------------------
+Checking variable: QELAT
+------------------
+
+------------------
+Checking variable: QEVAP
+------------------
+
+------------------
+Checking variable: TAUx
+------------------
+
+------------------
+Checking variable: TAUy
+------------------
+
+------------------
+Checking variable: U
+------------------
+
+------------------
+Checking variable: V
+------------------
+
+------------------
+Checking variable: T
+------------------
+
+------------------
+Checking variable: S
 ------------------
 
 ERRORS detected: 1
