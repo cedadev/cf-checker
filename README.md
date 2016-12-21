@@ -35,8 +35,10 @@ Alternatively, to install from source:
 
    * To install to a non standard location:
 
-            python setup.py --prefix=<directory>
+            python setup.py install --prefix=<directory>
 
+     If directory you are installing into is not on PYTHONPATH you will need to add it.
+     
 ## Running the CF Checker
 
 `cfchecks [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-v|--version CFVersion] file1 [file2...]`
