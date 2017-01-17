@@ -3,7 +3,7 @@ import sys, os
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+'/src/')
 __version__ = __import__('cfchecker').__version__
-__description__ = "\n"+open(os.path.join(os.path.dirname(__file__), 'README')).read()
+__description__ = "\n"+open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
 
 setup(name='cfchecker',
       version=__version__,
