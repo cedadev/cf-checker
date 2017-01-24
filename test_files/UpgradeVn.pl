@@ -13,10 +13,10 @@
 #           Before running simply alter the variables $checkerVN and
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
-$checkerVN="2.0.9";
-$standardNameVN="34 (2016-06-13T10:23:54Z)";
+$checkerVN="3.0.0-rc1";
+$standardNameVN="39 (2016-12-16T16:59:53Z)";
 
-$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
+$TEST_FILES_DIR="/home/ros/puma2/git-projects/cf-checker/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
 foreach $file (<*.check>) {

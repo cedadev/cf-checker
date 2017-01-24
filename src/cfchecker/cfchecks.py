@@ -621,6 +621,7 @@ class CFChecker:
 
 #---------------------------------------------------------------------------------------------
 # RSH (05.05.16) - TODO: Determine if var is a Time axis and call chkTimeVariableAttributes()
+#                        Commented out on move to netcdf4-python (See github #13)
 #---------------------------------------------------------------------------------------------
  #       if var in axes:
  #           # Check var is a FileAxis.  If not then there mqay be a problem with its declaration.
@@ -1698,10 +1699,10 @@ class CFChecker:
                         if not re.match("^(area|volume)$",measure):
                             self._add_error("Invalid measure in attribute cell_measures", varName, code="7.2")
 
-                        if measure == "area" and self.f.variables[variable].units != "m2":
+                        if measure == "area" and Units(self.f.variables[variable].units) != Units('m2'):
                             self._add_error("Must have square meters for area measure", varName, code="7.2")
 
-                        if measure == "volume" and self.f.variables[variable].units != "m3":
+                        if measure == "volume" and Units(self.f.variables[variable].units) != Units('m3'):
                             self._add_error("Must have cubic meters for volume measure", varName, code="7.2")
                         
             except StopIteration:
