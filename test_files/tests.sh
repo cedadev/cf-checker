@@ -21,6 +21,7 @@ area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-t
 #cfchecker="/usr/bin/python /home/ros/temp/cf-checker/bin/cfchecks"
 
 cfchecker="/home/ros/bin/cfchecks"
+cfchecker="/home/ros/puma2/dev/bin/cfchecks"
 
 failed=0
 
