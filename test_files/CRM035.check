@@ -7,196 +7,15 @@ Using Standard Name Table Version 39 (2016-12-16T16:59:53Z)
 WARN: (2.6.1): No 'Conventions' attribute present
 
 ------------------
-Checking variable: theta0
+Checking variable: dp
 ------------------
-
-------------------
-Checking variable: snsibl
-------------------
-
-------------------
-Checking variable: vsflx
-------------------
-ERROR: (3.1): Invalid units: PSU kg/m/s
-
-------------------
-Checking variable: ekin
-------------------
-
-------------------
-Checking variable: salflx
-------------------
-ERROR: (3.1): Invalid units: PSU kg/m2/s
-
-------------------
-Checking variable: precp
-------------------
-
-------------------
-Checking variable: latnt
-------------------
-
-------------------
-Checking variable: vo
-------------------
-
-------------------
-Checking variable: t_tend_vdiff
-------------------
-
-------------------
-Checking variable: t_tend_hdiff
-------------------
-
-------------------
-Checking variable: lwfl
-------------------
-
-------------------
-Checking variable: year
-------------------
-
-------------------
-Checking variable: vbavg
-------------------
-
-------------------
-Checking variable: surflx
-------------------
-
-------------------
-Checking variable: s_tend_vdiff
-------------------
-ERROR: (3.1): Invalid units: PSU/s
-
-------------------
-Checking variable: pbavg
-------------------
-
-------------------
-Checking variable: covice
-------------------
-
-------------------
-Checking variable: lon
-------------------
-WARN: (5): Possible incorrect declaration of a coordinate variable.
 
 ------------------
 Checking variable: th3d
 ------------------
 
 ------------------
-Checking variable: day
-------------------
-
-------------------
-Checking variable: uflx1
-------------------
-
-------------------
-Checking variable: hsnow
-------------------
-
-------------------
-Checking variable: thkice
-------------------
-
-------------------
-Checking variable: vflx1
-------------------
-
-------------------
-Checking variable: isens
-------------------
-
-------------------
-Checking variable: ubavg
-------------------
-
-------------------
-Checking variable: ilatnt
-------------------
-
-------------------
-Checking variable: s_tend_tot
-------------------
-ERROR: (3.1): Invalid units: PSU/s
-
-------------------
-Checking variable: mont3d
-------------------
-
-------------------
-Checking variable: emnsp
-------------------
-
-------------------
-Checking variable: lat
-------------------
-WARN: (5): Possible incorrect declaration of a coordinate variable.
-
-------------------
-Checking variable: s_tend_adv
-------------------
-ERROR: (3.1): Invalid units: PSU/s
-
-------------------
-Checking variable: pbot
-------------------
-
-------------------
-Checking variable: vflx
-------------------
-
-------------------
-Checking variable: zos
-------------------
-
-------------------
-Checking variable: dp
-------------------
-
-------------------
-Checking variable: t_tend_adv
-------------------
-
-------------------
-Checking variable: dpv
-------------------
-
-------------------
-Checking variable: dpu
-------------------
-
-------------------
-Checking variable: usflx
-------------------
-ERROR: (3.1): Invalid units: PSU kg/m/s
-
-------------------
-Checking variable: isalt
-------------------
-ERROR: (3.1): Invalid units: PSU kg/m2/s
-
-------------------
-Checking variable: mld
-------------------
-
-------------------
-Checking variable: uflx
-------------------
-
-------------------
-Checking variable: swfl
-------------------
-
-------------------
-Checking variable: rho_is
-------------------
-
-------------------
-Checking variable: uo
+Checking variable: theta0
 ------------------
 
 ------------------
@@ -205,7 +24,47 @@ Checking variable: so
 ERROR: (3.1): Invalid units: PSU
 
 ------------------
-Checking variable: snow
+Checking variable: uo
+------------------
+
+------------------
+Checking variable: vo
+------------------
+
+------------------
+Checking variable: ekin
+------------------
+
+------------------
+Checking variable: rho_is
+------------------
+
+------------------
+Checking variable: mont3d
+------------------
+
+------------------
+Checking variable: uflx
+------------------
+
+------------------
+Checking variable: vflx
+------------------
+
+------------------
+Checking variable: uflx1
+------------------
+
+------------------
+Checking variable: vflx1
+------------------
+
+------------------
+Checking variable: dpu
+------------------
+
+------------------
+Checking variable: dpv
 ------------------
 
 ------------------
@@ -213,9 +72,128 @@ Checking variable: utflx
 ------------------
 
 ------------------
+Checking variable: vtflx
+------------------
+
+------------------
+Checking variable: usflx
+------------------
+ERROR: (3.1): Invalid units: PSU kg/m/s
+
+------------------
+Checking variable: vsflx
+------------------
+ERROR: (3.1): Invalid units: PSU kg/m/s
+
+------------------
+Checking variable: t_tend_adv
+------------------
+
+------------------
+Checking variable: t_tend_hdiff
+------------------
+
+------------------
+Checking variable: t_tend_vdiff
+------------------
+
+------------------
+Checking variable: t_tend_tot
+------------------
+
+------------------
+Checking variable: s_tend_adv
+------------------
+ERROR: (3.1): Invalid units: PSU/s
+
+------------------
 Checking variable: s_tend_hdiff
 ------------------
 ERROR: (3.1): Invalid units: PSU/s
+
+------------------
+Checking variable: s_tend_vdiff
+------------------
+ERROR: (3.1): Invalid units: PSU/s
+
+------------------
+Checking variable: s_tend_tot
+------------------
+ERROR: (3.1): Invalid units: PSU/s
+
+------------------
+Checking variable: zos
+------------------
+
+------------------
+Checking variable: mld
+------------------
+
+------------------
+Checking variable: surflx
+------------------
+
+------------------
+Checking variable: salflx
+------------------
+ERROR: (3.1): Invalid units: PSU kg/m2/s
+
+------------------
+Checking variable: covice
+------------------
+
+------------------
+Checking variable: thkice
+------------------
+
+------------------
+Checking variable: hsnow
+------------------
+
+------------------
+Checking variable: lwfl
+------------------
+
+------------------
+Checking variable: swfl
+------------------
+
+------------------
+Checking variable: latnt
+------------------
+
+------------------
+Checking variable: ilatnt
+------------------
+
+------------------
+Checking variable: snow
+------------------
+
+------------------
+Checking variable: snsibl
+------------------
+
+------------------
+Checking variable: isens
+------------------
+
+------------------
+Checking variable: emnsp
+------------------
+
+------------------
+Checking variable: precp
+------------------
+
+------------------
+Checking variable: isalt
+------------------
+ERROR: (3.1): Invalid units: PSU kg/m2/s
+
+------------------
+Checking variable: pbot
+------------------
 
 ------------------
 Checking variable: taux
@@ -226,11 +204,33 @@ Checking variable: tauy
 ------------------
 
 ------------------
-Checking variable: vtflx
+Checking variable: ubavg
 ------------------
 
 ------------------
-Checking variable: t_tend_tot
+Checking variable: vbavg
+------------------
+
+------------------
+Checking variable: pbavg
+------------------
+
+------------------
+Checking variable: lon
+------------------
+WARN: (5): Possible incorrect declaration of a coordinate variable.
+
+------------------
+Checking variable: lat
+------------------
+WARN: (5): Possible incorrect declaration of a coordinate variable.
+
+------------------
+Checking variable: year
+------------------
+
+------------------
+Checking variable: day
 ------------------
 
 ERRORS detected: 9

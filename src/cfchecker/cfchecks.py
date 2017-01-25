@@ -561,6 +561,8 @@ class CFChecker:
     
     axes=self.f.dimensions.keys()
 
+    self._add_debug("Axes: %s" % axes)
+
     # Check each variable
     for var in self.f.variables.keys():
 
@@ -617,26 +619,20 @@ class CFChecker:
         if var in gridMappingVars:
             self.chkGridMappingVar(var)
 
-        self._add_debug("Axes: %s" % axes)
+        if var in axes:
 
-#---------------------------------------------------------------------------------------------
-# RSH (05.05.16) - TODO: Determine if var is a Time axis and call chkTimeVariableAttributes()
-#                        Commented out on move to netcdf4-python (See github #13)
-#---------------------------------------------------------------------------------------------
- #       if var in axes:
- #           # Check var is a FileAxis.  If not then there mqay be a problem with its declaration.
- #           # I.e. Multi-dimensional coordinate var with a dimension of the same name
- #           # or an axis that hasn't been identified through the coordinates attribute
- #           # CRM035 (17.04.07)
- #           if not (isinstance(self.f[var], FileAxis) or isinstance(self.f[var], FileAuxAxis1D)):
- #               self._add_warn('Possible incorrect declaration of a coordinate variable.', var, code='5')
- #           else:    
- #            if self.f[var].isTime():
- #                self.chkTimeVariableAttributes(var)
+            if self.isTime(var):
+                self._add_debug("Time Axis.....")
+                self.chkTimeVariableAttributes(var)
 
-        if var in axes and self.isTime(var):
-            self._add_debug("Time Axis.....")
-            self.chkTimeVariableAttributes(var)
+            # Github Issue #13
+            if var not in allCoordVars:
+                dimensions=map(str,self.f.variables[var].dimensions)
+
+                if len(dimensions) > 1 and var in dimensions:
+                    # Variable name matches a dimension; this may be an unidentified multi-dimensional coordinate variable
+                    self._add_warn('Possible incorrect declaration of a coordinate variable.', var, code='5')
+
 
     #self._add_info("%s variable(s) have the cf_role attribute set" % self.cf_roleCount)
     if self.version >= vn1_6:
@@ -2274,9 +2270,6 @@ class CFChecker:
       that the variable name should not match the name of any of its dimensions."""
       var=self.f.variables[varName]
     
-      # This is a temporary work around to obtain the dimensions of the coord
-      # var.  In CDMS vn4.0 only 1D coord vars will be axis variables; There
-      # will be no need to use _obj_. See CRM #011
       if varName in axes and len(var.dimensions) > 1:
           # Multi-dimensional coordinate var
           if varName in var.dimensions:
