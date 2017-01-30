@@ -13,7 +13,7 @@
 #           Before running simply alter the variables $checkerVN and
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
-$checkerVN="3.0.0-rc1";
+$checkerVN="3.0.0";
 $standardNameVN="39 (2016-12-16T16:59:53Z)";
 
 $TEST_FILES_DIR="/home/ros/puma2/git-projects/cf-checker/test_files";
