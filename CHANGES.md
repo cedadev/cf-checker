@@ -1,5 +1,7 @@
 # CF Checker Changes
 
+See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
+
 -----------------------------------------------------------------
 
 ## 30.01.2017
