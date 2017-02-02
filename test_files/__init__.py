@@ -51,7 +51,7 @@ def _clean_lines(lines):
 
     Removals include:
      1. Version tags of the tables used
-     2. Warnings from cdms2.
+     2. Warnings.
 
     This eases testing when all that's changed is the table version.
     

@@ -2,7 +2,7 @@ CHECKING NetCDF FILE: CRM032_test1.nc
 =====================
 Using CF Checker Version 3.0.0
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 39 (2016-12-16T16:59:53Z)
+Using Standard Name Table Version 40 (2017-01-25T13:15:07Z)
 
 ERROR: (2.6.1): This netCDF file does not appear to contain CF Convention data.
 ERROR: (5.6): MSLP - Invalid syntax for 'grid_mapping' attribute

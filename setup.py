@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 import sys, os
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__))+'/src/')
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/src')
 __version__ = __import__('cfchecker').__version__
-__description__ = "\n"+open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
+__description__ = "\n" + open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
 
 setup(name='cfchecker',
       version=__version__,
@@ -28,13 +28,8 @@ setup(name='cfchecker',
 
       include_package_data=True,
       zip_safe=False,
-      install_requires=[
-        # -*- Extra requirements: -*-
-        #!NOTE: although CDAT is required we may want to use full CDAT or
-        #       cdat_lite.  Therefore don't use dependency management.
-      ],
+      install_requires=['netCDF4', 'cfunits'],
       entry_points= {
-        'console_scripts': ['cfchecks = cfchecker:main'],
+        'console_scripts': ['cfchecks = cfchecker.cfchecks:main'],
         },
-      test_suite='nose.collector',
       )

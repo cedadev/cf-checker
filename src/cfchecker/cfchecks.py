@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-#!/home/ros/software/CDAT-5.2-cdms/bin/python
-# Adapted for numpy/ma/cdms2 by convertcdms.py
 #-------------------------------------------------------------
 # Name: cfchecks.py
 #
