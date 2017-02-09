@@ -280,5 +280,6 @@ class CfchecksWrapper(object):
 
 
 if __name__ == '__main__':
+
     w = CfchecksWrapper()
     w.main()
