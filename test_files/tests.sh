@@ -9,7 +9,7 @@ mkdir $outdir
 std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml
 area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml
 
-cfchecker="cfchecks"
+cfchecker="/home/ros/puma2/dev/bin/cfchecks"
 
 failed=0
 

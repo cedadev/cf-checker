@@ -3,7 +3,7 @@ CHECKING NetCDF FILE: stdName_test.nc
 Using CF Checker Version 3.0.0
 Checking against CF Version CF-1.6
 Using Standard Name Table Version 2 (2006-09-26T18:12:43Z)
-Using Area Type Table Version 5 (25 January 2017)
+Using Area Type Table Version 6 (22 February 2017)
 
 WARN: (2.6.1): Inconsistency - This netCDF file appears to contain CF-1.0 data, but you've requested a validity check against CF-1.6
 ERROR: (7.1): Boundary var time_bnds has inconsistent std_name to time
