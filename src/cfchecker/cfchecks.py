@@ -284,7 +284,7 @@ class FatalCheckerError(Exception):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=None, cfAreaTypesXML=None, version=newest_version, debug=False, silent=False):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=STANDARDNAME, cfAreaTypesXML=AREATYPES, version=newest_version, debug=False, silent=False):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
