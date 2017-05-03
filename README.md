@@ -24,8 +24,9 @@ Alternatively, to install from source:
 
 2. Unpack the library:
 
-        tar -zxf cfchecker-3.0.0.tar.gz
-        cd cfchecker-3.0.0
+        tar -zxf cfchecker-${version}.tar.gz
+
+        cd cfchecker-${version}
 
 3. Install the package:
 
