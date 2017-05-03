@@ -13,8 +13,8 @@
 #           Before running simply alter the variables $checkerVN and
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
-$checkerVN="3.0.0";
-$standardNameVN="41 (2017-02-22T08:54:22Z)";
+$checkerVN="3.0.1";
+$standardNameVN="43 (2017-04-25T09:31:50Z)";
 
 $TEST_FILES_DIR="/home/ros/puma2/git-projects/cf-checker/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
