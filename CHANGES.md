@@ -3,6 +3,14 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## 03.05.2017
+
+CF Checker release 3.0.1
+
+This is a bug fix release.
+
+Various bug fixes including:
+[#18](https://github.com/cedadev/cf-checker/issues/18): Pick up default Standard Name Table and Area Type table when called inline.
 
 ## 30.01.2017
 
