@@ -35,7 +35,7 @@ setup(name='cfchecker',
 
       include_package_data=True,
       zip_safe=False,
-      install_requires=['netCDF4', 'numpy', 'cfunits==1.3.3'],
+      install_requires=['netCDF4', 'numpy', 'cfunits'],
       entry_points= {
         'console_scripts': ['cfchecks = cfchecker.cfchecks:main'],
         },

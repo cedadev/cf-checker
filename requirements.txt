@@ -1,7 +1,3 @@
---index-url https://pypi.python.org/simple/
-
--e .
-
 netCDF4
 numpy
-cfunits==1.3.3
+cfunits
