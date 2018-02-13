@@ -110,7 +110,8 @@ vn1_3 = CFVersion((1, 3))
 vn1_4 = CFVersion((1, 4))
 vn1_5 = CFVersion((1, 5))
 vn1_6 = CFVersion((1, 6))
-cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6]
+vn1_7 = CFVersion((1, 7))
+cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6, vn1_7]
 newest_version = max(cfVersions)
 
 
@@ -610,6 +611,10 @@ class CFChecker:
             self.chkCFRole(var)
             self.chkRaggedArray(var)
 
+        if self.version >= vn1_7:
+            # Additional conformance checks from CF-1.7 onwards
+            self.chkActualRange(var)
+
         if var in coordVars:
             self.chkMultiDimCoord(var, axes)
             self.chkValuesMonotonic(var)
@@ -711,6 +716,11 @@ class CFChecker:
           self.AttrList['featureType']=['S','G']
           self.AttrList['instance_dimension']=['S','D']
           self.AttrList['sample_dimension']=['S','D']
+
+      if self.version>= vn1_7:
+          self.AttrList['actual_range']=['N',('C','D')]
+          self.AttrList['computed_standard_name']=['S','C']
+          self.AttrList['external_variables']=['S','G']
       
       return
 
@@ -1194,7 +1204,29 @@ class CFChecker:
             self._add_error("Global attribute 'featureType' contains invalid value",
                             code="9.4")
 
-    for attribute in ['title','history','institution','source','reference','comment']:
+    # External variables
+    if self.version >= vn1_7 and hasattr(self.f, 'external_variables'):
+        external_vars = self.f.external_variables
+
+        if not self.parseBlankSeparatedList(external_vars) :
+            self._add_error("external_variables attribute must be a blank separated list of variable names",
+                            code="2.6.3")
+        else:
+            # Split string up into component parts
+            external_vars_list = string.split(external_vars)
+            for var in external_vars_list:
+                if var.strip() in map(str, self.f.variables):
+                    self._add_error("Variable %s named as an external variable must not be present in this file" % var,
+                                    code="2.6.3")
+
+    # Global attributes that must be of type string
+    str_global_attrs = ['title','history','institution','source','reference','comment']
+    if self.version >= vn1_6:
+        str_global_attrs.append('featureType')
+    if self.version >= vn1_7:
+        str_global_attrs.append('external_variables')
+
+    for attribute in str_global_attrs:
         if hasattr(self.f, attribute):
             if not isinstance(self.f.getncattr(attribute), basestring):
                 self._add_error("Global attribute %s must be of type 'String'" % attribute,
@@ -1898,12 +1930,105 @@ class CFChecker:
               self._add_error("Illegal use of valid_range and valid_min/valid_max", varName, code="2.5.1")
 
   #---------------------------------
+  def chkActualRange(self, varName):
+  #---------------------------------
+      """Check that the actual_range:
+      1) is the same type as its associated variable or scale_factor/add_offset if set
+      2) has 2 elements where the first equals the min non-missing value and the second the max after any scale_factor/add_offset applied
+      3) is not present if all data values are equal to missing value
+      4) is valid if valid_range/valid_min/valid_max are specified
+      """
+      var=self.f.variables[varName]
+
+      if hasattr(var, 'actual_range'):
+          actual_range=var.actual_range
+
+          if len(actual_range) != 2:
+              self._add_error("actual_range attribute must contain only 2 elements",
+                              varName, code="2.5.1")
+
+          
+          actual_range_type = var.actual_range.dtype.char
+
+          # actual_range must be of same type as scale_factor/add_offset, if present otherwise the associated variable
+          if hasattr(var, 'scale_factor') or hasattr(var, 'add_offset'):
+
+              if hasattr(var, 'scale_factor') and actual_range_type != var.scale_factor.dtype.char:
+                      self._add_error("actual_range attribute must be of same type as scale_factor",
+                                      varName, code="2.5.1")
+
+              if hasattr(var, 'add_offset') and actual_range_type != var.add_offset.dtype.char:
+                      self._add_error("actual_range attribute must be of same type as add_offset",
+                                      varName, code="2.5.1")
+          else:
+              if actual_range_type != var.dtype.char:
+                  self._add_error("actual_range attribute must be of same type as variable %s" % varName,
+                                  varName, code="2.5.1")
+
+          # actual_range values must lie within valid_range, if specified
+          min_v=None
+          max_v=None
+          if hasattr(var, 'valid_range'):
+              min_v=var.valid_range[0]
+              max_v=var.valid_range[1]
+          elif hasattr(var, 'valid_min') or hasattr(var, 'valid_max'):
+              try:
+                  min_v=var.valid_min
+              except AttributeError:
+                  pass
+              try:
+                  max_v=var.valid_max
+              except AttributeError:
+                  pass
+
+          if min_v and max_v:
+              if not ((min_v <= actual_range[0] <= max_v) and (min_v <= actual_range[1] <= max_v)):
+                  self._add_error("actual_range values must lie between %s and %s (valid_range)" %(min_v, max_v),
+                                  varName, code="2.5.1")
+          elif min_v and not ((min_v <= actual_range[0]) and (min_v <= actual_range[1])):
+              self._add_error("actual_range values must be greater than or equal to %s (valid_min)" % min_v, 
+                              varName, code="2.5.1")
+          elif max_v and not ((actual_range[0] <= max_v) and (actual_range[1] <= max_v)):
+              self._add_error("actual_range values must be less than or equal to %s (valid_max)" % max_v,
+                              varName, code="2.5.1")
+
+          varData=self.f.variables[varName][:].flatten()
+          # Note: scale_factor & add_offset is automatically applied to data values.
+
+          if varData.count() == 0:
+              # All data values equal the missing value
+              self._add_error("There must be no actual_range attribute when all data values equal the missing value",
+                              varName, code="2.5.1")
+          else:
+              # Data values present
+              missing_value=None
+              min_dv=None
+              max_dv=None
+              if hasattr(var, '_FillValue'):
+                  missing_value=var._FillValue
+              elif hasattr(var, 'missing_value'):
+                  missing_value=var.missing_value
+
+              if missing_value:
+                  # Find minimum and maximum data value.
+                  # varData doesn't include values that are missing data
+                  min_dv=min(varData)
+                  max_dv=max(varData)
+                  if min_dv and actual_range[0] != min_dv:
+                      self._add_error("First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (%s)" % min_dv,
+                                      varName, code="2.5.1")
+                  if max_dv and actual_range[1] != max_dv:
+                      self._add_error("Second element of actual_range must equal maximum data value of variable after scale_factor/add_offset applied (%s)" % max_dv,
+                                      varName, code="2.5.1")
+
+
+  #---------------------------------
   def chk_FillValue(self, varName):
   #---------------------------------
     """Check 1) type of _FillValue
     2) _FillValue lies outside of valid_range
     3) type of missing_value
-    4) flag use of missing_value as deprecated"""
+    """
     var=self.f.variables[varName]
 
     if hasattr(var, '_FillValue'):
