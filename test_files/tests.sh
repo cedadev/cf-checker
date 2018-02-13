@@ -39,6 +39,10 @@ do
   then 
     # CF-1.4
     $cfchecker -s $std_name_table -a $area_table -v 1.4 $file > $outdir/$file.out 2>&1
+  elif test $file == "CF_1_7.nc"
+  then
+    # CF-1.7
+    $cfchecker -s $std_name_table -v auto $file > $outdir/$file.out 2>&1
   else
     # Run the checker on the file
     $cfchecker -s $std_name_table -v 1.0 $file > $outdir/$file.out 2>&1
