@@ -22,10 +22,13 @@ Options:
  -a or --area_types:
        the location of the CF area types table (xml)
        
+ -h or --help: Prints this help text
+
+ -r or --region_names:
+       the location of the CF standardized region names table (xml)
+
  -s or --cf_standard_names:
        the location of the CF standard name table (xml)
-
- -h or --help: Prints this help text.
 
  -v or --version: CF version to check against, use auto to auto-detect the file version.
 
@@ -42,13 +45,17 @@ import re, string, types, numpy
 
 from netCDF4 import Dataset as netCDF4_Dataset
 from netCDF4 import Variable as netCDF4_Variable
+
 from cfunits import Units
+
+from operator import mul
 
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
+REGIONNAMES = 'http://cfconventions.org/Data/cf-standard-names/docs/standardized-region-names.xml'
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -285,13 +292,14 @@ class FatalCheckerError(Exception):
 #======================
 class CFChecker:
     
-  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=STANDARDNAME, cfAreaTypesXML=AREATYPES, version=newest_version, debug=False, silent=False):
+  def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, cfStandardNamesXML=STANDARDNAME, cfAreaTypesXML=AREATYPES, cfRegionNamesXML=REGIONNAMES, version=newest_version, debug=False, silent=False):
       self.uploader = uploader
       self.useFileName = useFileName
       self.badc = badc
       self.coards = coards
       self.standardNames = cfStandardNamesXML
       self.areaTypes = cfAreaTypesXML
+      self.regionNames = cfRegionNamesXML
       self.version = version
       self.all_results = OrderedDict()  # dictonary of results sorted by file and then by globals / variable 
                                         # and then by category
@@ -355,6 +363,11 @@ class CFChecker:
         self.area_type_lh = ConstructList()
         parser.setContentHandler(self.area_type_lh)
         parser.parse(self.areaTypes)
+
+    # Set up list of valid region_names
+    self.region_name_lh = ConstructList()
+    parser.setContentHandler(self.region_name_lh)
+    parser.parse(self.regionNames)
     
     self._add_version("Using CF Checker Version %s" % __version__)
     if not self.version:
@@ -368,6 +381,9 @@ class CFChecker:
     if self.version >= vn1_4:
         self._add_version("Using Area Type Table Version %s (%s)" % 
                        (self.area_type_lh.version_number, self.area_type_lh.last_modified))
+
+    self._add_version("Using Standardized Region Name Table Version %s (%s)" %
+                      (self.region_name_lh.version_number, self.region_name_lh.last_modified))
     
     if not self.silent:
         print ""
@@ -2196,8 +2212,46 @@ class CFChecker:
                   modifier=std_name_el[1]
                   if not modifier in ['detection_minimum','number_of_observations','standard_error','status_flag']:
                       self._add_error("Invalid standard_name modifier: %s" % modifier, varName, code="3.3")
-                      
 
+                  if self.version >= vn1_7:
+                      if modifier in ['status_flag', 'number_of_observations']:
+                          self._add_warn("Use of standard_name modifier %s is deprecated" % modifier,
+                                         varName, code="3.3")
+
+              if name == "region":
+                  # Check values are from the permitted list
+                  region_names = self.getStringValue(varName)
+                  for region in region_names:
+                      if not region in self.region_name_lh.list:
+                          self._add_error("Invalid region name: %s" % region, varName, code="3.3")
+
+  #---------------------------------  
+  def getStringValue(self, varName):
+  #---------------------------------
+      # Collapse (by concatenation) the outermost
+      # (fastest varying) dimension of string valued array into
+      # memory. E.g. [['a','b','c']] becomes ['abc']
+      array=self.f.variables[varName][:]
+
+      if array.dtype.kind == 'S':
+          strlen = array.shape[-1]
+            
+          new_shape = array.shape[0:-1]
+          new_size  = long(reduce(mul, new_shape, 1))
+            
+          array = numpy.ma.resize(array, (new_size, strlen))
+          
+          array = array.filled(fill_value='')
+
+          array = numpy.array([''.join(x).rstrip() for x in array],
+                              dtype='S%d' % strlen)
+            
+          array = array.reshape(new_shape)
+
+          array = numpy.ma.where(array=='', numpy.ma.masked, array)
+
+      return array
+        
   #-----------------------------------
   def chkCompressAttr(self, varName):
   #-----------------------------------
@@ -2452,9 +2506,11 @@ def getargs(arglist):
 
     standardnamekey='CF_STANDARD_NAMES'
     areatypeskey='CF_AREA_TYPES'
+    regionnameskey='CF_REGION_NAMES'
     # set defaults
     standardname=STANDARDNAME
     areatypes=AREATYPES
+    regionnames=REGIONNAMES
     uploader=None
     useFileName="yes"
     badc=None
@@ -2467,9 +2523,11 @@ def getargs(arglist):
         standardname=environ[standardnamekey]
     if environ.has_key(areatypeskey):
         areatypes=environ[areatypeskey]
+    if environ.has_key(regionnameskey):
+        regionnames=environ[regionnameskey]
 
     try:
-        (opts,args)=getopt(arglist[1:],'a:bcdhlns:v:',['area_types=','badc','coards','help','uploader','noname','cf_standard_names=','version=', 'debug'])
+        (opts,args)=getopt(arglist[1:],'a:bcdhlnr:s:v:',['area_types=','badc','coards','help','uploader','noname','region_names=','cf_standard_names=','version=', 'debug'])
     except GetoptError:
         stderr.write('%s\n'%__doc__)
         exit(1)
@@ -2495,6 +2553,9 @@ def getargs(arglist):
             continue
         if a in ('-n','--noname'):
             useFileName="no"
+            continue
+        if a in ('-r','--region_names'):
+            regionnames=v.strip()
             continue
         if a in ('-s','--cf_standard_names'):
             standardname=v.strip()
