@@ -14,7 +14,6 @@ Checking variable: n_heat_transport
 ------------------
 Checking variable: time
 ------------------
-ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lat
@@ -24,6 +23,6 @@ Checking variable: lat
 Checking variable: geo_region
 ------------------
 
-ERRORS detected: 1
+ERRORS detected: 0
 WARNINGS given: 0
 INFORMATION messages: 0
