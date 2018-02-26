@@ -351,6 +351,7 @@ class CFChecker:
 
     # Set up dictionary of all valid attributes, their type and use
     self.setUpAttributeList()
+    self.validGridMappingAttributes()
 
     # Set up dictionary of standard_names and their assoc. units
     parser = make_parser()
@@ -1065,19 +1066,120 @@ class CFChecker:
         #------------------------------------------
         if hasattr(self.f.variables[var], 'grid_mapping'):
             grid_mapping = self.f.variables[var].grid_mapping
-            # Check syntax of grid_mapping attribute: a string whose value is a single variable name.
-            if not re.search("^[a-zA-Z0-9_]*$",grid_mapping):
-                self._add_error("%s - Invalid syntax for 'grid_mapping' attribute" % var, var, code="5.6")
-            else:
-                if grid_mapping in variables:
-                    gridMappingVars.append(grid_mapping)
+
+            (grid_mapping_vars, coord_vars) = self.chkGridMappingAttribute(var, grid_mapping)
+
+            for gmv in grid_mapping_vars:
+                if gmv in variables:
+                    gridMappingVars.append(gmv)
                 else:
-                    self._add_error("grid_mapping attribute referencing non-existent variable %s" % grid_mapping,
-                                    var)
+                    self._add_error("grid_mapping attribute referencing non-existent variable %s" % gmv,
+                                    var, code="5.6")
+
+            for cv in coord_vars:
+                # cv must be the name of a coordinate variable or auxiliary coordinate variable
+                if cv not in self.f.variables[var].dimensions and cv not in coordinates:
+                    self._add_error("%s must be the name of a coordinate variable or auxiliary coordinate variable of %s" % (cv,var),
+                                    var, code="5.6")
+                if cv not in allVariables:
+                    self._add_error("grid_mapping attribute referencing non-existent coordinate variable %s" % cv,
+                                     var, code="5.6")
                     
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
 
 
+  #------------------
+  def subst(self, s):
+  #------------------
+    "substitute tokens for WORD and SEP (space or end of string)"
+    return s.replace('WORD', r'[A-Za-z0-9_]+').replace('SEP', r'(\s+|$)')
+
+  #--------------------------------------------------------
+  def chkGridMappingAttribute(self, varName, grid_mapping):
+  #--------------------------------------------------------
+      """Validate syntax of grid_mapping attribute"""
+
+      grid_mapping_vars=[]
+      coord_vars=[]
+
+      if self.version < vn1_7:
+          # Syntax: a string whose value is a single variable name
+          pat_sole = self.subst('(?P<sole_mapping>WORD)$')
+          m = re.match(pat_sole, grid_mapping)
+              
+      else:
+          # Syntax: a string whose value is a single variable name or of the form:
+          # grid_mapping_var: coord_var [coord_var ...] [grid_mapping_var: coord_var [coord_var ...]]
+
+          pat_coord = self.subst('(?P<coord>WORD)SEP')
+          pat_coord_list = '({})+'.format(pat_coord)
+
+          pat_mapping = self.subst('(?P<mapping_name>WORD):SEP(?P<coord_list>{})'.format(pat_coord_list))
+          pat_mapping_list = '({})+'.format(pat_mapping)
+
+          pat_all = self.subst('((?P<sole_mapping>WORD)|(?P<mapping_list>{}))$'.format(pat_mapping_list))
+
+          m = re.match(pat_all, grid_mapping)
+
+      if not m:
+          self._add_error("%s - Invalid syntax for 'grid_mapping' attribute" % varName, varName, code="5.6")
+          return ([], [])
+
+      # Parse grid_mapping attribute to obtain a list of grid_mapping_vars and a list of coord_vars
+      sole_mapping = m.group('sole_mapping')
+      if sole_mapping:
+          # Contains only a single variable name
+          grid_mapping_vars.append(sole_mapping)
+    
+      else:
+          # Complex form, split into lists of grid_mapping_vars and coord_vars
+          mapping_list = m.group('mapping_list')
+          for mapping in re.finditer(pat_mapping, mapping_list):
+              mapping_name = mapping.group('mapping_name')
+              coord_list = mapping.group('coord_list')
+
+              grid_mapping_vars.append(mapping_name)
+              for coord in re.finditer(pat_coord, coord_list):
+                  coord_vars.append(coord.group('coord'))
+
+      return (map(str,grid_mapping_vars), map(str,coord_vars))
+
+  #------------------------------------
+  def validGridMappingAttributes(self):
+  #------------------------------------
+      """Setup dictionary of valid grid mapping attributes and their types"""
+
+      self.grid_mapping_attrs=dict([('azimuth_of_central_line', 'N'),
+                                    ('crs_wkt', 'S'),
+                                    ('earth_radius', 'N'),
+                                    ('false_easting', 'N'),
+                                    ('false_northing', 'N'),
+                                    ('geographic_crs_name', 'S'),
+                                    ('geoid_name', 'S'),
+                                    ('geopotential_datum_name', 'S'),
+                                    ('grid_mapping_name', 'S'),
+                                    ('grid_north_pole_latitude', 'N'),
+                                    ('grid_north_pole_longitude', 'N'),
+                                    ('horizontal_datum_name', 'S'),
+                                    ('inverse_flattening', 'N'),
+                                    ('latitude_of_projection_origin', 'N'),
+                                    ('longitude_of_central_meridian', 'N'),
+                                    ('longitude_of_prime_meridian', 'N'),
+                                    ('longitude_of_projection_origin', 'N'),
+                                    ('north_pole_grid_longitude', 'N'),
+                                    ('perspective_point_height', 'N'),
+                                    ('prime_meridian_name', 'S'),
+                                    ('projected_crs_name', 'S'),
+                                    ('reference_ellipsoid_name', 'S'),
+                                    ('scale_factor_at_central_meridian', 'N'),
+                                    ('scale_factor_at_projection_origin', 'N'),
+                                    ('semi_major_axis', 'N'),
+                                    ('semi_minor_axis', 'N'),
+                                    ('standard_parallel', 'N'),
+                                    ('straight_vertical_longitude_from_pole', 'N'),
+                                    ('towgs84', 'N')])
+      return
+                                    
   #-------------------------------------
   def chkGridMappingVar(self, varName):
   #-------------------------------------
@@ -1097,6 +1199,10 @@ class CFChecker:
           if self.version >= vn1_4:
               # Extra grid_mapping_names at vn1.4
               validNames[len(validNames):] = ['lambert_cylindrical_equal_area','mercator','orthographic']
+
+          if self.version >= vn1_7:
+              # Extra grid_mapping_names at vn1.7
+              validNames[len(validNames):] = ['geostationary', 'oblique_mercator', 'sinusoidal']
               
           if var.grid_mapping_name not in validNames:
               self._add_error("Invalid grid_mapping_name: %s" % var.grid_mapping_name,
@@ -1108,6 +1214,45 @@ class CFChecker:
       if len(var.dimensions) != 0:
           self._add_warn("A grid mapping variable should have 0 dimensions",
                          varName, code="5.6")
+
+      for attribute in map(str, var.ncattrs()):
+
+          # Check type of attribute matches that specified in Appendix F: Table 1
+          attr_type = type(var.getncattr(attribute))
+
+          if isinstance(var.getncattr(attribute), basestring):
+              attr_type='S'
+
+          elif (numpy.issubdtype(attr_type, numpy.int) or
+                numpy.issubdtype(attr_type, numpy.float) or 
+                attr_type == numpy.ndarray):
+              attr_type='N'
+
+          else:
+              self._add_info("Unknown Type for attribute: %s %s" % (attribute, attr_type))
+              continue
+          
+          if (attribute in self.grid_mapping_attrs.keys() and 
+              attr_type != self.grid_mapping_attrs[attribute]):
+              self._add_error("Attribute %s of incorrect data type (Appendix F)" % attribute,
+                              varName, code="5.6")
+              
+      if self.version >= vn1_7:
+          if hasattr(var, 'crs_wkt'):
+              msg = "CF checker currently does not verify the syntax of the crs_wkt attribute " \
+                  "which must conform to the CRS WKT specification"
+              self._add_info(msg, varName, code="5.6")
+
+          # If any of these attributes are present then they all must be
+          l=['reference_ellipsoid_name', 'prime_meridian_name', 'horizontal_datum_name', 'geographic_crs_name']
+          if any(hasattr(var, x) for x in l) and not all(hasattr(var, x) for x in l):
+              msg = "reference_ellipsoid_name, prime_meridian_name, horizontal_datum_name " \
+                  "and geographic_crs_name must all be definied if any one is defined"
+              self._add_error(msg, varName, code="5.6")
+
+          if hasattr(var, 'projected_crs_name') and not hasattr(var, 'geographic_crs_name'):
+              self._add_error("projected_crs_name is defined therefore geographic_crs_name must be also",
+                              varName, code="5.6")
 
   #------------------------
   def setUpFormulas(self):

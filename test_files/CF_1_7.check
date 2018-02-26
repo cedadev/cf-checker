@@ -11,7 +11,6 @@ ERROR: (2.6.3): Variable external_var2 named as an external variable must not be
 ------------------
 Checking variable: lat
 ------------------
-ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lon
@@ -65,6 +64,70 @@ Checking variable: arv4
 ERROR: (2.5.1): actual_range attribute must be of same type as variable arv4
 ERROR: (2.5.1): actual_range values must be greater than or equal to 15.0 (valid_min)
 
-ERRORS detected: 14
-WARNINGS given: 0
-INFORMATION messages: 0
+------------------
+Checking variable: current_speed_qc
+------------------
+WARN: (3.3): Use of standard_name modifier status_flag is deprecated
+
+------------------
+Checking variable: current_speed_qc2
+------------------
+WARN: (3.3): Use of standard_name modifier number_of_observations is deprecated
+
+------------------
+Checking variable: n_heat_transport
+------------------
+
+------------------
+Checking variable: geo_region
+------------------
+ERROR: (3.3): Invalid region name: dummy_ocean
+
+------------------
+Checking variable: lev
+------------------
+ERROR: (4.3.3): Standard name of variable PS inconsistent with that of lev
+ERROR: (4.3.3): PTOP is not declared as a variable
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: PS
+------------------
+
+------------------
+Checking variable: sigma
+------------------
+ERROR: (4.3.3): Formula term dummy not present in formula for ocean_sigma_coordinate
+ERROR: (4.3.3): Standard names of formula_terms variables are inconsistent/invalid
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: var2
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: var3
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: sigma2
+------------------
+WARN: (3.1): units attribute should be present
+ERROR: (4.3.3): computed_standard_name attribute is only allowed on a coordinate variable which has a formula_terms attribute
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: temp
+------------------
+
+------------------
+Checking variable: crs
+------------------
+ERROR: (5.6): Attribute longitude_of_prime_meridian of incorrect data type (Appendix F)
+ERROR: (5.6): reference_ellipsoid_name, prime_meridian_name, horizontal_datum_name and geographic_crs_name must all be definied if any one is defined
+
+ERRORS detected: 24
+WARNINGS given: 3
+INFORMATION messages: 2
