@@ -976,14 +976,19 @@ class CFChecker:
                     else:
                         self._add_error("Incorrect number of dimensions for boundary variable: %s" % bounds, bounds, code="7.1")
 
-                    if hasattr(self.f.variables[bounds], 'units'):
-                        if self.f.variables[bounds].units != self.f.variables[var].units:
-                            self._add_error("Boundary var %s has inconsistent units to %s" % (bounds, var),
-                                            bounds, code="7.1")
-                    if hasattr(self.f.variables[bounds], 'standard_name') and hasattr(self.f.variables[var], 'standard_name'):
-                        if self.f.variables[bounds].standard_name != self.f.variables[var].standard_name:
-                            self._add_error("Boundary var %s has inconsistent std_name to %s" % (bounds, var),
-                                            bounds, code="7.1")
+                    l = ['units', 'standard_name']
+                    if self.version >= vn1_7:
+                        l[len(l):] = ['axis', 'positive', 'calendar', 'leap_month', 'leap_year', 'month_lengths']
+                    for x in l:
+                        if hasattr(self.f.variables[bounds], x):
+                            if self.version >= vn1_7:
+                                self._add_warn("Boundary var %s should not have attribute %s" % (bounds, x),
+                                               bounds, code="7.1")
+                            if (hasattr(self.f.variables[var], x) 
+                                and self.f.variables[bounds].getncattr(x) != self.f.variables[var].getncattr(x)):
+                                self._add_error("Boundary var %s has inconsistent %s to %s" % (bounds, x, var),
+                                                bounds, code="7.1")
+                            
                 else:
                     self._add_error("bounds attribute referencing non-existent variable %s" % bounds,
                                     bounds, code="7.1")
@@ -1438,7 +1443,6 @@ class CFChecker:
     # External variables
     if self.version >= vn1_7 and hasattr(self.f, 'external_variables'):
         external_vars = self.f.external_variables
-
         if not self.parseBlankSeparatedList(external_vars) :
             self._add_error("external_variables attribute must be a blank separated list of variable names",
                             code="2.6.3")
@@ -1935,9 +1939,18 @@ class CFChecker:
                     variable=splitIter.next()
 
                     if variable not in self.f.variables:
-                        self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
-                                       "This is strictly an error if the cell_measures variable is not included in the dataset.", 
-                                       varName, code="7.2")
+                        if self.version >= vn1_7:
+                            # Variable must exist in the file or be named by the external_variables attribute
+                            msg = "cell_measures variable %s must either exist in this netCDF file " \
+                                "or be named by the external_variables attribute" % variable
+                            if not hasattr(self.f, 'external_variables'):
+                                self._add_error(msg, varName, code="7.2")
+                            elif variable not in string.split(self.f.external_variables):
+                                self._add_error(msg, varName, code="7.2")
+                        else:
+                            self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
+                                           "This is strictly an error if the cell_measures variable is not included in the dataset.", 
+                                           varName, code="7.2")
                         
                     else:
                         # Valid variable name in cell_measures so carry on with tests.    

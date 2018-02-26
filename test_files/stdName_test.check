@@ -7,7 +7,9 @@ Using Area Type Table Version 6 (22 February 2017)
 Using Standardized Region Name Table Version 2 (12 June 2013)
 
 WARN: (2.6.1): Inconsistency - This netCDF file appears to contain CF-1.0 data, but you've requested a validity check against CF-1.7
-ERROR: (7.1): Boundary var time_bnds has inconsistent std_name to time
+WARN: (7.1): Boundary var time_bnds should not have attribute units
+WARN: (7.1): Boundary var time_bnds should not have attribute standard_name
+ERROR: (7.1): Boundary var time_bnds has inconsistent standard_name to time
 WARN: (7.1): Data for variable time lies outside cell boundaries
 
 ------------------
@@ -39,5 +41,5 @@ Checking variable: time_bnds
 ------------------
 
 ERRORS detected: 3
-WARNINGS given: 4
+WARNINGS given: 6
 INFORMATION messages: 0
