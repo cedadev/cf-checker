@@ -2521,9 +2521,12 @@ class CFChecker:
               if name == "region":
                   # Check values are from the permitted list
                   region_names = self.getStringValue(varName)
-                  for region in region_names:
-                      if not region in self.region_name_lh.list:
-                          self._add_error("Invalid region name: %s" % region, varName, code="3.3")
+                  if len(region_names):
+                      for region in region_names:
+                          if not region in self.region_name_lh.list:
+                              self._add_error("Invalid region name: %s" % region, varName, code="3.3")
+                  else:
+                      self._add_error("No region names specified", varName, code="3.3")
 
   #---------------------------------  
   def getStringValue(self, varName):
@@ -2532,10 +2535,10 @@ class CFChecker:
       # (fastest varying) dimension of string valued array into
       # memory. E.g. [['a','b','c']] becomes ['abc']
       array=self.f.variables[varName][:]
-
+      ndim = array.ndim
       if array.dtype.kind == 'S':
           strlen = array.shape[-1]
-            
+              
           new_shape = array.shape[0:-1]
           new_size  = long(reduce(mul, new_shape, 1))
             
@@ -2549,7 +2552,11 @@ class CFChecker:
           array = array.reshape(new_shape)
 
           array = numpy.ma.where(array=='', numpy.ma.masked, array)
-
+      
+          # If varName is one dimension convert result of join from a string into an array
+          if ndim == 1:
+              array = [array]
+          
       return array
         
   #-----------------------------------
