@@ -40,6 +40,7 @@ if sys.version_info[:2] < (2,7):
     from ordereddict import OrderedDict
 else:
     from collections import OrderedDict
+    from collections import defaultdict
 
 import re, string, types, numpy
 
@@ -350,6 +351,7 @@ class CFChecker:
 
     # Set up dictionary of all valid attributes, their type and use
     self.setUpAttributeList()
+    self.validGridMappingAttributes()
 
     # Set up dictionary of standard_names and their assoc. units
     parser = make_parser()
@@ -630,6 +632,7 @@ class CFChecker:
         if self.version >= vn1_7:
             # Additional conformance checks from CF-1.7 onwards
             self.chkActualRange(var)
+            self.chkComputedStandardName(var)
 
         if var in coordVars:
             self.chkMultiDimCoord(var, axes)
@@ -973,14 +976,19 @@ class CFChecker:
                     else:
                         self._add_error("Incorrect number of dimensions for boundary variable: %s" % bounds, bounds, code="7.1")
 
-                    if hasattr(self.f.variables[bounds], 'units'):
-                        if self.f.variables[bounds].units != self.f.variables[var].units:
-                            self._add_error("Boundary var %s has inconsistent units to %s" % (bounds, var),
-                                            bounds, code="7.1")
-                    if hasattr(self.f.variables[bounds], 'standard_name') and hasattr(self.f.variables[var], 'standard_name'):
-                        if self.f.variables[bounds].standard_name != self.f.variables[var].standard_name:
-                            self._add_error("Boundary var %s has inconsistent std_name to %s" % (bounds, var),
-                                            bounds, code="7.1")
+                    l = ['units', 'standard_name']
+                    if self.version >= vn1_7:
+                        l[len(l):] = ['axis', 'positive', 'calendar', 'leap_month', 'leap_year', 'month_lengths']
+                    for x in l:
+                        if hasattr(self.f.variables[bounds], x):
+                            if self.version >= vn1_7:
+                                self._add_warn("Boundary var %s should not have attribute %s" % (bounds, x),
+                                               bounds, code="7.1")
+                            if (hasattr(self.f.variables[var], x) 
+                                and self.f.variables[bounds].getncattr(x) != self.f.variables[var].getncattr(x)):
+                                self._add_error("Boundary var %s has inconsistent %s to %s" % (bounds, x, var),
+                                                bounds, code="7.1")
+                            
                 else:
                     self._add_error("bounds attribute referencing non-existent variable %s" % bounds,
                                     bounds, code="7.1")
@@ -1063,19 +1071,120 @@ class CFChecker:
         #------------------------------------------
         if hasattr(self.f.variables[var], 'grid_mapping'):
             grid_mapping = self.f.variables[var].grid_mapping
-            # Check syntax of grid_mapping attribute: a string whose value is a single variable name.
-            if not re.search("^[a-zA-Z0-9_]*$",grid_mapping):
-                self._add_error("%s - Invalid syntax for 'grid_mapping' attribute" % var, var, code="5.6")
-            else:
-                if grid_mapping in variables:
-                    gridMappingVars.append(grid_mapping)
+
+            (grid_mapping_vars, coord_vars) = self.chkGridMappingAttribute(var, grid_mapping)
+
+            for gmv in grid_mapping_vars:
+                if gmv in variables:
+                    gridMappingVars.append(gmv)
                 else:
-                    self._add_error("grid_mapping attribute referencing non-existent variable %s" % grid_mapping,
-                                    var)
+                    self._add_error("grid_mapping attribute referencing non-existent variable %s" % gmv,
+                                    var, code="5.6")
+
+            for cv in coord_vars:
+                # cv must be the name of a coordinate variable or auxiliary coordinate variable
+                if cv not in self.f.variables[var].dimensions and cv not in coordinates:
+                    self._add_error("%s must be the name of a coordinate variable or auxiliary coordinate variable of %s" % (cv,var),
+                                    var, code="5.6")
+                if cv not in allVariables:
+                    self._add_error("grid_mapping attribute referencing non-existent coordinate variable %s" % cv,
+                                     var, code="5.6")
                     
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
 
 
+  #------------------
+  def subst(self, s):
+  #------------------
+    "substitute tokens for WORD and SEP (space or end of string)"
+    return s.replace('WORD', r'[A-Za-z0-9_]+').replace('SEP', r'(\s+|$)')
+
+  #--------------------------------------------------------
+  def chkGridMappingAttribute(self, varName, grid_mapping):
+  #--------------------------------------------------------
+      """Validate syntax of grid_mapping attribute"""
+
+      grid_mapping_vars=[]
+      coord_vars=[]
+
+      if self.version < vn1_7:
+          # Syntax: a string whose value is a single variable name
+          pat_sole = self.subst('(?P<sole_mapping>WORD)$')
+          m = re.match(pat_sole, grid_mapping)
+              
+      else:
+          # Syntax: a string whose value is a single variable name or of the form:
+          # grid_mapping_var: coord_var [coord_var ...] [grid_mapping_var: coord_var [coord_var ...]]
+
+          pat_coord = self.subst('(?P<coord>WORD)SEP')
+          pat_coord_list = '({})+'.format(pat_coord)
+
+          pat_mapping = self.subst('(?P<mapping_name>WORD):SEP(?P<coord_list>{})'.format(pat_coord_list))
+          pat_mapping_list = '({})+'.format(pat_mapping)
+
+          pat_all = self.subst('((?P<sole_mapping>WORD)|(?P<mapping_list>{}))$'.format(pat_mapping_list))
+
+          m = re.match(pat_all, grid_mapping)
+
+      if not m:
+          self._add_error("%s - Invalid syntax for 'grid_mapping' attribute" % varName, varName, code="5.6")
+          return ([], [])
+
+      # Parse grid_mapping attribute to obtain a list of grid_mapping_vars and a list of coord_vars
+      sole_mapping = m.group('sole_mapping')
+      if sole_mapping:
+          # Contains only a single variable name
+          grid_mapping_vars.append(sole_mapping)
+    
+      else:
+          # Complex form, split into lists of grid_mapping_vars and coord_vars
+          mapping_list = m.group('mapping_list')
+          for mapping in re.finditer(pat_mapping, mapping_list):
+              mapping_name = mapping.group('mapping_name')
+              coord_list = mapping.group('coord_list')
+
+              grid_mapping_vars.append(mapping_name)
+              for coord in re.finditer(pat_coord, coord_list):
+                  coord_vars.append(coord.group('coord'))
+
+      return (map(str,grid_mapping_vars), map(str,coord_vars))
+
+  #------------------------------------
+  def validGridMappingAttributes(self):
+  #------------------------------------
+      """Setup dictionary of valid grid mapping attributes and their types"""
+
+      self.grid_mapping_attrs=dict([('azimuth_of_central_line', 'N'),
+                                    ('crs_wkt', 'S'),
+                                    ('earth_radius', 'N'),
+                                    ('false_easting', 'N'),
+                                    ('false_northing', 'N'),
+                                    ('geographic_crs_name', 'S'),
+                                    ('geoid_name', 'S'),
+                                    ('geopotential_datum_name', 'S'),
+                                    ('grid_mapping_name', 'S'),
+                                    ('grid_north_pole_latitude', 'N'),
+                                    ('grid_north_pole_longitude', 'N'),
+                                    ('horizontal_datum_name', 'S'),
+                                    ('inverse_flattening', 'N'),
+                                    ('latitude_of_projection_origin', 'N'),
+                                    ('longitude_of_central_meridian', 'N'),
+                                    ('longitude_of_prime_meridian', 'N'),
+                                    ('longitude_of_projection_origin', 'N'),
+                                    ('north_pole_grid_longitude', 'N'),
+                                    ('perspective_point_height', 'N'),
+                                    ('prime_meridian_name', 'S'),
+                                    ('projected_crs_name', 'S'),
+                                    ('reference_ellipsoid_name', 'S'),
+                                    ('scale_factor_at_central_meridian', 'N'),
+                                    ('scale_factor_at_projection_origin', 'N'),
+                                    ('semi_major_axis', 'N'),
+                                    ('semi_minor_axis', 'N'),
+                                    ('standard_parallel', 'N'),
+                                    ('straight_vertical_longitude_from_pole', 'N'),
+                                    ('towgs84', 'N')])
+      return
+                                    
   #-------------------------------------
   def chkGridMappingVar(self, varName):
   #-------------------------------------
@@ -1095,6 +1204,10 @@ class CFChecker:
           if self.version >= vn1_4:
               # Extra grid_mapping_names at vn1.4
               validNames[len(validNames):] = ['lambert_cylindrical_equal_area','mercator','orthographic']
+
+          if self.version >= vn1_7:
+              # Extra grid_mapping_names at vn1.7
+              validNames[len(validNames):] = ['geostationary', 'oblique_mercator', 'sinusoidal']
               
           if var.grid_mapping_name not in validNames:
               self._add_error("Invalid grid_mapping_name: %s" % var.grid_mapping_name,
@@ -1106,6 +1219,45 @@ class CFChecker:
       if len(var.dimensions) != 0:
           self._add_warn("A grid mapping variable should have 0 dimensions",
                          varName, code="5.6")
+
+      for attribute in map(str, var.ncattrs()):
+
+          # Check type of attribute matches that specified in Appendix F: Table 1
+          attr_type = type(var.getncattr(attribute))
+
+          if isinstance(var.getncattr(attribute), basestring):
+              attr_type='S'
+
+          elif (numpy.issubdtype(attr_type, numpy.int) or
+                numpy.issubdtype(attr_type, numpy.float) or 
+                attr_type == numpy.ndarray):
+              attr_type='N'
+
+          else:
+              self._add_info("Unknown Type for attribute: %s %s" % (attribute, attr_type))
+              continue
+          
+          if (attribute in self.grid_mapping_attrs.keys() and 
+              attr_type != self.grid_mapping_attrs[attribute]):
+              self._add_error("Attribute %s of incorrect data type (Appendix F)" % attribute,
+                              varName, code="5.6")
+              
+      if self.version >= vn1_7:
+          if hasattr(var, 'crs_wkt'):
+              msg = "CF checker currently does not verify the syntax of the crs_wkt attribute " \
+                  "which must conform to the CRS WKT specification"
+              self._add_info(msg, varName, code="5.6")
+
+          # If any of these attributes are present then they all must be
+          l=['reference_ellipsoid_name', 'prime_meridian_name', 'horizontal_datum_name', 'geographic_crs_name']
+          if any(hasattr(var, x) for x in l) and not all(hasattr(var, x) for x in l):
+              msg = "reference_ellipsoid_name, prime_meridian_name, horizontal_datum_name " \
+                  "and geographic_crs_name must all be definied if any one is defined"
+              self._add_error(msg, varName, code="5.6")
+
+          if hasattr(var, 'projected_crs_name') and not hasattr(var, 'geographic_crs_name'):
+              self._add_error("projected_crs_name is defined therefore geographic_crs_name must be also",
+                              varName, code="5.6")
 
   #------------------------
   def setUpFormulas(self):
@@ -1119,8 +1271,11 @@ class CFChecker:
       self.alias['atmosphere_hybrid_sigma_pressure_coordinate']='hybrid_sigma_pressure'
       self.alias['hybrid_sigma_pressure']='hybrid_sigma_pressure'
       self.alias['atmosphere_hybrid_height_coordinate']='atmosphere_hybrid_height_coordinate'
+      self.alias['atmosphere_sleve_coordinate']='atmosphere_sleve_coordinate'
       self.alias['ocean_sigma_coordinate']='ocean_sigma_coordinate'
       self.alias['ocean_s_coordinate']='ocean_s_coordinate'
+      self.alias['ocean_s_coordinate_g1']='ocean_s_coordinate_g1'
+      self.alias['ocean_s_coordinate_g2']='ocean_s_coordinate_g2'
       self.alias['ocean_sigma_z_coordinate']='ocean_sigma_z_coordinate'
       self.alias['ocean_double_sigma_coordinate']='ocean_double_sigma_coordinate'
       
@@ -1128,22 +1283,87 @@ class CFChecker:
       self.formulas['atmosphere_ln_pressure_coordinate']=['p(k)=p0*exp(-lev(k))']
       self.formulas['sigma']=['p(n,k,j,i)=ptop+sigma(k)*(ps(n,j,i)-ptop)']
 
-      self.formulas['hybrid_sigma_pressure']=['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)'
-                                              ,'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
+      self.formulas['hybrid_sigma_pressure']=['p(n,k,j,i)=a(k)*p0+b(k)*ps(n,j,i)',
+                                              'p(n,k,j,i)=ap(k)+b(k)*ps(n,j,i)']
 
       self.formulas['atmosphere_hybrid_height_coordinate']=['z(n,k,j,i)=a(k)+b(k)*orog(n,j,i)']
 
+      self.formulas['atmosphere_sleve_coordinate']=['z(n,k,j,i) = a(k)*ztop + b1(k)*zsurf1(n,j,i) + b2(k)*zsurf2(n,j,i)']
+
       self.formulas['ocean_sigma_coordinate']=['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(depth(j,i)+eta(n,j,i))']
       
-      self.formulas['ocean_s_coordinate']=['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)'
-                                           ,'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
+      self.formulas['ocean_s_coordinate']=['z(n,k,j,i)=eta(n,j,i)*(1+s(k))+depth_c*s(k)+(depth(j,i)-depth_c)*C(k)',
+                                           'C(k)=(1-b)*sinh(a*s(k))/sinh(a)+b*[tanh(a*(s(k)+0.5))/(2*tanh(0.5*a))-0.5]']
 
-      self.formulas['ocean_sigma_z_coordinate']=['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))'
-                                                 ,'z(n,k,j,i)=zlev(k)']
+      self.formulas['ocean_s_coordinate_g1']=['z(n,k,j,i) = S(k,j,i) + eta(n,j,i) * (1 + S(k,j,i) / depth(j,i))',
+                                              'z(n,k,j,i) = S(k,j,i) + eta(n,j,i) * (1 + S(k,j,i) / depth(j,i))']
 
-      self.formulas['ocean_double_sigma_coordinate']=['z(k,j,i)=sigma(k)*f(j,i)'
-                                                      ,'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))'
-                                                      ,'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
+      self.formulas['ocean_s_coordinate_g2']=['z(n,k,j,i) = eta(n,j,i) + (eta(n,j,i) + depth(j,i)) * S(k,j,i)',
+                                              'S(k,j,i) = (depth_c * s(k) + depth(j,i) * C(k)) / (depth_c + depth(j,i))']
+
+      self.formulas['ocean_sigma_z_coordinate']=['z(n,k,j,i)=eta(n,j,i)+sigma(k)*(min(depth_c,depth(j,i))+eta(n,j,i))',
+                                                 'z(n,k,j,i)=zlev(k)']
+
+      self.formulas['ocean_double_sigma_coordinate']=['z(k,j,i)=sigma(k)*f(j,i)',
+                                                      'z(k,j,i)=f(j,i)+(sigma(k)-1)*(depth(j,i)-f(j,i))',
+                                                      'f(j,i)=0.5*(z1+z2)+0.5*(z1-z2)*tanh(2*a/(z1-z2)*(depth(j,i)-href))']
+
+      # Set up nested dictionary of:
+      # 1) valid standard_names for variables named by the formula_terms attribute
+      # 2) computed_standard_names (csn) for the variable specifying the formula_terms attribute
+
+      self.ft_var_stdnames=defaultdict(dict)
+
+      self.ft_var_stdnames['atmosphere_ln_pressure_coordinate'] = {'p0': ['reference_air_pressure_for_atmosphere_vertical_coordinate'],
+                                                                   'csn': ['air_pressure']}
+
+      self.ft_var_stdnames['sigma'] = {'ptop': ['air_pressure_at_top_of_atmosphere_model'],
+                                       'ps': ['surface_air_pressure'],
+                                       'csn': ['air_pressure']}
+
+      self.ft_var_stdnames['hybrid_sigma_pressure'] = {'p0': ['reference_air_pressure_for_atmosphere_vertical_coordinate'],
+                                                       'ps': ['surface_air_pressure'],
+                                                       'csn': ['air_pressure']}
+
+      self.ft_var_stdnames['atmosphere_hybrid_height_coordinate'] = {'orog': ['surface_altitude', 'surface_height_above_geopotential_datum'],
+                                                                     'a': ['atmosphere_hybrid_height_coordinate'],
+                                                                     'csn': ['altitude', 'height_above_geopotential_datum']}
+
+      self.ft_var_stdnames['atmosphere_sleve_coordinate'] = {'ztop': ['altitude_at_top_of_atmosphere_model', 'height_above_geopotential_datum_at_top_of_atmosphere_model'],
+                                                             'csn': ['altitude', 'height_above_geopotential_datum']}
+
+      self.ft_var_stdnames['ocean_sigma_coordinate'] = {'eta': ['set'], 'depth': ['set'], 'csn': ['set']}
+      self.ft_var_stdnames['ocean_s_coordinate'] = {'eta': ['set'], 'depth': ['set'], 'csn': ['set']}
+      self.ft_var_stdnames['ocean_s_coordinate_g1'] = {'eta': ['set'], 'depth': ['set'], 'csn': ['set']}
+      self.ft_var_stdnames['ocean_s_coordinate_g2'] = {'eta': ['set'], 'depth': ['set'], 'csn': ['set']}
+      self.ft_var_stdnames['ocean_sigma_z_coordinate'] = {'eta': ['set'], 'depth': ['set'], 'zlev': ['set'], 'csn': ['set']}
+      self.ft_var_stdnames['ocean_double_sigma_coordinate'] = {'depth': ['set'], 'csn': ['set']}
+
+      self.ft_stdname_sets=defaultdict(dict)
+      self.ft_stdname_sets[0] = {'zlev': ['altitude'],
+                                 'eta': ['sea_surface_height_above_geoid'],
+                                 'depth': ['sea_floor_depth_below_geoid'],
+                                 'csn': ['altitude']}
+
+      self.ft_stdname_sets[1] = {'zlev': ['height_above_geopotential_datum'],
+                                 'eta': ['sea_surface_height_above_geopotential_datum'],
+                                 'depth': ['sea_floor_depth_below_geopotential_datum'],
+                                 'csn': ['height_above_geopotential_datum']}
+
+      self.ft_stdname_sets[2] ={'zlev': ['height_above_reference_ellipsoid'],
+                                'eta': ['sea_surface_height_above_reference_ellipsoid'],
+                                'depth': ['sea_floor_depth_below_reference_ellipsoid'],
+                                'csn': ['height_above_reference_ellipsoid']}
+
+      self.ft_stdname_sets[3] = {'zlev': ['height_above_mean_sea_level'],
+                                 'eta': ['sea_surface_height_above_mean_ sea_level'],
+                                 'depth': ['sea_floor_depth_below_mean_ sea_level'],
+                                 'csn': ['height_above_mean_sea_level']}
+
+      
+      
+      
+
 
       
   #----------------------------------------
@@ -1223,7 +1443,6 @@ class CFChecker:
     # External variables
     if self.version >= vn1_7 and hasattr(self.f, 'external_variables'):
         external_vars = self.f.external_variables
-
         if not self.parseBlankSeparatedList(external_vars) :
             self._add_error("external_variables attribute must be a blank separated list of variable names",
                             code="2.6.3")
@@ -1720,9 +1939,18 @@ class CFChecker:
                     variable=splitIter.next()
 
                     if variable not in self.f.variables:
-                        self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
-                                       "This is strictly an error if the cell_measures variable is not included in the dataset.", 
-                                       varName, code="7.2")
+                        if self.version >= vn1_7:
+                            # Variable must exist in the file or be named by the external_variables attribute
+                            msg = "cell_measures variable %s must either exist in this netCDF file " \
+                                "or be named by the external_variables attribute" % variable
+                            if not hasattr(self.f, 'external_variables'):
+                                self._add_error(msg, varName, code="7.2")
+                            elif variable not in string.split(self.f.external_variables):
+                                self._add_error(msg, varName, code="7.2")
+                        else:
+                            self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
+                                           "This is strictly an error if the cell_measures variable is not included in the dataset.", 
+                                           varName, code="7.2")
                         
                     else:
                         # Valid variable name in cell_measures so carry on with tests.    
@@ -1754,7 +1982,7 @@ class CFChecker:
   #----------------------------------
   def chkFormulaTerms(self,varName,allCoordVars):
   #----------------------------------
-    """Checks on formula_terms attribute (CF Section 4.3.2):
+    """Checks on formula_terms attribute (CF Section 4.3.3):
     formula_terms = var: term var: term ...
     1) No standard_name present
     2) No formula defined for std_name
@@ -1764,47 +1992,108 @@ class CFChecker:
     
     if hasattr(var, 'formula_terms'):
 
+        if self.version >= vn1_7:
+            # CF conventions document reorganised - section no. has changed
+            scode = "4.3.3"
+        else:
+            scode = "4.3.2"
+
         if varName not in allCoordVars:
-            self._add_error("formula_terms attribute only allowed on coordinate variables", varName, code="4.3.2")
+            self._add_error("formula_terms attribute only allowed on coordinate variables", varName, code=scode)
             
         # Get standard_name to determine which formula is to be used
         if not hasattr(var, 'standard_name'):
-            self._add_error("Cannot get formula definition as no standard_name", varName, code="4.3.2")
+            self._add_error("Cannot get formula definition as no standard_name", varName, code=scode)
             # No sense in carrying on as can't validate formula_terms without valid standard name
             return
-
 
         (stdName,modifier) = self.getStdName(var)
         
         if not self.alias.has_key(stdName):
-            self._add_error("No formula defined for standard name: %s" % stdName, varName, code="4.3.2")
+            self._add_error("No formula defined for standard name: %s" % stdName, varName, code=scode)
             # No formula available so can't validate formula_terms
             return
 
         index=self.alias[stdName]
 
+        if self.version >= vn1_7:
+            # Check computed_standard_name is valid
+            setname=None
+            if hasattr(var, 'computed_standard_name'):
+                csn = var.computed_standard_name
+                if self.ft_var_stdnames[index]['csn'][0] == 'set':
+                    # Check which set
+                    for key in self.ft_stdname_sets.keys():
+                        if csn in self.ft_stdname_sets[key]['csn']:
+                            # Found
+                            setname = key
+
+                elif csn not in self.ft_var_stdnames[index]['csn']:
+                    self._add_error("Invalid computed_standard_name: %s" % csn, varName, code=scode)
+
         formulaTerms=var.formula_terms
         if not re.search("^([a-zA-Z0-9_]+: +[a-zA-Z0-9_]+( +)?)*$",formulaTerms):
-            self._add_error("Invalid formula_terms syntax", varName, code="4.3.2")
+            self._add_error("Invalid formula_terms syntax", varName, code=scode)
         else:
             # Need to validate the term & var
-            split=string.split(formulaTerms)
-            for x in split[:]:
-                if not re.search("^[a-zA-Z0-9_]+:$", x):
-                    # Variable - should be declared in netCDF file
-                    if x not in self.f.variables.keys():
-                        self._add_error("%s is not declared as a variable" % x, varName, code="4.3.2")
-                else:
+            iter_obj=iter(formulaTerms.split())
+            while True:
+                try:
+                    term = iter_obj.next()
+                    term=re.sub(':','',term)
+
+                    ftvar = iter_obj.next()
+                    
                     # Term - Should be present in formula
-                    x=re.sub(':','',x)
                     found='false'
                     for formula in self.formulas[index]:
-                        if re.search(x,formula):
+                        if re.search(term,formula):
                             found='true'
                             break
 
                     if found == 'false':
-                        self._add_error("term %s not present in formula" % x, varName, code="4.3.2")
+                        self._add_error("Formula term %s not present in formula for %s" % (term, stdName), varName, code=scode)
+
+                    # Variable - should be declared in netCDF file
+                    if ftvar not in self.f.variables.keys():
+                        self._add_error("%s is not declared as a variable" % ftvar, varName, code=scode)
+                    elif ftvar == varName:
+                        # var is the variable specifying the formula_terms attribute
+                        pass
+                    else:
+                        if self.version >= vn1_7:
+                            # Check that standard_name of formula term is consistent with that
+                            # of the coordinate variable
+                            if hasattr(self.f.variables[ftvar], 'standard_name'):
+#                                print "RSH: index -%s, ftvar - %s, term - %s" % (index, ftvar, term)
+#                                print "RSH ftvar.standard_name:", self.f.variables[ftvar].standard_name
+                                try:
+                                    valid_stdnames=self.ft_var_stdnames[index][term]
+                                except KeyError:
+                                    # No standard_name specified for this formula_term
+                                    continue
+
+                                if valid_stdnames[0] == 'set':
+                                    if setname is None:
+                                        for key in self.ft_stdname_sets.keys():
+                                            if self.f.variables[ftvar].standard_name in self.ft_stdname_sets[key][term]:
+                                                # Found
+                                                if not setname:
+                                                    setname = key
+                                                elif setname != key:
+                                                    # standard_names of formula_terms vars are inconsistent
+                                                    self._add_error("Standard names of formula_terms variables are inconsistent/invalid", varName, code=scode)
+                                                    break
+                                    else:
+                                        if not self.f.variables[ftvar].standard_name in self.ft_stdname_sets[setname][term]:
+                                            self._add_error("Standard names of formula_terms variables are inconsistent/invalid", varName, code=scode)
+
+                                elif self.f.variables[ftvar].standard_name not in valid_stdnames:
+                                    self._add_error("Standard name of variable %s inconsistent with that of %s" % (ftvar, varName),
+                                                    varName, code=scode)
+
+                except StopIteration:
+                    break
 
   #----------------------------------------
   def chkUnits(self,varName,allCoordVars):
@@ -1944,6 +2233,17 @@ class CFChecker:
       if hasattr(var, 'valid_range'):
           if hasattr(var, 'valid_min') or hasattr(var, 'valid_max'):
               self._add_error("Illegal use of valid_range and valid_min/valid_max", varName, code="2.5.1")
+
+  
+  #------------------------------------------
+  def chkComputedStandardName(self, varName):
+  #------------------------------------------
+      """Check if var computed_standard_name attribute that it also has formula_terms attribute"""
+      var= self.f.variables[varName]
+      
+      if hasattr(var, 'computed_standard_name') and not hasattr(var, 'formula_terms'):
+          self._add_error("computed_standard_name attribute is only allowed on a coordinate variable which has a formula_terms attribute",
+                          varName, code="4.3.3")
 
   #---------------------------------
   def chkActualRange(self, varName):

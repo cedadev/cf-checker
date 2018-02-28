@@ -14,7 +14,7 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="3.0.6-dev";
-$standardNameVN="48 (2017-11-28T15:32:48Z)";
+$standardNameVN="49 (2018-02-13T08:44:33Z)";
 
 $TEST_FILES_DIR="/home/ros/puma2/git-projects/cf-checker/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";

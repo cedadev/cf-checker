@@ -1,14 +1,26 @@
-CHECKING NetCDF FILE: CRM026_test2.nc
+CHECKING NetCDF FILE: example_5.10.nc
 =====================
 Using CF Checker Version 3.0.6-dev
-Checking against CF Version CF-1.0
+Checking against CF Version CF-1.7
 Using Standard Name Table Version 49 (2018-02-13T08:44:33Z)
+Using Area Type Table Version 6 (22 February 2017)
 Using Standardized Region Name Table Version 2 (12 June 2013)
 
 
 ------------------
-Checking variable: FR_LAND
+Checking variable: x
 ------------------
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: y
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: z
+------------------
+ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lat
@@ -19,25 +31,21 @@ Checking variable: lon
 ------------------
 
 ------------------
-Checking variable: rlat
+Checking variable: temp
 ------------------
 
 ------------------
-Checking variable: rlon
+Checking variable: pres
 ------------------
 
 ------------------
-Checking variable: rotated_pole
+Checking variable: crsOSGB
 ------------------
 
 ------------------
-Checking variable: time
+Checking variable: crsWGS84
 ------------------
 
-------------------
-Checking variable: time_bnds
-------------------
-
-ERRORS detected: 0
+ERRORS detected: 3
 WARNINGS given: 0
 INFORMATION messages: 0
