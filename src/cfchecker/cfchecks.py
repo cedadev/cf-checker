@@ -2653,7 +2653,7 @@ class CFChecker:
                                   varName, code="3.5")
                   
               # flag_values values must be mutually exclusive
-              if type(values) == str:
+              if isinstance(values, basestring):
                   values = values.split()
 
               if not self.uniqueList(values):
