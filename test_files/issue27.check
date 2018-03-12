@@ -1,0 +1,707 @@
+CHECKING NetCDF FILE: issue27.nc
+=====================
+Using CF Checker Version 3.0.6-dev
+Checking against CF Version CF-1.6
+Using Standard Name Table Version 49 (2018-02-13T08:44:33Z)
+Using Area Type Table Version 6 (22 February 2017)
+Using Standardized Region Name Table Version 2 (12 June 2013)
+
+ERROR: (5): coordinates attribute referencing non-existent variable
+ERROR: (5.3): Invalid syntax for 'coordinates' attribute
+
+------------------
+Checking variable: obs_id
+------------------
+ERROR: (2.2): Invalid variable type: <type 'netCDF4._netCDF4.VLType'>: string type (vlen types not supported)
+
+------------------
+Checking variable: fov_obs_id
+------------------
+ERROR: (2.2): Invalid variable type: <type 'netCDF4._netCDF4.VLType'>: string type (vlen types not supported)
+
+------------------
+Checking variable: obs_time_tai93
+------------------
+
+------------------
+Checking variable: obs_time_utc
+------------------
+INFO: Invalid Type for attribute: _FillValue <type 'numpy.uint16'>
+
+------------------
+Checking variable: lat
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lat_geoid
+------------------
+
+------------------
+Checking variable: fov_lat
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lon
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lon_geoid
+------------------
+
+------------------
+Checking variable: fov_lon
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lat_bnds
+------------------
+WARN: (7.1): Boundary Variable lat_bnds should not have _FillValue attribute
+
+------------------
+Checking variable: fov_lat_bnds
+------------------
+WARN: (7.1): Boundary Variable fov_lat_bnds should not have _FillValue attribute
+
+------------------
+Checking variable: lon_bnds
+------------------
+WARN: (7.1): Boundary Variable lon_bnds should not have _FillValue attribute
+
+------------------
+Checking variable: fov_lon_bnds
+------------------
+WARN: (7.1): Boundary Variable fov_lon_bnds should not have _FillValue attribute
+
+------------------
+Checking variable: land_frac
+------------------
+
+------------------
+Checking variable: fov_land_frac
+------------------
+
+------------------
+Checking variable: surf_alt
+------------------
+
+------------------
+Checking variable: fov_surf_alt
+------------------
+
+------------------
+Checking variable: surf_alt_sdev
+------------------
+
+------------------
+Checking variable: fov_surf_alt_sdev
+------------------
+
+------------------
+Checking variable: sun_glint_lat
+------------------
+
+------------------
+Checking variable: sun_glint_lon
+------------------
+
+------------------
+Checking variable: sol_zen
+------------------
+
+------------------
+Checking variable: sol_azi
+------------------
+
+------------------
+Checking variable: sun_glint_dist
+------------------
+
+------------------
+Checking variable: view_ang
+------------------
+
+------------------
+Checking variable: sat_zen
+------------------
+
+------------------
+Checking variable: sat_azi
+------------------
+
+------------------
+Checking variable: sat_range
+------------------
+
+------------------
+Checking variable: asc_flag
+------------------
+INFO: Invalid Type for attribute: _FillValue <type 'numpy.uint8'>
+
+------------------
+Checking variable: subsat_lat
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: subsat_lon
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: scan_mid_time
+------------------
+
+------------------
+Checking variable: sat_alt
+------------------
+
+------------------
+Checking variable: sat_pos
+------------------
+
+------------------
+Checking variable: sat_vel
+------------------
+
+------------------
+Checking variable: sat_att
+------------------
+
+------------------
+Checking variable: local_solar_time
+------------------
+
+------------------
+Checking variable: mean_anom_wrt_equat
+------------------
+
+------------------
+Checking variable: sat_sol_zen
+------------------
+
+------------------
+Checking variable: sat_sol_azi
+------------------
+
+------------------
+Checking variable: asc_node_lon
+------------------
+
+------------------
+Checking variable: asc_node_tai93
+------------------
+
+------------------
+Checking variable: asc_node_local_solar_time
+------------------
+
+------------------
+Checking variable: solar_beta_angle
+------------------
+
+------------------
+Checking variable: attitude_lbl
+------------------
+ERROR: (2.2): Invalid variable type: <type 'netCDF4._netCDF4.VLType'>: string type (vlen types not supported)
+WARN: (2.2): Could not get typecode of variable.  Variable types supported are: char, byte, short, int, float, real, double
+
+------------------
+Checking variable: spatial_lbl
+------------------
+ERROR: (2.2): Invalid variable type: <type 'netCDF4._netCDF4.VLType'>: string type (vlen types not supported)
+
+------------------
+Checking variable: utc_tuple_lbl
+------------------
+ERROR: (2.2): Invalid variable type: <type 'netCDF4._netCDF4.VLType'>: string type (vlen types not supported)
+
+------------------
+Checking variable: air_temp
+------------------
+
+------------------
+Checking variable: air_temp_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: air_temp_err
+------------------
+
+------------------
+Checking variable: surf_air_temp
+------------------
+
+------------------
+Checking variable: surf_air_temp_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: surf_air_temp_err
+------------------
+
+------------------
+Checking variable: air_temp_dof
+------------------
+
+------------------
+Checking variable: h2o_vap_tot
+------------------
+
+------------------
+Checking variable: h2o_vap_tot_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: h2o_vap_tot_err
+------------------
+
+------------------
+Checking variable: h2o_mmr
+------------------
+
+------------------
+Checking variable: h2o_mmr_qc
+------------------
+
+------------------
+Checking variable: h2o_mmr_err
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_qc
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_err
+------------------
+
+------------------
+Checking variable: h2o_vap_dof
+------------------
+
+------------------
+Checking variable: rel_hum
+------------------
+
+------------------
+Checking variable: rel_hum_qc
+------------------
+
+------------------
+Checking variable: rel_hum_err
+------------------
+
+------------------
+Checking variable: surf_rel_hum
+------------------
+
+------------------
+Checking variable: surf_rel_hum_qc
+------------------
+
+------------------
+Checking variable: surf_rel_hum_err
+------------------
+
+------------------
+Checking variable: h2o_mmr_sat_ice
+------------------
+ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
+
+------------------
+Checking variable: h2o_mmr_sat_ice_qc
+------------------
+
+------------------
+Checking variable: h2o_mmr_sat_ice_err
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_sat_ice
+------------------
+ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
+
+------------------
+Checking variable: surf_h2o_mmr_sat_ice_qc
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_sat_ice_err
+------------------
+
+------------------
+Checking variable: h2o_mmr_sat_liq
+------------------
+
+------------------
+Checking variable: h2o_mmr_sat_liq_qc
+------------------
+
+------------------
+Checking variable: h2o_mmr_sat_liq_err
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_sat_liq
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_sat_liq_qc
+------------------
+
+------------------
+Checking variable: surf_h2o_mmr_sat_liq_err
+------------------
+
+------------------
+Checking variable: gp_hgt
+------------------
+INFO: attribute axis is being used in a non-standard way
+
+------------------
+Checking variable: gp_hgt_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: gp_hgt_err
+------------------
+
+------------------
+Checking variable: surf_gp_hgt
+------------------
+
+------------------
+Checking variable: surf_gp_hgt_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: surf_gp_hgt_err
+------------------
+
+------------------
+Checking variable: o3_tot
+------------------
+
+------------------
+Checking variable: o3_tot_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: o3_tot_err
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: o3_vmr
+------------------
+
+------------------
+Checking variable: o3_vmr_qc
+------------------
+
+------------------
+Checking variable: o3_vmr_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: o3_dof
+------------------
+
+------------------
+Checking variable: co_vmr_midtrop
+------------------
+
+------------------
+Checking variable: co_vmr_midtrop_qc
+------------------
+
+------------------
+Checking variable: co_vmr_midtrop_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: co_dof
+------------------
+
+------------------
+Checking variable: ch4_tot
+------------------
+
+------------------
+Checking variable: ch4_tot_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: ch4_tot_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: ch4_vmr
+------------------
+
+------------------
+Checking variable: ch4_vmr_qc
+------------------
+
+------------------
+Checking variable: ch4_vmr_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: ch4_dof
+------------------
+
+------------------
+Checking variable: mw_cld_phase
+------------------
+
+------------------
+Checking variable: h2o_liq_tot
+------------------
+
+------------------
+Checking variable: h2o_liq_tot_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: h2o_liq_tot_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: h2o_liq_mol_lay
+------------------
+
+------------------
+Checking variable: h2o_liq_mol_lay_qc
+------------------
+
+------------------
+Checking variable: h2o_liq_mol_lay_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: surf_temp
+------------------
+
+------------------
+Checking variable: surf_temp_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: surf_temp_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: surf_temp_dof
+------------------
+
+------------------
+Checking variable: surf_emis_ir
+------------------
+
+------------------
+Checking variable: surf_emis_ir_qc
+------------------
+
+------------------
+Checking variable: surf_emis_ir_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: surf_refl_ir
+------------------
+
+------------------
+Checking variable: surf_refl_ir_qc
+------------------
+
+------------------
+Checking variable: surf_emis_ir_freq_cnt
+------------------
+
+------------------
+Checking variable: surf_emis_ir_freq
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: surf_emis_mw
+------------------
+
+------------------
+Checking variable: surf_emis_mw_qc
+------------------
+
+------------------
+Checking variable: surf_emis_mw_err
+------------------
+ERROR: (3.3): Invalid standard_name modifier: error_estimate
+
+------------------
+Checking variable: cld_frac_tot
+------------------
+
+------------------
+Checking variable: cld_frac
+------------------
+
+------------------
+Checking variable: cld_frac_qc
+------------------
+
+------------------
+Checking variable: cld_top_pres
+------------------
+
+------------------
+Checking variable: cld_top_pres_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: cld_top_temp
+------------------
+
+------------------
+Checking variable: cld_top_temp_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: olr
+------------------
+
+------------------
+Checking variable: olr_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: olr_band
+------------------
+
+------------------
+Checking variable: olr_clr
+------------------
+
+------------------
+Checking variable: olr_clr_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: olr_clr_band
+------------------
+
+------------------
+Checking variable: tpause_gp_hgt
+------------------
+
+------------------
+Checking variable: tpause_gp_hgt_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: tpause_pres
+------------------
+
+------------------
+Checking variable: tpause_pres_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: tpause_temp
+------------------
+
+------------------
+Checking variable: tpause_temp_qc
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: bndry_lyr_top
+------------------
+
+------------------
+Checking variable: bndry_lyr_top_qc
+------------------
+
+------------------
+Checking variable: surf_indx
+------------------
+
+------------------
+Checking variable: lev_100
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lev_h2o
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lay_100
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+
+------------------
+Checking variable: lay_100_bnds
+------------------
+WARN: (7.1): Boundary Variable lay_100_bnds should not have _FillValue attribute
+ERROR: (7.3): Invalid syntax for cell_methods attribute
+
+------------------
+Checking variable: olr_freq
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+
+------------------
+Checking variable: olr_freq_bnds
+------------------
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
+WARN: (7.1): Boundary Variable olr_freq_bnds should not have _FillValue attribute
+
+------------------
+Checking variable: mw_surf_class
+------------------
+
+------------------
+Checking variable: surf_freq_mw
+------------------
+INFO: attribute _FillValue is being used in a non-standard way
+WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
+ERROR: (4.4): Invalid units and/or reference time
+
+ERRORS detected: 41
+WARNINGS given: 8
+INFORMATION messages: 14
