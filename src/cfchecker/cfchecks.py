@@ -46,6 +46,7 @@ import re, string, types, numpy
 
 from netCDF4 import Dataset as netCDF4_Dataset
 from netCDF4 import Variable as netCDF4_Variable
+from netCDF4 import VLType as netCDF4_VLType
 
 from cfunits import Units
 
@@ -580,6 +581,16 @@ class CFChecker:
 
     self._add_debug("Axes: %s" % axes)
 
+    valid_types=[numpy.character, 
+                 numpy.dtype('c'),
+                 numpy.dtype('b'),
+                 numpy.dtype('i4'),
+                 numpy.int32,
+                 numpy.float32,
+                 numpy.double,
+                 'int16',
+                 'float32']
+
     # Check each variable
     for var in self.f.variables.keys():
 
@@ -592,6 +603,14 @@ class CFChecker:
 
         if not self.validName(var):
             self._add_error("Invalid variable name", var, code='2.3')
+
+        dt = self.f.variables[var].dtype
+        if dt not in valid_types:
+            try:
+                if isinstance(self.f.variables[var].datatype, netCDF4_VLType):
+                    self._add_error("Invalid variable type: {} (vlen types not supported)".format(self.f.variables[var].datatype), var, code="2.2")
+            except:
+                self._add_error("Invalid variable type: {}".format(dt), var, code="2.2")
 
         # Check to see if a variable with this name already exists (case-insensitive)
         lowerVar=var.lower()
@@ -1234,7 +1253,7 @@ class CFChecker:
               attr_type='N'
 
           else:
-              self._add_info("Unknown Type for attribute: %s %s" % (attribute, attr_type))
+              self._add_info("Invalid Type for attribute: %s %s" % (attribute, attr_type))
               continue
           
           if (attribute in self.grid_mapping_attrs.keys() and 
@@ -1623,8 +1642,22 @@ class CFChecker:
  #         return obj.dtype.char
 
  #     print "RSH: type ", obj.dtype.char
- 
-      return obj.dtype.char
+
+      if isinstance(obj, netCDF4_Variable):
+          # Variable object
+          if isinstance(obj.datatype, netCDF4_VLType):
+              # VLEN types not supported
+              return 'vlen'
+          
+          try:
+              typecode = obj.dtype.char
+          except AttributeError as e:
+              self._add_warn("Problem getting typecode: {}".format(e), obj.name)
+      else:
+          # Attribute object
+          typecode = obj.dtype.char
+          
+      return typecode
 
 
   #-------------------------------------------------------
@@ -1640,7 +1673,14 @@ class CFChecker:
                         varName)
         return
 
-    value=var.getncattr(attribute)
+    try:
+        value=var.getncattr(attribute)
+    except KeyError as e:
+        self._add_error("{} - {}".format(attribute,e), varName, code="2.2")
+        if self.AttrList.has_key(attribute):
+            # This is a standard attribute so inform user no further checks being made on it
+            self._add_info("No further checks made on attribute: {}".format(attribute), varName)
+        return
 
     self._add_debug("chkAttribute: Checking attribute - %s" % attribute, varName)
  
@@ -1661,7 +1701,7 @@ class CFChecker:
         elif attrType == types.NoneType:
             attrType='NoneType'
         else:
-            self._add_info("Unknown Type for attribute: %s %s" % (attribute, attrType))
+            self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
@@ -2183,12 +2223,15 @@ class CFChecker:
               
               #print "RSH: in allCoordVars"
               # Label variables do not require units attribute
-              if self.f.variables[varName].dtype.char != 'S':
-                  if hasattr(var, 'axis'):
-                      if not var.axis == 'Z':
+              try:
+                  if self.f.variables[varName].dtype.char != 'S':
+                      if hasattr(var, 'axis'):
+                          if not var.axis == 'Z':
+                              self._add_warn("units attribute should be present", varName, code="3.1")
+                      elif not hasattr(var,'positive') and not hasattr(var,'formula_terms') and not hasattr(var,'compress'):
                           self._add_warn("units attribute should be present", varName, code="3.1")
-                  elif not hasattr(var,'positive') and not hasattr(var,'formula_terms') and not hasattr(var,'compress'):
-                      self._add_warn("units attribute should be present", varName, code="3.1")
+              except:
+                  pass
 
           elif varName not in self.boundsVars and varName not in self.climatologyVars and varName not in self.gridMappingVars:
               # Variable is not a boundary or climatology variable

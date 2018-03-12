@@ -38,7 +38,7 @@ do
   then 
     # CF-1.4
     $cfchecker -s $std_name_table -a $area_table -v 1.4 $file > $outdir/$file.out 2>&1
-  elif [[ $file == "CF_1_7.nc" || $file == "example_6.2.nc" || $file == "example_5.10.nc" ]]
+  elif [[ $file == "CF_1_7.nc" || $file == "example_6.2.nc" || $file == "example_5.10.nc" || $file = "issue27.nc" ]]
   then
     # Run checker using the CF version specified in the conventions attribute of the file
     $cfchecker -s $std_name_table -v auto $file > $outdir/$file.out 2>&1
