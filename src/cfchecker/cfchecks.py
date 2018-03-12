@@ -1042,7 +1042,7 @@ class CFChecker:
 #                            self._add_warn("Data for variable %s lies outside cell boundaries" % var,
 #                                           var, code="7.1")
 #                    else:
-                    for i, value in enumerate(varData):
+                    for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
                             if not (boundsData[i][0] <= value <= boundsData[i][1]):
                                 self._add_warn("Data for variable %s lies outside cell boundaries" % var,
