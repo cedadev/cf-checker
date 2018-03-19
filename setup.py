@@ -39,4 +39,5 @@ setup(name='cfchecker',
       entry_points= {
         'console_scripts': ['cfchecks = cfchecker.cfchecks:main'],
         },
+      scripts=['src/cf-checker']
       )
