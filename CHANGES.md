@@ -3,6 +3,18 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## March 2018
+
+CF Checker release 3.1.0
+
+This is a development release to include addition checks for CF-1.7 comformance.
+
+### Other Noteworthy Changes
+
+[#35](https://github.com/cedadev/cf-checker/issues/35): Improve execution speed
+
+[#29](https://github.com/cedadev/cf-checker/issues/29): Include checks against region names table
+
 ## 03.05.2017
 
 CF Checker release 3.0.1

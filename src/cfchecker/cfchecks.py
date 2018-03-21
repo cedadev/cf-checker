@@ -2664,6 +2664,14 @@ class CFChecker:
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
 
+              if hasattr(var, 'positive'):
+                  # Check that positive attribute is consistent with sign implied by standard_name
+                  if (re.match("height", name, re.I) and not re.match("up", var.positive, re.I)) or \
+                          (re.match("depth", name, re.I) and not re.match("down", var.positive, re.I)):
+                      self._add_warn("Positive attribute inconsistent with sign conventions implied by the standard_name",
+                                     varName, code="4.3")
+
+
   #---------------------------------  
   def getStringValue(self, varName):
   #---------------------------------

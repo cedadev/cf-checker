@@ -1,6 +1,6 @@
 CHECKING NetCDF FILE: CF_1_7.nc
 =====================
-Using CF Checker Version 3.0.6-dev
+Using CF Checker Version 3.1.0-rc1
 Checking against CF Version CF-1.7
 Using Standard Name Table Version 50 (2018-03-14T11:01:19Z)
 Using Area Type Table Version 7 (14 March 2018)
@@ -20,6 +20,8 @@ ERROR: (5): co-ordinate variable not monotonic
 ------------------
 Checking variable: depth
 ------------------
+WARN: (4.3): Positive attribute inconsistent with sign conventions implied by the standard_name
+ERROR: (3.1): Units are not consistent with those given in the standard_name table.
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
@@ -128,6 +130,6 @@ Checking variable: crs
 ERROR: (5.6): Attribute longitude_of_prime_meridian of incorrect data type (Appendix F)
 ERROR: (5.6): reference_ellipsoid_name, prime_meridian_name, horizontal_datum_name and geographic_crs_name must all be definied if any one is defined
 
-ERRORS detected: 24
-WARNINGS given: 3
+ERRORS detected: 25
+WARNINGS given: 4
 INFORMATION messages: 2

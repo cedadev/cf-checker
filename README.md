@@ -42,14 +42,17 @@ Alternatively, to install from source:
      
 ## Running the CF Checker
 
-`cfchecks [-a area_types.xml] [-s standard_names.xml] [-t cache_time_days ] [-v CFVersion] [-x] [--cachedir <dir>] file1 [file2...]`
+`cfchecks [-a <area-types.xml>] [-r <regions.xml>] [-s <std_names.xml>] [-v <CFVersion>] [-x] [-t <cache_time_days>] file1 [file2...]`
+
+For further details and for other available command line options please see the help by running `cfchecks -h`
 
 ### Environment Variables
 
 The following parameters can be set on the command-line or through environment variables:
 
-1. `CF_STANDARD_NAMES` (or CL option `-s`) : The path or URL to the CF standard names table
-2. `CF_AREA_TYPES` or (CL option `-a`) : The path or URL to the CF area types tables
+1. `CF_STANDARD_NAMES` or (CL option `-s`) : The path or URL to the CF standard names table
+2. `CF_AREA_TYPES` or (CL option `-a`) : The path or URL to the CF area types table
+3. `CF_REGION_NAMES` or (CL option `-r`): The path or URL to the CF region names table
 
 ### Wrapper script
 
@@ -64,7 +67,7 @@ The wrapper is maintained by CEDA and not by NCAS CMS.
 
 ### Running the Test script
 
-In the release tarball there is a `test_files` directory containing a `test.sh` script which runs a series of test files through the CF Checker and confirms the checker is working as expected.  It is a very elementary system, which will be rewritten soon.  Before running it you will need to edit the location of the cfchecker script in the `tests.sh` file:
+In the release tarball there is a `test_files` directory containing a `test.sh` script which runs a series of test files through the CF Checker and confirms the checker is working as expected.  It is a very elementary system, which will be rewritten soon.  Before running it you will need to edit the location of the cfchecks script in the `tests.sh` file:
 
     cfchecker="<location of cfchecks>"
 

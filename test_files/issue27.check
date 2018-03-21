@@ -1,6 +1,6 @@
 CHECKING NetCDF FILE: issue27.nc
 =====================
-Using CF Checker Version 3.0.6-dev
+Using CF Checker Version 3.1.0-rc1
 Checking against CF Version CF-1.6
 Using Standard Name Table Version 50 (2018-03-14T11:01:19Z)
 Using Area Type Table Version 7 (14 March 2018)

@@ -13,7 +13,7 @@
 #           Before running simply alter the variables $checkerVN and
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
-$checkerVN="3.0.6-dev";
+$checkerVN="3.1.0-rc1";
 $standardNameVN="50 (2018-03-14T11:01:19Z)";
 $areaTypeVN="7 (14 March 2018)";
 
