@@ -14,9 +14,10 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="3.0.6-dev";
-$standardNameVN="49 (2018-02-13T08:44:33Z)";
+$standardNameVN="50 (2018-03-14T11:01:19Z)";
+$areaTypeVN="7 (14 March 2018)";
 
-$TEST_FILES_DIR="/home/ros/puma2/git-projects/cf-checker/test_files";
+$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
 foreach $file (<*.check>) {
@@ -36,6 +37,8 @@ foreach $file (<*.check>) {
 	    } else {
 		push (@new_file, "Using Standard Name Table Version $standardNameVN\n");
 	    }
+        } elsif (/Using Area Type Table/) {
+            push (@new_file, "Using Area Type Table Version $areaTypeVN\n");
 	} else {
 	    push (@new_file, "$_");
 	}
