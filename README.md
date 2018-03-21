@@ -42,7 +42,7 @@ Alternatively, to install from source:
      
 ## Running the CF Checker
 
-`cfchecks [-a|--area_types area_types.xml] [-s|--cf_standard_names standard_names.xml] [-v|--version CFVersion] file1 [file2...]`
+`cfchecks [-a area_types.xml] [-s standard_names.xml] [-t cache_time_days ] [-v CFVersion] [-x] [--cachedir <dir>] file1 [file2...]`
 
 ### Environment Variables
 
