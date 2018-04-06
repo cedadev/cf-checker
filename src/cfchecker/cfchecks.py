@@ -80,6 +80,25 @@ def normalize_whitespace(text):
     return ' '.join(text.split())
 
 
+def isnt_str_or_basestring(thing):
+    """
+    check if the passed in thing is a str, or if running under python 2,
+    a basestring
+    """
+
+    if sys.version_info[:2] < (3,0):
+      return not isinstance(thing, str) and not isinstance(thing, basestring)
+    else:
+      return not isinstance(thing, str)
+
+def is_str_or_basestring(thing):
+    """
+    check if the passed in thing is a str, or if running under python 2,
+    a basestring
+    """
+
+    return not isnt_str_or_basestring(thing)
+
 class CFVersion(object):
     """A CF version number, stored as a tuple, that can be instantiated with 
     a tuple or a string, written out as a string, and compared with another version"""
@@ -100,9 +119,11 @@ class CFVersion(object):
             return False
 
     def __str__(self):
-        return "CF-%s" % string.join(map(str, self.tuple), ".")
+        return "CF-%s" % ".".join(map(str, self.tuple))
+
 
     def __cmp__(self, other):
+
         # maybe overkill but allow for different lengths in future e.g. 3.2 and 3.2.1
         pos = 0
         while True:
@@ -121,6 +142,16 @@ class CFVersion(object):
                 else:  # not in_s and not in_o
                     return 0  # e.g. 3.2 == 3.2
             pos += 1
+
+    def __ge__(self, other):
+        if self.__cmp__(other) >= 0:
+	        return True
+        return False
+
+    def __lt__(self, other):
+        if self.__cmp__(other) < 0:
+            return True
+        return False
 
 vn1_0 = CFVersion((1, 0))
 vn1_1 = CFVersion((1, 1))
@@ -411,7 +442,7 @@ class CFChecker:
         self._add_version("CHECKING NetCDF FILE: %s" % file)
     
     if not self.silent:
-        print "====================="
+        print ("=====================")
 
     # Check for valid filename
     if not fileSuffix.match(file):
@@ -476,7 +507,7 @@ class CFChecker:
                       (self.region_name_lh.version_number, self.region_name_lh.last_modified))
     
     if not self.silent:
-        print ""
+        print ("")
 
     try:
         return self._checker()
@@ -573,9 +604,9 @@ class CFChecker:
         if not self.silent:
             #print msg_print
             if category == "VERSION":
-                print self._join_strings([code_report, msg])
+                print (self._join_strings([code_report, msg]))
             else:
-                print self._join_strings([category, code_report, msg])
+                print (self._join_strings([category, code_report, msg]))
 
         self.all_messages.append(msg_print)
 
@@ -583,7 +614,8 @@ class CFChecker:
       """
       filter out None from lists and join the rest
       """
-      return string.join(filter(lambda x: x is not None, list_), ": ")
+      return ": ".join(filter(lambda x: x is not None, list_))
+
 
   def get_total_counts(self):
         """
@@ -626,7 +658,7 @@ class CFChecker:
                         "INFO": "INFORMATION messages",
                         "DEBUG": "DEBUG messages",
                         "VERSION": "VERSION information"}
-        for category, count in self.get_counts(results).iteritems():
+        for category, count in self.get_counts(results).items():
             # A FATAL error is really the inability of the checker to perform the checks.
             # Only show this if it actually occurred.
             if category == "FATAL" and count == 0:
@@ -635,7 +667,7 @@ class CFChecker:
                 continue
             line = "%s: %s" % (descriptions[category], count)
             if not self.silent:
-                print line
+                print (line)
             if append_to_all_messages:
                 self.all_messages.append(line)
   
@@ -686,10 +718,10 @@ class CFChecker:
     for var in self.f.variables.keys():
 
         if not self.silent:
-            print ""
-            print "------------------"
-            print "Checking variable:",var
-            print "------------------"
+            print ("")
+            print ("------------------")
+            print ("Checking variable:",var)
+            print ("------------------")
 
 
         if not self.validName(var):
@@ -915,7 +947,7 @@ class CFChecker:
       if attName not in attDict.keys():
           return None
 
-      bits = string.split(attDict[attName])
+      bits = attDict[attName].split()
       
       if len(bits) == 1:
           # Only standard_name part present
@@ -1113,26 +1145,6 @@ class CFChecker:
                     varData=self.f.variables[var][:]
                     boundsData=self.f.variables[bounds][:]
 
-# RSH TODO - Remove this as all tests pass                    
-#                    print "RSH: boundsData -",boundsData
-#
-#                    try:
-#                        length = len(varData)
-#                        print "RSH: length:",length
-#                    except TypeError:
-#                        length = 1  # scalar (no len); treat as length 1
-#                        print "RSH: length 1"
-#
-#                    if length == 0:
-#                        self._add_warn("Problem with variable - Skipping check that data lies within cell boundaries.", var)
-#                  
-#                    elif length == 1:
-#                        # Variable contains only one value
-#                        # Bounds array will be 1-dimensional
-#                        if not (boundsData[0] <= varData <= boundsData[1]):
-#                            self._add_warn("Data for variable %s lies outside cell boundaries" % var,
-#                                           var, code="7.1")
-#                    else:
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
                             if not (boundsData[i][0] <= value <= boundsData[i][1]):
@@ -1335,7 +1347,7 @@ class CFChecker:
           # Check type of attribute matches that specified in Appendix F: Table 1
           attr_type = type(var.getncattr(attribute))
 
-          if isinstance(var.getncattr(attribute), basestring):
+          if is_str_or_basestring(var.getncattr(attribute)):
               attr_type='S'
 
           elif (numpy.issubdtype(attr_type, numpy.int) or
@@ -1522,9 +1534,9 @@ class CFChecker:
             # Split string up into component parts
             # If a comma is present we assume a comma separated list as names cannot contain commas
             if re.match("^.*,.*$",conventions):
-                conventionList = string.split(conventions,",")
+                conventionList = conventions.split(",")
             else:
-                conventionList = string.split(conventions)
+                conventionList = conventions.split()
             
             found = 0
             for convention in conventionList:
@@ -1558,7 +1570,7 @@ class CFChecker:
                             code="2.6.3")
         else:
             # Split string up into component parts
-            external_vars_list = string.split(external_vars)
+            external_vars_list = external_vars.split()
             for var in external_vars_list:
                 if var.strip() in map(str, self.f.variables):
                     self._add_error("Variable %s named as an external variable must not be present in this file" % var,
@@ -1573,7 +1585,7 @@ class CFChecker:
 
     for attribute in str_global_attrs:
         if hasattr(self.f, attribute):
-            if not isinstance(self.f.getncattr(attribute), basestring):
+	        if isnt_str_or_basestring(self.f.getncattr(attribute)):
                 self._add_error("Global attribute %s must be of type 'String'" % attribute,
                                 code="2.6.2")
 
@@ -1586,7 +1598,7 @@ class CFChecker:
 
     if "Conventions" in map(str, self.f.ncattrs()):
         value = self.f.getncattr('Conventions')
-        if isinstance(value, basestring):
+        if is_str_or_basestring(value):
             try:
                 conventions = str(value)
             except UnicodeEncodeError:
@@ -1615,8 +1627,6 @@ class CFChecker:
             self._add_warn("The conventions attribute specifies COARDS, assuming CF-1.0")
             rc = CFVersion((1, 0))
 
-            #print "RSH - rc is ",rc
-                
     return rc
 
   #--------------------------
@@ -1646,7 +1656,7 @@ class CFChecker:
     dimensions=map(str,var.dimensions)
     trailingVars=[]
     
-    if len(dimensions) > 1:
+    if len(list(dimensions)) > 1:
         order=['T','Z','Y','X']
         axesFound=[0,0,0,0] # Holding array to record whether a dimension with an axis value has been found.
         i=-1
@@ -1716,7 +1726,7 @@ class CFChecker:
                                    varName, code="2.4")
 
                 
-        dimensions.sort()
+        sorted(dimensions)
         if not self.uniqueList(dimensions):
             self._add_error("variable has repeated dimensions", varName, code="2.4")
 
@@ -1727,12 +1737,6 @@ class CFChecker:
       Get the type, as a 1-character code
       """
   #     self._add_debug("getTypeCode: Object - %s" % obj)
-
- #     if isinstance(obj, netCDF4_Variable) or isinstance(obj, numpy.ndarray):
- #         print "RSH: netcdf4.Variable or numpy.ndarray"
- #         return obj.dtype.char
-
- #     print "RSH: type ", obj.dtype.char
 
       if isinstance(obj, netCDF4_Variable):
           # Variable object
@@ -1778,12 +1782,12 @@ class CFChecker:
     #------------------------------------------------------------
     # Attribute of wrong 'type' in the sense numeric/non-numeric
     #------------------------------------------------------------
-    if self.AttrList.has_key(attribute):
+    if attribute in self.AttrList:
         # Standard Attribute, therefore check type
 
         attrType=type(value)
 
-        if isinstance(value, basestring):
+        if is_str_or_basestring(value):
             attrType='S'
         elif numpy.issubdtype(attrType, numpy.int) or numpy.issubdtype(attrType, numpy.float):
             attrType='N'
@@ -1814,7 +1818,7 @@ class CFChecker:
                 typeError=1
 
             if typeError:
-                self._add_error("Attribute %s of incorrect type" % attribute,
+                self._add_error("Attribute %s of incorrect type (expecting %s, got %s)" % (attribute, self.AttrList[attribute][0], attrType),
                                 varName)
             
         # Attribute attached to the wrong kind of variable
@@ -2016,7 +2020,7 @@ class CFChecker:
                                 
                         else:
                             # dim is a variable dimension
-                            if varDimensions.has_key(d) and d != "time":
+                            if d != "time" and d in varDimensions:
                                 self._add_error("Multiple cell_methods entries for dimension: %s" % d, varName, code="7.3")
                             else:
                                 varDimensions[d]=1
@@ -2062,12 +2066,12 @@ class CFChecker:
             self._add_error("Invalid cell_measures syntax", varName, code="7.2")
         else:
             # Need to validate the measure + name
-            split=string.split(cellMeasures)
+            split=cellMeasures.split()
             splitIter=iter(split)
             try:
                 while 1:
-                    measure=splitIter.next()
-                    variable=splitIter.next()
+                    measure=next(splitIter)
+                    variable=next(splitIter)
 
                     if variable not in self.f.variables:
                         if self.version >= vn1_7:
@@ -2076,7 +2080,7 @@ class CFChecker:
                                 "or be named by the external_variables attribute" % variable
                             if not hasattr(self.f, 'external_variables'):
                                 self._add_error(msg, varName, code="7.2")
-                            elif variable not in string.split(self.f.external_variables):
+                            elif variable not in self.f.external_variables.split():
                                 self._add_error(msg, varName, code="7.2")
                         else:
                             self._add_warn("cell_measures refers to variable %s that doesn't exist in this netCDF file. " % variable + 
@@ -2197,8 +2201,6 @@ class CFChecker:
                             # Check that standard_name of formula term is consistent with that
                             # of the coordinate variable
                             if hasattr(self.f.variables[ftvar], 'standard_name'):
-#                                print "RSH: index -%s, ftvar - %s, term - %s" % (index, ftvar, term)
-#                                print "RSH ftvar.standard_name:", self.f.variables[ftvar].standard_name
                                 try:
                                     valid_stdnames=self.ft_var_stdnames[index][term]
                                 except KeyError:
@@ -2243,7 +2245,7 @@ class CFChecker:
       if hasattr(var, 'units') and var.units != '':
           # Type of units is a string
           units = var.units
-          if not isinstance(units, basestring):
+          if isnt_str_or_basestring(units):
               self._add_error("units attribute must be of type 'String'", varName, code="3.1")
               # units not a string so no point carrying out further tests
               return
@@ -2314,7 +2316,6 @@ class CFChecker:
           # dimensionless vertical coordinate var
           if varName in allCoordVars:
               
-              #print "RSH: in allCoordVars"
               # Label variables do not require units attribute
               try:
                   if self.f.variables[varName].dtype.char != 'S':
@@ -2629,7 +2630,7 @@ class CFChecker:
 
           # standard_name attribute can comprise a standard_name only or a standard_name
           # followed by a modifier (E.g. atmosphere_cloud_liquid_water_content status_flag)
-          std_name_el=string.split(std_name)
+          std_name_el=std_name.split()
           if not std_name_el:
               self._add_error("Empty string for 'standard_name' attribute", varName, code="3.3")
               
@@ -2797,7 +2798,7 @@ class CFChecker:
                                   varName, code="3.5")
                   
               # flag_values values must be mutually exclusive
-              if isinstance(values, basestring):
+              if is_str_or_basestring(values):
                   values = values.split()
 
               if not self.uniqueList(values):
@@ -2850,14 +2851,14 @@ class CFChecker:
       if isinstance(arg, numpy.ndarray):
           return "array"
 
-      elif isinstance(arg, basestring):
+      elif isinstance(arg, str):
           return "str"
 
       elif type(arg) == list:
           return "list"
 
       else:
-          print "<cfchecker> ERROR: Unknown Type in getType("+arg+")"
+          print ("<cfchecker> ERROR: Unknown Type in getType("+arg+")")
           return 0
   
   
@@ -3008,7 +3009,7 @@ def getargs(arglist):
             debug=True
             continue
         if a in ('-h','--help'):
-            print __doc__
+            print (__doc__)
             exit(0)
         if a in ('-l','--uploader'):
             uploader="yes"
@@ -3032,11 +3033,11 @@ def getargs(arglist):
                 try:
                     version = CFVersion(v)
                 except ValueError:
-                    print "WARNING: '%s' cannot be parsed as a version number." % v
-                    print "Performing check against newest version", newest_version                    
+                    print ("WARNING: '%s' cannot be parsed as a version number." % v)
+                    print ("Performing check against newest version", newest_version                    )
                 if version not in cfVersions:
-                    print "WARNING: %s is not a valid CF version." % version
-                    print "Performing check against newest version", newest_version
+                    print ("WARNING: %s is not a valid CF version." % version)
+                    print ("Performing check against newest version", newest_version)
                     version = newest_version
             continue
         if a in ('-x','--cache_tables'):
@@ -3071,16 +3072,16 @@ def main():
         try:
             inst.checker(file)
         except FatalCheckerError:
-            print "Checking of file %s aborted due to error" % file
+            print ("Checking of file %s aborted due to error" % file)
         #print
 
     totals = inst.get_total_counts()
 
     if debug:
         print
-        print "Results dictionary:", inst.all_results
+        print ("Results dictionary:", inst.all_results)
         print
-        print "Messages that were printed", inst.all_messages
+        print ("Messages that were printed", inst.all_messages)
 
     errs = totals["FATAL"] + totals["ERROR"]
     if errs:
