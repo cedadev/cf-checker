@@ -131,7 +131,7 @@ class CFVersion(object):
             in_o = (pos < len(other.tuple))
             if in_s:
                 if in_o:
-                    c = cmp(self.tuple[pos], other.tuple[pos])
+                    c = (self.tuple[pos] > other.tuple[pos]) - (self.tuple[pos] <  other.tuple[pos])
                     if c != 0:
                         return c  # e.g. 1.x <=> 1.y
                 else:  # in_s and not in_o
@@ -1585,7 +1585,7 @@ class CFChecker:
 
     for attribute in str_global_attrs:
         if hasattr(self.f, attribute):
-	        if isnt_str_or_basestring(self.f.getncattr(attribute)):
+            if isnt_str_or_basestring(self.f.getncattr(attribute)):
                 self._add_error("Global attribute %s must be of type 'String'" % attribute,
                                 code="2.6.2")
 
@@ -1772,7 +1772,7 @@ class CFChecker:
         value=var.getncattr(attribute)
     except KeyError as e:
         self._add_error("{} - {}".format(attribute,e), varName, code="2.2")
-        if self.AttrList.has_key(attribute):
+        if attribute in self.AttrList:
             # This is a standard attribute so inform user no further checks being made on it
             self._add_info("No further checks made on attribute: {}".format(attribute), varName)
         return
@@ -2145,7 +2145,7 @@ class CFChecker:
         (stdName,modifier) = self.getStdName(var)
         stdName=stdName.encode('ascii')
 
-        if not self.alias.has_key(stdName):
+        if stdName not in self.alias:
             self._add_error("No formula defined for standard name: %s" % stdName, varName, code=scode)
             # No formula available so can't validate formula_terms
             return
@@ -2977,11 +2977,11 @@ def getargs(arglist):
     cacheDir = '/tmp'
     
     # set to environment variables
-    if environ.has_key(standardnamekey):
+    if standardnamekey in environ:
         standardname=environ[standardnamekey]
-    if environ.has_key(areatypeskey):
+    if areatypeskey in environ:
         areatypes=environ[areatypeskey]
-    if environ.has_key(regionnameskey):
+    if regionnameskey in environ:
         regionnames=environ[regionnameskey]
 
     try:
