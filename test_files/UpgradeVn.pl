@@ -14,7 +14,7 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="3.1.0-rc1";
-$standardNameVN="50 (2018-03-14T11:01:19Z)";
+$standardNameVN="51 (2018-04-17T11:39:10Z)";
 $areaTypeVN="7 (14 March 2018)";
 
 $TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";

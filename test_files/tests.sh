@@ -16,12 +16,14 @@ failed=0
 echo "Unzipping input netcdf files..."
 gzip -d *.gz
 
+cache_opts="-x --cache_dir /home/ros/temp"
+
 for file in `ls *.nc`
 do
   if test $file == "badc_units.nc"
   then
     # Check --badc option (Note:  Need to set path to badc_units.txt in cfchecks.py)
-    $cfchecker -x --badc $file -s $std_name_table > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts --badc $file -s $std_name_table > $outdir/$file.out 2>&1
   elif test $file == "stdName_test.nc"
   then
     # Check --cf_standard_names option
@@ -30,22 +32,22 @@ do
   elif test $file == "CF_1_2.nc"
   then
     # CF-1.2
-    $cfchecker -x -s $std_name_table -v 1.2 $file > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts -s $std_name_table -v 1.2 $file > $outdir/$file.out 2>&1
   elif test $file == "flag_tests.nc"
   then
     # CF-1.3
-    $cfchecker -x -s $std_name_table -v 1.3 $file > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts -s $std_name_table -v 1.3 $file > $outdir/$file.out 2>&1
   elif [[ $file == "Trac049_test1.nc" || $file == "Trac049_test2.nc" ]]
   then 
     # CF-1.4
-    $cfchecker -x -s $std_name_table -a $area_table -v 1.4 $file > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts -s $std_name_table -a $area_table -v 1.4 $file > $outdir/$file.out 2>&1
   elif [[ $file == "CF_1_7.nc" || $file == "example_6.2.nc" || $file == "example_5.10.nc" || $file = "issue27.nc" ]]
   then
     # Run checker using the CF version specified in the conventions attribute of the file
-    $cfchecker -x -s $std_name_table -v auto $file > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts -s $std_name_table -v auto $file > $outdir/$file.out 2>&1
   else
     # Run the checker on the file
-    $cfchecker -x -s $std_name_table -v 1.0 $file > $outdir/$file.out 2>&1
+    $cfchecker $cache_opts -s $std_name_table -v 1.0 $file > $outdir/$file.out 2>&1
   fi
   # Check the output against what is expected
   result=${file%.nc}.check
