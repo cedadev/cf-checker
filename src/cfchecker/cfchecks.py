@@ -1113,26 +1113,6 @@ class CFChecker:
                     varData=self.f.variables[var][:]
                     boundsData=self.f.variables[bounds][:]
 
-# RSH TODO - Remove this as all tests pass                    
-#                    print "RSH: boundsData -",boundsData
-#
-#                    try:
-#                        length = len(varData)
-#                        print "RSH: length:",length
-#                    except TypeError:
-#                        length = 1  # scalar (no len); treat as length 1
-#                        print "RSH: length 1"
-#
-#                    if length == 0:
-#                        self._add_warn("Problem with variable - Skipping check that data lies within cell boundaries.", var)
-#                  
-#                    elif length == 1:
-#                        # Variable contains only one value
-#                        # Bounds array will be 1-dimensional
-#                        if not (boundsData[0] <= varData <= boundsData[1]):
-#                            self._add_warn("Data for variable %s lies outside cell boundaries" % var,
-#                                           var, code="7.1")
-#                    else:
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
                             if not (boundsData[i][0] <= value <= boundsData[i][1]):
@@ -1140,9 +1120,9 @@ class CFChecker:
                                                var, code="7.1")
                                 break
                         except IndexError as e:
-                            self._add_warn("Failed to check data lies within/on bounds for variable %s. Problem with bounds data: %s" % (var, bounds),
+                            self._add_warn("Failed to check data lies within/on bounds for variable %s. Problem with bounds variable: %s" % (var, bounds),
                                            var, code="7.1")
-                            #self._add_info("%s" % e, bounds)
+                            self._add_debug("%s" % e, bounds)
                             break
 
 
@@ -1760,7 +1740,7 @@ class CFChecker:
     var=self.f.variables[varName]
 
     if not self.validName(attribute) and attribute != "_FillValue":
-        self._add_error("Invalid attribute name: %s",attribute,
+        self._add_error("Invalid attribute name: {}".format(attribute),
                         varName)
         return
 
