@@ -11,7 +11,7 @@ This is a development release to include addition checks for CF-1.7 comformance.
 
 ### Other Noteworthy Changes
 
-[#35](https://github.com/cedadev/cf-checker/issues/35): Improve execution speed
+[#35](https://github.com/cedadev/cf-checker/issues/35): Improve execution speed (See also new CL options -x, -t, --cache-dir)
 
 [#29](https://github.com/cedadev/cf-checker/issues/29): Include checks against region names table
 
