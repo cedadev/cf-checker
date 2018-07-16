@@ -848,8 +848,10 @@ class CFChecker:
 
       if self.version>= vn1_7:
           self.AttrList['actual_range']=['N',('C','D')]
+          self.AttrList['comment']=['S',('G','C','D')]
           self.AttrList['computed_standard_name']=['S','C']
           self.AttrList['external_variables']=['S','G']
+          self.AttrList['scale_factor']=['N',('C','D')]
       
       return
 
@@ -1112,6 +1114,10 @@ class CFChecker:
                 if len(self.f.variables[bounds].dimensions) <= 2:
                     varData=self.f.variables[var][:]
                     boundsData=self.f.variables[bounds][:]
+
+                    # Convert 1d array (scalar coordinate variable) to 2d to check cell boundaries
+                    if len(boundsData.shape) == 1:
+                        boundsData = [boundsData]
 
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
