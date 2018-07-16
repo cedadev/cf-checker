@@ -2430,9 +2430,8 @@ class CFChecker:
               self._add_error("actual_range values must be less than or equal to %s (valid_max)" % max_v,
                               varName, code="2.5.1")
 
-          varData=self.f.variables[varName][:].flatten()
+          varData=self.f.variables[varName][:]
           # Note: scale_factor & add_offset is automatically applied to data values.
-
           if varData.count() == 0:
               # All data values equal the missing value
               self._add_error("There must be no actual_range attribute when all data values equal the missing value",
@@ -2442,6 +2441,7 @@ class CFChecker:
               missing_value=None
               min_dv=None
               max_dv=None
+          
               if hasattr(var, '_FillValue'):
                   missing_value=var._FillValue
               elif hasattr(var, 'missing_value'):
@@ -2450,8 +2450,9 @@ class CFChecker:
               if missing_value:
                   # Find minimum and maximum data value.
                   # varData doesn't include values that are missing data
-                  min_dv=min(varData)
-                  max_dv=max(varData)
+                  min_dv=varData.min()
+                  max_dv=varData.max()
+
                   if min_dv and actual_range[0] != min_dv:
                       self._add_error("First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (%s)" % min_dv,
                                       varName, code="2.5.1")

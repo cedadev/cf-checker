@@ -2,8 +2,8 @@ CHECKING NetCDF FILE: CF_1_7.nc
 =====================
 Using CF Checker Version 3.1.0
 Checking against CF Version CF-1.7
-Using Standard Name Table Version 51 (2018-04-17T11:39:10Z)
-Using Area Type Table Version 7 (14 March 2018)
+Using Standard Name Table Version 57 (2018-07-11T12:54:31Z)
+Using Area Type Table Version 9 (04 July 2018)
 Using Standardized Region Name Table Version 2 (12 June 2013)
 
 ERROR: (2.6.3): Variable external_var2 named as an external variable must not be present in this file
@@ -44,7 +44,7 @@ Checking variable: external_var2
 ------------------
 Checking variable: arv1
 ------------------
-ERROR: (2.5.1): actual_range values must lie between 11.0 and 100.0 (valid_range)
+ERROR: (2.5.1): actual_range values must lie between 5.0 and 100.0 (valid_range)
 ERROR: (2.5.1): First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (11.0)
 ERROR: (2.5.1): Second element of actual_range must equal maximum data value of variable after scale_factor/add_offset applied (27.0)
 
@@ -56,15 +56,16 @@ ERROR: (2.5.1): There must be no actual_range attribute when all data values equ
 ------------------
 Checking variable: arv3
 ------------------
-ERROR: (2.5.1): actual_range values must lie between 15.0 and 100.0 (valid_range)
-ERROR: (2.5.1): First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (11.0)
+ERROR: (2.5.1): actual_range values must lie between 6.0 and 100.0 (valid_range)
+ERROR: (2.5.1): First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (13.0)
 ERROR: (2.5.1): Second element of actual_range must equal maximum data value of variable after scale_factor/add_offset applied (27.0)
 
 ------------------
 Checking variable: arv4
 ------------------
 ERROR: (2.5.1): actual_range attribute must be of same type as variable arv4
-ERROR: (2.5.1): actual_range values must be greater than or equal to 15.0 (valid_min)
+ERROR: (2.5.1): actual_range values must be greater than or equal to 6.0 (valid_min)
+ERROR: (2.5.1): First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (6)
 
 ------------------
 Checking variable: current_speed_qc
@@ -130,6 +131,6 @@ Checking variable: crs
 ERROR: (5.6): Attribute longitude_of_prime_meridian of incorrect data type (Appendix F)
 ERROR: (5.6): reference_ellipsoid_name, prime_meridian_name, horizontal_datum_name and geographic_crs_name must all be definied if any one is defined
 
-ERRORS detected: 25
+ERRORS detected: 26
 WARNINGS given: 4
 INFORMATION messages: 2
