@@ -2,7 +2,7 @@ CHECKING NetCDF FILE: issue27.nc
 =====================
 Using CF Checker Version 3.1.0
 Checking against CF Version CF-1.6
-Using Standard Name Table Version 57 (2018-07-11T12:54:31Z)
+Using Standard Name Table Version 58 (2018-08-07T13:50:57Z)
 Using Area Type Table Version 9 (04 July 2018)
 Using Standardized Region Name Table Version 2 (12 June 2013)
 
@@ -317,7 +317,6 @@ Checking variable: surf_rel_hum_err
 ------------------
 Checking variable: h2o_mmr_sat_ice
 ------------------
-ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
 
 ------------------
 Checking variable: h2o_mmr_sat_ice_qc
@@ -330,7 +329,6 @@ Checking variable: h2o_mmr_sat_ice_err
 ------------------
 Checking variable: surf_h2o_mmr_sat_ice
 ------------------
-ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
 
 ------------------
 Checking variable: surf_h2o_mmr_sat_ice_qc
@@ -702,6 +700,6 @@ INFO: attribute _FillValue is being used in a non-standard way
 WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
 ERROR: (4.4): Invalid units and/or reference time
 
-ERRORS detected: 41
+ERRORS detected: 39
 WARNINGS given: 8
 INFORMATION messages: 14
