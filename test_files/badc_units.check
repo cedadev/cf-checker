@@ -2,7 +2,7 @@
 CHECKING NetCDF FILE: badc_units.nc
 =====================
 Using CF Checker Version 3.1.0
-Using Standard Name Table Version 58 (2018-08-07T13:50:57Z)
+Using Standard Name Table Version 59 (2018-09-25T14:23:22Z)
 
 WARNING (7.1): Data for variable time lies outside cell boundaries
 

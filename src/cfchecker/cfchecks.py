@@ -2844,7 +2844,8 @@ class CFChecker:
           return "list"
 
       else:
-          print "<cfchecker> ERROR: Unknown Type in getType("+arg+")"
+          #print "RSH: arg is:",arg
+          print "<cfchecker> ERROR: Invalid Type: ", type(arg)
           return 0
   
   
@@ -2859,6 +2860,7 @@ class CFChecker:
       type_arg2 = self.getType(arg2)
       
       if not type_arg1 or not type_arg2:
+          # Invalid type
           return -1
           
       if type_arg1 == "str":
