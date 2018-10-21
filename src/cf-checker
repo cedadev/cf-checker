@@ -102,12 +102,12 @@ class CfchecksWrapper(object):
         try:
             self.refresh_tables()
         except (IOError, OSError) as err:
-            print "Warning: error when trying to refresh local copies of xml tables:"
-            print "%s: %s" % (err.filename, err.strerror)
+            print("Warning: error when trying to refresh local copies of xml tables: %s: %s"
+                  % (err.filename, err.strerror))
             self.verbose = True
             exit_value = 1
             if self.files_to_check:
-                print "\nTrying to run checker anyway..."
+                print("\nTrying to run checker anyway...")
         for data_file in self.files_to_check:
             status = self.run_checker(data_file, cf_version = self.cf_version)
             if status != 0:
@@ -151,7 +151,7 @@ class CfchecksWrapper(object):
             elif arg in ("--update_only"):
                 update_only = True
             else:
-                print "unrecognised option %s (coding bug?)" % arg
+                print("unrecognised option %s (coding bug?)" % arg)
 
         if self.max_table_age == None:
             if update_only:
@@ -161,8 +161,8 @@ class CfchecksWrapper(object):
 
         self.files_to_check = args
         if not update_only and not self.files_to_check:
-            print "Error: no files to check and --update_only not given"
-            print "run with --help (or -h) for a full usage message"
+            print("Error: no files to check and --update_only not given run with --help (or -h) "
+                  "for a full usage message")
             sys.exit(1)
 
         self.set_table_paths()
@@ -188,10 +188,10 @@ class CfchecksWrapper(object):
 
     def usage(self, status=None, show_checker_usage=False):
         "Print a usage message, and exit if status passed"
-        print self.__doc__
+        print(self.__doc__)
         if show_checker_usage:
-            print "\nUsage message from underlying checker (%s) follows:" % self.checker_command
-            print "-----------------------------------------------------\n"
+            print("\nUsage message from underlying checker (%s) follows:" % self.checker_command)
+            print("-----------------------------------------------------\n")
             self.run_command([self.checker_command, "-h"])
         if status != None:
             sys.exit(status)
@@ -213,7 +213,7 @@ class CfchecksWrapper(object):
             return False
         age = self.file_age(local_path)
         if self.verbose:
-            print "age of %s is %s days" % (local_path, age)
+            print("age of %s is %s days" % (local_path, age))
         if age > self.max_table_age:
             return False
         if age < 0:
@@ -233,10 +233,10 @@ class CfchecksWrapper(object):
         "Fetch URL to the specified local path (via tmp file for atomicity)"
         tmp_path = tmp_path or ("%s.tmp" % local_path)
         if self.verbose:
-            print "downloading %s to %s" % (url,  tmp_path)
+            print("downloading %s to %s" % (url,  tmp_path))
         self.download(url, tmp_path)
         if self.verbose:
-            print "renaming %s to %s" % (tmp_path, local_path)
+            print("renaming %s to %s" % (tmp_path, local_path))
         os.rename(tmp_path, local_path)
 
     def download(self, url, local_path):
@@ -262,13 +262,13 @@ class CfchecksWrapper(object):
             command += ["-v", cf_version]
         command.append(data_file)
         if self.verbose:
-            print "running command: ", string.join(command)
+            print("running command: ", string.join(command))
         # for clarity, flush before running command
         sys.stdout.flush()
         sys.stderr.flush()
         status = self.run_command(command)
         if self.verbose:
-            print "checker returned status %s" % status
+            print("checker returned status %s" % status)
         return status
 
     def run_command(self, command):
