@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
-import sys, os
+import sys
+import os
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)) + '/src')
 __version__ = __import__('cfchecker').__version__
@@ -11,33 +12,36 @@ try:
 except:
     __description__ = ""
 
-
 setup(name='cfchecker',
       version=__version__,
-      description="The NetCDF Climate Forcast Conventions compliance checker",
+      description="The NetCDF Climate Forecast Conventions compliance checker",
       long_description=__description__,
-      
+
       classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Scientific/Engineering :: Atmospheric Science',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        ], 
+          'Development Status :: 5 - Production/Stable',
+          'Topic :: Software Development :: Libraries',
+          'Topic :: Scientific/Engineering :: Atmospheric Science',
+          'Intended Audience :: Science/Research',
+          'Natural Language :: English',
+          'License :: OSI Approved :: BSD License',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
+      ],
 
       keywords='',
       author='Rosalyn Hatcher',
       author_email='r.s.hatcher@reading.ac.uk',
 
       url='http://cfconventions.org/compliance-checker.html',
-      package_dir = {'': 'src'},
+      package_dir={'': 'src'},
       packages=find_packages('src'),
 
       include_package_data=True,
       zip_safe=False,
       install_requires=['netCDF4', 'numpy', 'cfunits'],
-      entry_points= {
-        'console_scripts': ['cfchecks = cfchecker.cfchecks:main'],
-        },
+      entry_points={'console_scripts': ['cfchecks = cfchecker.cfchecks:main']},
       scripts=['src/cf-checker']
       )
