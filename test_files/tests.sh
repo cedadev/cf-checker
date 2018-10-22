@@ -10,6 +10,7 @@ std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-st
 area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml
 
 cfchecker="/home/ros/software/dev/bin/cfchecks"
+cfchecker="/home/ros/software/dev-python3/bin/cfchecks"
 
 failed=0
 

@@ -43,8 +43,15 @@ Options:
        directory in which to store cached tables
 
 '''
+from __future__ import print_function
 
+from builtins import str
+from builtins import next
+from builtins import map
+from past.builtins import basestring
+from builtins import object
 import sys, os, time
+from functools import reduce
 
 if sys.version_info[:2] < (2,7):
     from ordereddict import OrderedDict
@@ -53,6 +60,10 @@ else:
     from collections import defaultdict
 
 import re, string, types, numpy
+
+# Ignore Future warnings in numpy for now
+import warnings
+warnings.filterwarnings("ignore",category=FutureWarning)
 
 from netCDF4 import Dataset as netCDF4_Dataset
 from netCDF4 import Variable as netCDF4_Variable
@@ -108,11 +119,11 @@ class CFVersion(object):
         if isinstance(value, str):
             if value.startswith("CF-"):
                 value = value[3:]
-            self.tuple = map(int, value.split("."))
+            self.tuple = tuple(map(int, value.split(".")))
         else:
             self.tuple = value
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.tuple:
             return True
         else:
@@ -142,6 +153,9 @@ class CFVersion(object):
                 else:  # not in_s and not in_o
                     return 0  # e.g. 3.2 == 3.2
             pos += 1
+
+    def __eq__(self,other):
+        return self.tuple == other.tuple
 
     def __ge__(self, other):
         if self.__cmp__(other) >= 0:
@@ -398,7 +412,7 @@ class FatalCheckerError(Exception):
 #======================
 # Checking class
 #======================
-class CFChecker:
+class CFChecker(object):
     
   def __init__(self, uploader=None, useFileName="yes", badc=None, coards=None, 
                cfStandardNamesXML=STANDARDNAME, cfAreaTypesXML=AREATYPES, 
@@ -614,7 +628,7 @@ class CFChecker:
       """
       filter out None from lists and join the rest
       """
-      return ": ".join(filter(lambda x: x is not None, list_))
+      return ": ".join([x for x in list_ if x is not None])
 
 
   def get_total_counts(self):
@@ -622,7 +636,7 @@ class CFChecker:
         Get counts totalled over all files checked.
         """
         grand_totals = self._get_zero_counts()
-        for results in self.all_results.values():
+        for results in list(self.all_results.values()):
             counts = self.get_counts(results)
             for category in self.categories:
                 grand_totals[category] += counts[category]
@@ -642,7 +656,7 @@ class CFChecker:
             results = self.results
         counts = self._get_zero_counts()
         self._update_counts(counts, results["global"])
-        for res in results["variables"].values():
+        for res in list(results["variables"].values()):
             self._update_counts(counts, res)
         return counts
 
@@ -658,7 +672,7 @@ class CFChecker:
                         "INFO": "INFORMATION messages",
                         "DEBUG": "DEBUG messages",
                         "VERSION": "VERSION information"}
-        for category, count in self.get_counts(results).items():
+        for category, count in list(self.get_counts(results).items()):
             # A FATAL error is really the inability of the checker to perform the checks.
             # Only show this if it actually occurred.
             if category == "FATAL" and count == 0:
@@ -676,7 +690,7 @@ class CFChecker:
     Main implementation of checker assuming self.f exists.
     """
     lowerVars=[]
-    for var in map(str, self.f.variables.keys()):
+    for var in map(str, list(self.f.variables.keys())):
         self._init_var_results(var)
 
     # Check global attributes
@@ -689,18 +703,18 @@ class CFChecker:
     self.climatologyVars = climatologyVars
     self.gridMappingVars = gridMappingVars
 
-    self._add_debug("Auxillary Coordinate Vars: %s" % map(str,auxCoordVars))
-    self._add_debug("Coordinate Vars: %s" % map(str,coordVars))
-    self._add_debug("Boundary Vars: %s" % map(str,boundsVars))
-    self._add_debug("Climatology Vars: %s" % map(str,climatologyVars))
-    self._add_debug("Grid Mapping Vars: %s" % map(str,gridMappingVars))
+    self._add_debug("Auxillary Coordinate Vars: %s" % list(map(str,auxCoordVars)))
+    self._add_debug("Coordinate Vars: %s" % list(map(str,coordVars)))
+    self._add_debug("Boundary Vars: %s" % list(map(str,boundsVars)))
+    self._add_debug("Climatology Vars: %s" % list(map(str,climatologyVars)))
+    self._add_debug("Grid Mapping Vars: %s" % list(map(str,gridMappingVars)))
 
     allCoordVars=coordVars[:]
     allCoordVars[len(allCoordVars):]=auxCoordVars[:]
 
     self.setUpFormulas()
     
-    axes=self.f.dimensions.keys()
+    axes=list(self.f.dimensions.keys())
 
     self._add_debug("Axes: %s" % axes)
 
@@ -715,7 +729,7 @@ class CFChecker:
                  'float32']
 
     # Check each variable
-    for var in self.f.variables.keys():
+    for var in list(self.f.variables.keys()):
 
         if not self.silent:
             print ("")
@@ -791,7 +805,7 @@ class CFChecker:
 
             # Github Issue #13
             if var not in allCoordVars:
-                dimensions=map(str,self.f.variables[var].dimensions)
+                dimensions=list(map(str,self.f.variables[var].dimensions))
 
                 if len(dimensions) > 1 and var in dimensions:
                     # Variable name matches a dimension; this may be an unidentified multi-dimensional coordinate variable
@@ -820,7 +834,7 @@ class CFChecker:
                 self._add_error("CF Files containing %s featureType may contain 2 occurrences of a cf_role attribute" % featureType)
 
     if not self.silent:
-        print
+        print()
     self.show_counts(append_to_all_messages=True)
     return self.results
 
@@ -944,7 +958,7 @@ class CFChecker:
       attName = 'standard_name'
       attDict = var.__dict__
 
-      if attName not in attDict.keys():
+      if attName not in list(attDict.keys()):
           return None
 
       bits = attDict[attName].split()
@@ -1002,8 +1016,8 @@ class CFChecker:
     """Obtain list of coordinate data variables, boundary
     variables, climatology variables and grid_mapping variables."""
     
-    allVariables = map(str, self.f.variables)   # List of all vars, including coord vars
-    axes = map(str, self.f.dimensions)
+    allVariables = list(map(str, self.f.variables))   # List of all vars, including coord vars
+    axes = list(map(str, self.f.dimensions))
     
     coordVars = []
     variables = []
@@ -1013,7 +1027,7 @@ class CFChecker:
     auxCoordVars = []
 
     # Split each variable in allVariables into either coordVars or variables (data vars)
-    for varname, var in self.f.variables.items():
+    for varname, var in list(self.f.variables.items()):
         if len(var.shape) == 1 and len(var.dimensions) == 1 and var.dimensions[0] == varname: # 1D and dimension is same name as variable
             coordVars.append(varname)
         else:
@@ -1029,7 +1043,7 @@ class CFChecker:
             if not self.parseBlankSeparatedList(self.f.variables[var].coordinates):
                 self._add_error("Invalid syntax for 'coordinates' attribute", var, code="5.3")
             else:
-                coordinates=string.split(self.f.variables[var].coordinates)
+                coordinates=self.f.variables[var].coordinates.split()
                 for dataVar in coordinates:
                     if dataVar in variables:
                         self._add_debug(dataVar)
@@ -1070,7 +1084,7 @@ class CFChecker:
                                 # A ragged array is identified by the presence of either the attribute sample_dimension 
                                 # or instance_dimension. Need to check that the sample dimension is the dimension of
                                 # the variable to which the aux coord var is attached.
-                                self._add_debug("Not a label variable. Dimensions are: %s" % map(str, self.f.variables[dataVar].dimensions),
+                                self._add_debug("Not a label variable. Dimensions are: %s" % list(map(str, self.f.variables[dataVar].dimensions)),
                                                 dataVar)
 
                                 for dim in self.f.variables[dataVar].dimensions:
@@ -1269,7 +1283,7 @@ class CFChecker:
               for coord in re.finditer(pat_coord, coord_list):
                   coord_vars.append(coord.group('coord'))
 
-      return (map(str,grid_mapping_vars), map(str,coord_vars))
+      return (list(map(str,grid_mapping_vars)), list(map(str,coord_vars)))
 
   #------------------------------------
   def validGridMappingAttributes(self):
@@ -1359,7 +1373,7 @@ class CFChecker:
               self._add_info("Invalid Type for attribute: %s %s" % (attribute, attr_type))
               continue
           
-          if (attribute in self.grid_mapping_attrs.keys() and 
+          if (attribute in list(self.grid_mapping_attrs.keys()) and 
               attr_type != self.grid_mapping_attrs[attribute]):
               self._add_error("Attribute %s of incorrect data type (Appendix F)" % attribute,
                               varName, code="5.6")
@@ -1540,7 +1554,7 @@ class CFChecker:
             
             found = 0
             for convention in conventionList:
-                if convention.strip() in map(str, cfVersions):
+                if convention.strip() in list(map(str, cfVersions)):
                     found = 1
                     break
         
@@ -1572,7 +1586,7 @@ class CFChecker:
             # Split string up into component parts
             external_vars_list = external_vars.split()
             for var in external_vars_list:
-                if var.strip() in map(str, self.f.variables):
+                if var.strip() in list(map(str, self.f.variables)):
                     self._add_error("Variable %s named as an external variable must not be present in this file" % var,
                                     code="2.6.3")
 
@@ -1596,7 +1610,7 @@ class CFChecker:
     else a valid version based on Conventions else an empty version (for auto version)"""
     rc = CFVersion()
 
-    if "Conventions" in map(str, self.f.ncattrs()):
+    if "Conventions" in list(map(str, self.f.ncattrs())):
         value = self.f.getncattr('Conventions')
         if is_str_or_basestring(value):
             try:
@@ -1606,6 +1620,8 @@ class CFChecker:
         else:
             conventions = value
         
+        print("RSH conventions: {}".format(conventions))
+
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
         if re.match("^.*,.*$",conventions):
@@ -1616,7 +1632,7 @@ class CFChecker:
         found = 0
         coards = 0
         for convention in conventionList:
-            if convention.strip() in map(str, cfVersions):
+            if convention.strip() in list(map(str, cfVersions)):
                 found = 1
                 rc = CFVersion(convention.strip())
                 break
@@ -1653,7 +1669,7 @@ class CFChecker:
        1 trailing dimension is allowed."""
 
     var=self.f.variables[varName]
-    dimensions=map(str,var.dimensions)
+    dimensions=list(map(str,var.dimensions))
     trailingVars=[]
     
     if len(list(dimensions)) > 1:
@@ -1793,7 +1809,7 @@ class CFChecker:
             attrType='N'
         elif attrType == numpy.ndarray:
             attrType='N'
-        elif attrType == types.NoneType:
+        elif attrType == type(None):
             attrType='NoneType'
         else:
             self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
@@ -2010,7 +2026,7 @@ class CFChecker:
                 for d in dims:
                     if d:
                         dc=dc+1
-                        if d not in var.dimensions and d not in self.std_name_dh.dict.keys():
+                        if d not in var.dimensions and d not in list(self.std_name_dh.dict.keys()):
                             if self.version >= vn1_4:
                                 # Extra constraints at CF-1.4 and above
                                 if d != "area":
@@ -2090,14 +2106,14 @@ class CFChecker:
                     else:
                         # Valid variable name in cell_measures so carry on with tests.    
                         if len(self.f.variables[variable].dimensions) > len(var.dimensions):
-                            self._add_error("Dimensions of %s must be same or a subset of %s" % (variable, map(str,var.dimensions)),
+                            self._add_error("Dimensions of %s must be same or a subset of %s" % (variable, list(map(str,var.dimensions))),
                                             varName, code="7.2")
                         else:
                             # If cell_measures variable has more dims than var then this check automatically will fail
                             # Put in else so as not to duplicate ERROR messages.
                             for dim in self.f.variables[variable].dimensions:
                                 if dim not in var.dimensions:
-                                    self._add_error("Dimensions of %s must be same or a subset of %s" % (variable, map(str,var.dimensions)),
+                                    self._add_error("Dimensions of %s must be same or a subset of %s" % (variable, list(map(str,var.dimensions))),
                                                     varName, code="7.2")
                     
                         measure=re.sub(':','',measure)
@@ -2159,7 +2175,7 @@ class CFChecker:
                 csn = var.computed_standard_name
                 if self.ft_var_stdnames[index]['csn'][0] == 'set':
                     # Check which set
-                    for key in self.ft_stdname_sets.keys():
+                    for key in list(self.ft_stdname_sets.keys()):
                         if csn in self.ft_stdname_sets[key]['csn']:
                             # Found
                             setname = key
@@ -2175,10 +2191,10 @@ class CFChecker:
             iter_obj=iter(formulaTerms.split())
             while True:
                 try:
-                    term = iter_obj.next()
+                    term = next(iter_obj)
                     term=re.sub(':','',term)
 
-                    ftvar = iter_obj.next()
+                    ftvar = next(iter_obj)
                     
                     # Term - Should be present in formula
                     found='false'
@@ -2191,7 +2207,7 @@ class CFChecker:
                         self._add_error("Formula term %s not present in formula for %s" % (term, stdName), varName, code=scode)
 
                     # Variable - should be declared in netCDF file
-                    if ftvar not in self.f.variables.keys():
+                    if ftvar not in list(self.f.variables.keys()):
                         self._add_error("%s is not declared as a variable" % ftvar, varName, code=scode)
                     elif ftvar == varName:
                         # var is the variable specifying the formula_terms attribute
@@ -2209,7 +2225,7 @@ class CFChecker:
 
                                 if valid_stdnames[0] == 'set':
                                     if setname is None:
-                                        for key in self.ft_stdname_sets.keys():
+                                        for key in list(self.ft_stdname_sets.keys()):
                                             if self.f.variables[ftvar].standard_name in self.ft_stdname_sets[key][term]:
                                                 # Found
                                                 if not setname:
@@ -2281,7 +2297,7 @@ class CFChecker:
                           self._add_error("Standard Name modifier 'number_of_observations' present therefore units must be set to 1.",
                                           varName, code="3.3")
                   
-                  elif stdName in self.std_name_dh.dict.keys():
+                  elif stdName in list(self.std_name_dh.dict.keys()):
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
 
@@ -2640,7 +2656,7 @@ class CFChecker:
           else:
               # Validate standard_name
               name=std_name_el[0]
-              if not name in self.std_name_dh.dict.keys():
+              if not name in list(self.std_name_dh.dict.keys()):
                   if chkDerivedName(name):
                       self._add_error("Invalid standard_name: %s" % name, varName, code="3.3")
 
@@ -2685,7 +2701,7 @@ class CFChecker:
           strlen = array.shape[-1]
               
           new_shape = array.shape[0:-1]
-          new_size  = long(reduce(mul, new_shape, 1))
+          new_size  = int(reduce(mul, new_shape, 1))
             
           array = numpy.ma.resize(array, (new_size, strlen))
           
@@ -3034,9 +3050,11 @@ def getargs(arglist):
                     version = CFVersion(v)
                 except ValueError:
                     print ("WARNING: '%s' cannot be parsed as a version number." % v)
-                    print ("Performing check against newest version", newest_version                    )
+                    print(("Performing check against newest version", newest_version))
+                #print ("RSH: version: {}".format(version))
+                #print ("RSH: cfVersions: {}".format(cfVersions))
                 if version not in cfVersions:
-                    print ("WARNING: %s is not a valid CF version." % version)
+                    print ("WARNING: {} is not a valid CF version.".format(version))
                     print ("Performing check against newest version", newest_version)
                     version = newest_version
             continue
@@ -3078,10 +3096,10 @@ def main():
     totals = inst.get_total_counts()
 
     if debug:
-        print
-        print ("Results dictionary:", inst.all_results)
-        print
-        print ("Messages that were printed", inst.all_messages)
+        print()
+        print("Results dictionary:", inst.all_results)
+        print()
+        print("Messages that were printed", inst.all_messages)
 
     errs = totals["FATAL"] + totals["ERROR"]
     if errs:
