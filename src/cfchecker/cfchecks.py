@@ -62,6 +62,8 @@ from cfunits import Units
 
 from operator import mul
 
+import warnings
+
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
 
@@ -1321,9 +1323,10 @@ class CFChecker:
           # Check type of attribute matches that specified in Appendix F: Table 1
           attr_type = type(var.getncattr(attribute))
 
+          warnings.simplefilter(action="ignore", category=FutureWarning)
           if isinstance(var.getncattr(attribute), basestring):
               attr_type='S'
-
+          
           elif (numpy.issubdtype(attr_type, numpy.int) or
                 numpy.issubdtype(attr_type, numpy.float) or 
                 attr_type == numpy.ndarray):
@@ -1332,7 +1335,8 @@ class CFChecker:
           else:
               self._add_info("Invalid Type for attribute: %s %s" % (attribute, attr_type))
               continue
-          
+          warnings.resetwarnings()
+
           if (attribute in self.grid_mapping_attrs.keys() and 
               attr_type != self.grid_mapping_attrs[attribute]):
               self._add_error("Attribute %s of incorrect data type (Appendix F)" % attribute,
@@ -1769,6 +1773,7 @@ class CFChecker:
 
         attrType=type(value)
 
+        warnings.simplefilter(action="ignore", category=FutureWarning)
         if isinstance(value, basestring):
             attrType='S'
         elif numpy.issubdtype(attrType, numpy.int) or numpy.issubdtype(attrType, numpy.float):
@@ -1779,6 +1784,7 @@ class CFChecker:
             attrType='NoneType'
         else:
             self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
+        warnings.resetwarnings()
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
