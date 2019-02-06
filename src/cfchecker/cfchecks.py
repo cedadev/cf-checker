@@ -2323,7 +2323,7 @@ class CFChecker:
 
               dimensions = self.f.variables[varName].dimensions
 
-              if not hasattr(var,'flag_values') and len(dimensions) != 0:
+              if not (hasattr(var,'flag_values') or hasattr(var,'flag_masks')) and len(dimensions) != 0:
                   try:
                       if self.f.variables[varName].dtype.char != 'S':
                           # Variable is not a flag variable or a scalar or a label
