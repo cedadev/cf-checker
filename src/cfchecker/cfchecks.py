@@ -844,6 +844,7 @@ class CFChecker:
 
       if self.version >= vn1_6:
           self.AttrList['cf_role']=['S','C']
+          self.AttrList['_FillValue']=['D',('C','D')]
           self.AttrList['featureType']=['S','G']
           self.AttrList['instance_dimension']=['S','D']
           self.AttrList['sample_dimension']=['S','D']
