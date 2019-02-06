@@ -69,7 +69,7 @@ from cfchecker import __version__
 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
-REGIONNAMES = 'http://cfconventions.org/Data/cf-standard-names/docs/standardized-region-names.xml'
+REGIONNAMES = 'http://cfconventions.org/Data/standardized-region-list/standardized-region-list.xml'
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
