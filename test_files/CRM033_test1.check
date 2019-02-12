@@ -198,9 +198,7 @@ Checking variable: pressure
 ------------------
 Checking variable: time
 ------------------
-WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
-ERROR: (4.4): Invalid units and/or reference time
 
-ERRORS detected: 17
-WARNINGS given: 2
+ERRORS detected: 16
+WARNINGS given: 1
 INFORMATION messages: 0

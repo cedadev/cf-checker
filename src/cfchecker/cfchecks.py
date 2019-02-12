@@ -754,8 +754,8 @@ class CFChecker:
             self.chkGridMappingVar(var)
 
         if var in axes:
-
             if self.isTime(var):
+                # Time coordinate variable
                 self._add_debug("Time Axis.....")
                 self.chkTimeVariableAttributes(var)
 
@@ -884,30 +884,34 @@ class CFChecker:
           rc=0
       return rc
 
+
   #----------------------
   def isTime(self, var):
   #----------------------
-      """Is variable a time axis."""
+      """Variable is a time axis coordinate if it has one or more of the following:
+      1) The axis attribute has the value 'T'
+      2) Units of reference time
+      3) The standard_name attribute is one of 'time' or 'forecast_reference_time'"""
 
       variable = self.f.variables[var]
 
+      # Does it have a reference time?
       if hasattr(variable, 'units'):
-          if self.getInterpretation(variable.units) == 'T':
+          u = Units(variable.units)
+          if u.isreftime:
               return 1
       
+      # Axis attribute has the value 'T'
       if hasattr(variable, 'axis'):
           if variable.axis == 'T':
               return 1
 
+      # Standard name is one of 'time' or 'forecast_reference_time'
       if hasattr(variable, 'standard_name'):
           if variable.standard_name == 'time' or variable.standard_name == 'forecast_reference_time':
               return 1
 
       return 0
-
-
-
-
 
 
   #-------------------------
