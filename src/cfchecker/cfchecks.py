@@ -1891,20 +1891,8 @@ class CFChecker:
 
           if self.getTypeCode(var) != 'i':
               self._add_error("index variable must be of type integer", varName, code="9.3")
+
                 
-  #----------------------------------
-  def isValidUdunitsUnit(self,unit):
-  #----------------------------------
-      # units must be recognizable by udunits package
-      rc=1
-      try:
-          u = Units(unit)
-      except:
-          rc=0
-
-      return rc
-
-
   #---------------------------------------------------
   def isValidCellMethodTypeValue(self, type, value, varName):
   #---------------------------------------------------
@@ -2037,7 +2025,7 @@ class CFChecker:
                 for m in allIntervals:
                     i=i+1
                     unit=m.group('unit')
-                    if not self.isValidUdunitsUnit(unit):
+                    if not Units(unit).isvalid:
                         self._add_error("Invalid unit %s in cell_methods comment" % unit, varName, code="7.3")
 
                 if i > 1 and i != dc:
@@ -2256,9 +2244,8 @@ class CFChecker:
                              varName, code="4.4")
           else:
               # units must be recognizable by udunits package
-              try:
-                  varUnit = Units(units)
-              except ValueError:
+              varUnit = Units(units)
+              if not varUnit.isvalid:
                   self._add_error("Invalid units: %s" % units,  varName, code="3.1")
                   # Invalid unit so no point continuing with further unit checks
                   return
