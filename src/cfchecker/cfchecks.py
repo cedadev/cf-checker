@@ -791,7 +791,7 @@ class CFChecker:
                 self._add_error("CF Files containing %s featureType may contain 2 occurrences of a cf_role attribute" % featureType)
 
     if not self.silent:
-        print
+        print("")
     self.show_counts(append_to_all_messages=True)
     return self.results
 
