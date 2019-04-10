@@ -4,6 +4,9 @@ The CF Checker is a utility that checks the contents of a NetCDF file complies w
 
 ## Prerequisites
 
+* The package runs on [**Linux**](http://en.wikipedia.org/wiki/Linux)
+  and [**Mac OS**](http://en.wikipedia.org/wiki/Mac_OS) operating systems.
+
 * [Python 2.6](https://www.python.org/) or newer (not yet tested with Python 3.x)
 
 * [netcdf4-python](https://pypi.python.org/pypi/netCDF4)
