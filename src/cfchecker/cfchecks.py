@@ -2715,15 +2715,11 @@ class CFChecker:
                     self._add_error("compress attribute naming non-existent dimension: %s" % x,
                                     varName, code="8.2")
 
-            outOfRange=0
-            for val in var[:]:
-                if val < 0 or val > dimProduct-1:
-                    outOfRange=1
-                    break;
-                
-            if outOfRange:
-                self._add_error("values of %s must be in the range 0 to %s" % (varName, dimProduct - 1),
-                                varName, code="8.2")
+            # Check all non-masked values are within the range 0 to product of compressed dimensions
+            if var[:].count() != 0:
+                if var[:].compressed().min() < 0 or var[:].compressed().max() > dimProduct-1:                    
+                    self._add_error("values of %s must be in the range 0 to %s" % (varName, dimProduct - 1),
+                                    varName, code="8.2")
 
   #---------------------------------
   def chkPackedData(self, varName):
