@@ -62,12 +62,14 @@ from cfunits import Units
 
 from operator import mul
 
+import warnings
+
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
 
 STANDARDNAME = 'http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml'
 AREATYPES = 'http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml'
-REGIONNAMES = 'http://cfconventions.org/Data/cf-standard-names/docs/standardized-region-names.xml'
+REGIONNAMES = 'http://cfconventions.org/Data/standardized-region-list/standardized-region-list.xml'
 
 #-----------------------------------------------------------
 from xml.sax import ContentHandler
@@ -752,8 +754,8 @@ class CFChecker:
             self.chkGridMappingVar(var)
 
         if var in axes:
-
             if self.isTime(var):
+                # Time coordinate variable
                 self._add_debug("Time Axis.....")
                 self.chkTimeVariableAttributes(var)
 
@@ -842,14 +844,17 @@ class CFChecker:
 
       if self.version >= vn1_6:
           self.AttrList['cf_role']=['S','C']
+          self.AttrList['_FillValue']=['D',('C','D')]
           self.AttrList['featureType']=['S','G']
           self.AttrList['instance_dimension']=['S','D']
           self.AttrList['sample_dimension']=['S','D']
 
       if self.version>= vn1_7:
           self.AttrList['actual_range']=['N',('C','D')]
+          self.AttrList['comment']=['S',('G','C','D')]
           self.AttrList['computed_standard_name']=['S','C']
           self.AttrList['external_variables']=['S','G']
+          self.AttrList['scale_factor']=['N',('C','D')]
       
       return
 
@@ -879,30 +884,34 @@ class CFChecker:
           rc=0
       return rc
 
+
   #----------------------
   def isTime(self, var):
   #----------------------
-      """Is variable a time axis."""
+      """Variable is a time axis coordinate if it has one or more of the following:
+      1) The axis attribute has the value 'T'
+      2) Units of reference time
+      3) The standard_name attribute is one of 'time' or 'forecast_reference_time'"""
 
       variable = self.f.variables[var]
 
+      # Does it have a reference time?
       if hasattr(variable, 'units'):
-          if self.getInterpretation(variable.units) == 'T':
+          u = Units(variable.units)
+          if u.isreftime:
               return 1
       
+      # Axis attribute has the value 'T'
       if hasattr(variable, 'axis'):
           if variable.axis == 'T':
               return 1
 
+      # Standard name is one of 'time' or 'forecast_reference_time'
       if hasattr(variable, 'standard_name'):
           if variable.standard_name == 'time' or variable.standard_name == 'forecast_reference_time':
               return 1
 
       return 0
-
-
-
-
 
 
   #-------------------------
@@ -1113,6 +1122,10 @@ class CFChecker:
                     varData=self.f.variables[var][:]
                     boundsData=self.f.variables[bounds][:]
 
+                    # Convert 1d array (scalar coordinate variable) to 2d to check cell boundaries
+                    if len(boundsData.shape) == 1:
+                        boundsData = [boundsData]
+
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
                             if not (boundsData[i][0] <= value <= boundsData[i][1]):
@@ -1315,9 +1328,10 @@ class CFChecker:
           # Check type of attribute matches that specified in Appendix F: Table 1
           attr_type = type(var.getncattr(attribute))
 
+          warnings.simplefilter(action="ignore", category=FutureWarning)
           if isinstance(var.getncattr(attribute), basestring):
               attr_type='S'
-
+          
           elif (numpy.issubdtype(attr_type, numpy.int) or
                 numpy.issubdtype(attr_type, numpy.float) or 
                 attr_type == numpy.ndarray):
@@ -1326,7 +1340,8 @@ class CFChecker:
           else:
               self._add_info("Invalid Type for attribute: %s %s" % (attribute, attr_type))
               continue
-          
+          warnings.resetwarnings()
+
           if (attribute in self.grid_mapping_attrs.keys() and 
               attr_type != self.grid_mapping_attrs[attribute]):
               self._add_error("Attribute %s of incorrect data type (Appendix F)" % attribute,
@@ -1763,6 +1778,7 @@ class CFChecker:
 
         attrType=type(value)
 
+        warnings.simplefilter(action="ignore", category=FutureWarning)
         if isinstance(value, basestring):
             attrType='S'
         elif numpy.issubdtype(attrType, numpy.int) or numpy.issubdtype(attrType, numpy.float):
@@ -1773,6 +1789,7 @@ class CFChecker:
             attrType='NoneType'
         else:
             self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
+        warnings.resetwarnings()
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
@@ -1874,20 +1891,8 @@ class CFChecker:
 
           if self.getTypeCode(var) != 'i':
               self._add_error("index variable must be of type integer", varName, code="9.3")
+
                 
-  #----------------------------------
-  def isValidUdunitsUnit(self,unit):
-  #----------------------------------
-      # units must be recognizable by udunits package
-      rc=1
-      try:
-          u = Units(unit)
-      except:
-          rc=0
-
-      return rc
-
-
   #---------------------------------------------------
   def isValidCellMethodTypeValue(self, type, value, varName):
   #---------------------------------------------------
@@ -2020,7 +2025,7 @@ class CFChecker:
                 for m in allIntervals:
                     i=i+1
                     unit=m.group('unit')
-                    if not self.isValidUdunitsUnit(unit):
+                    if not Units(unit).isvalid:
                         self._add_error("Invalid unit %s in cell_methods comment" % unit, varName, code="7.3")
 
                 if i > 1 and i != dc:
@@ -2239,9 +2244,8 @@ class CFChecker:
                              varName, code="4.4")
           else:
               # units must be recognizable by udunits package
-              try:
-                  varUnit = Units(units)
-              except ValueError:
+              varUnit = Units(units)
+              if not varUnit.isvalid:
                   self._add_error("Invalid units: %s" % units,  varName, code="3.1")
                   # Invalid unit so no point continuing with further unit checks
                   return
@@ -2311,7 +2315,7 @@ class CFChecker:
 
               dimensions = self.f.variables[varName].dimensions
 
-              if not hasattr(var,'flag_values') and len(dimensions) != 0:
+              if not (hasattr(var,'flag_values') or hasattr(var,'flag_masks')) and len(dimensions) != 0:
                   try:
                       if self.f.variables[varName].dtype.char != 'S':
                           # Variable is not a flag variable or a scalar or a label
@@ -2424,9 +2428,8 @@ class CFChecker:
               self._add_error("actual_range values must be less than or equal to %s (valid_max)" % max_v,
                               varName, code="2.5.1")
 
-          varData=self.f.variables[varName][:].flatten()
+          varData=self.f.variables[varName][:]
           # Note: scale_factor & add_offset is automatically applied to data values.
-
           if varData.count() == 0:
               # All data values equal the missing value
               self._add_error("There must be no actual_range attribute when all data values equal the missing value",
@@ -2436,6 +2439,7 @@ class CFChecker:
               missing_value=None
               min_dv=None
               max_dv=None
+          
               if hasattr(var, '_FillValue'):
                   missing_value=var._FillValue
               elif hasattr(var, 'missing_value'):
@@ -2444,8 +2448,9 @@ class CFChecker:
               if missing_value:
                   # Find minimum and maximum data value.
                   # varData doesn't include values that are missing data
-                  min_dv=min(varData)
-                  max_dv=max(varData)
+                  min_dv=varData.min()
+                  max_dv=varData.max()
+
                   if min_dv and actual_range[0] != min_dv:
                       self._add_error("First element of actual_range must equal minimum data value of variable after scale_factor/add_offset applied (%s)" % min_dv,
                                       varName, code="2.5.1")
@@ -2710,15 +2715,11 @@ class CFChecker:
                     self._add_error("compress attribute naming non-existent dimension: %s" % x,
                                     varName, code="8.2")
 
-            outOfRange=0
-            for val in var[:]:
-                if val < 0 or val > dimProduct-1:
-                    outOfRange=1
-                    break;
-                
-            if outOfRange:
-                self._add_error("values of %s must be in the range 0 to %s" % (varName, dimProduct - 1),
-                                varName, code="8.2")
+            # Check all non-masked values are within the range 0 to product of compressed dimensions
+            if var[:].count() != 0:
+                if var[:].compressed().min() < 0 or var[:].compressed().max() > dimProduct-1:                    
+                    self._add_error("values of %s must be in the range 0 to %s" % (varName, dimProduct - 1),
+                                    varName, code="8.2")
 
   #---------------------------------
   def chkPackedData(self, varName):
@@ -2837,7 +2838,8 @@ class CFChecker:
           return "list"
 
       else:
-          print "<cfchecker> ERROR: Unknown Type in getType("+arg+")"
+          #print "RSH: arg is:",arg
+          print "<cfchecker> ERROR: Invalid Type: ", type(arg)
           return 0
   
   
@@ -2852,6 +2854,7 @@ class CFChecker:
       type_arg2 = self.getType(arg2)
       
       if not type_arg1 or not type_arg2:
+          # Invalid type
           return -1
           
       if type_arg1 == "str":

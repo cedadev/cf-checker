@@ -2,9 +2,9 @@ CHECKING NetCDF FILE: issue27.nc
 =====================
 Using CF Checker Version 3.1.0
 Checking against CF Version CF-1.6
-Using Standard Name Table Version 51 (2018-04-17T11:39:10Z)
-Using Area Type Table Version 7 (14 March 2018)
-Using Standardized Region Name Table Version 2 (12 June 2013)
+Using Standard Name Table Version 65 (2019-04-09T13:32:32Z)
+Using Area Type Table Version 9 (07 August 2018)
+Using Standardized Region Name Table Version 4 (18 December 2018)
 
 ERROR: (5): coordinates attribute referencing non-existent variable
 ERROR: (5.3): Invalid syntax for 'coordinates' attribute
@@ -31,7 +31,6 @@ INFO: Invalid Type for attribute: _FillValue <type 'numpy.uint16'>
 ------------------
 Checking variable: lat
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lat_geoid
@@ -40,12 +39,10 @@ Checking variable: lat_geoid
 ------------------
 Checking variable: fov_lat
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lon
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lon_geoid
@@ -54,7 +51,6 @@ Checking variable: lon_geoid
 ------------------
 Checking variable: fov_lon
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lat_bnds
@@ -144,12 +140,10 @@ INFO: Invalid Type for attribute: _FillValue <type 'numpy.uint8'>
 ------------------
 Checking variable: subsat_lat
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: subsat_lon
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: scan_mid_time
@@ -317,7 +311,6 @@ Checking variable: surf_rel_hum_err
 ------------------
 Checking variable: h2o_mmr_sat_ice
 ------------------
-ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
 
 ------------------
 Checking variable: h2o_mmr_sat_ice_qc
@@ -330,7 +323,6 @@ Checking variable: h2o_mmr_sat_ice_err
 ------------------
 Checking variable: surf_h2o_mmr_sat_ice
 ------------------
-ERROR: (2.2): AIRS_name - 'vlen string array attributes not supported'
 
 ------------------
 Checking variable: surf_h2o_mmr_sat_ice_qc
@@ -661,17 +653,14 @@ Checking variable: surf_indx
 ------------------
 Checking variable: lev_100
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lev_h2o
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lay_100
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 
 ------------------
 Checking variable: lay_100_bnds
@@ -682,7 +671,6 @@ ERROR: (7.3): Invalid syntax for cell_methods attribute
 ------------------
 Checking variable: olr_freq
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
 ERROR: (3.1): Units are not consistent with those given in the standard_name table.
 
 ------------------
@@ -698,10 +686,7 @@ Checking variable: mw_surf_class
 ------------------
 Checking variable: surf_freq_mw
 ------------------
-INFO: attribute _FillValue is being used in a non-standard way
-WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommended for time coordinate variables
-ERROR: (4.4): Invalid units and/or reference time
 
-ERRORS detected: 41
-WARNINGS given: 8
-INFORMATION messages: 14
+ERRORS detected: 38
+WARNINGS given: 7
+INFORMATION messages: 3

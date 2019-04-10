@@ -14,10 +14,11 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="3.1.0";
-$standardNameVN="51 (2018-04-17T11:39:10Z)";
-$areaTypeVN="7 (14 March 2018)";
+$standardNameVN="65 (2019-04-09T13:32:32Z)";
+$areaTypeVN="9 (07 August 2018)";
+$regionNameVN="4 (18 December 2018)";
 
-$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
+$TEST_FILES_DIR="/home/ros/git-projects/cf-checker-bugfixes/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
 foreach $file (<*.check>) {
@@ -39,6 +40,8 @@ foreach $file (<*.check>) {
 	    }
         } elsif (/Using Area Type Table/) {
             push (@new_file, "Using Area Type Table Version $areaTypeVN\n");
+        } elsif (/Using Standardized Region Name Table/) {
+            push (@new_file, "Using Standardized Region Name Table Version $regionNameVN\n");
 	} else {
 	    push (@new_file, "$_");
 	}

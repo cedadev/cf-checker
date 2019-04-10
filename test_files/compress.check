@@ -1,35 +1,37 @@
-CHECKING NetCDF FILE: Trac049_test2.nc
+CHECKING NetCDF FILE: compress.nc
 =====================
 Using CF Checker Version 3.1.0
-Checking against CF Version CF-1.4
+Checking against CF Version CF-1.7
 Using Standard Name Table Version 65 (2019-04-09T13:32:32Z)
 Using Area Type Table Version 9 (07 August 2018)
 Using Standardized Region Name Table Version 4 (18 December 2018)
 
 
 ------------------
-Checking variable: ecoregion
+Checking variable: landpoint
+------------------
+ERROR: (8.2): values of landpoint must be in the range 0 to 7007
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: landsoilt
 ------------------
 
 ------------------
-Checking variable: latitude
+Checking variable: depth
 ------------------
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
-Checking variable: flag_meanings_array
-------------------
-
-------------------
-Checking variable: longitude
+Checking variable: lat
 ------------------
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
-Checking variable: time
+Checking variable: lon
 ------------------
-ERROR: (3.1): Invalid units: years since 0000-01-01 00:00:00
+ERROR: (5): co-ordinate variable not monotonic
 
-ERRORS detected: 3
+ERRORS detected: 5
 WARNINGS given: 0
 INFORMATION messages: 0
