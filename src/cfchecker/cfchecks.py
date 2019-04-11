@@ -43,6 +43,7 @@ Options:
        directory in which to store cached tables
 
 '''
+from __future__ import print_function
 
 import sys, os, time
 
@@ -413,7 +414,7 @@ class CFChecker:
         self._add_version("CHECKING NetCDF FILE: %s" % file)
     
     if not self.silent:
-        print "====================="
+        print("=====================")
 
     # Check for valid filename
     if not fileSuffix.match(file):
@@ -478,7 +479,7 @@ class CFChecker:
                       (self.region_name_lh.version_number, self.region_name_lh.last_modified))
     
     if not self.silent:
-        print ""
+        print("")
 
     try:
         return self._checker()
@@ -575,9 +576,9 @@ class CFChecker:
         if not self.silent:
             #print msg_print
             if category == "VERSION":
-                print self._join_strings([code_report, msg])
+                print(self._join_strings([code_report, msg]))
             else:
-                print self._join_strings([category, code_report, msg])
+                print(self._join_strings([category, code_report, msg]))
 
         self.all_messages.append(msg_print)
 
@@ -637,7 +638,7 @@ class CFChecker:
                 continue
             line = "%s: %s" % (descriptions[category], count)
             if not self.silent:
-                print line
+                print(line)
             if append_to_all_messages:
                 self.all_messages.append(line)
   
@@ -688,10 +689,10 @@ class CFChecker:
     for var in self.f.variables.keys():
 
         if not self.silent:
-            print ""
-            print "------------------"
-            print "Checking variable:",var
-            print "------------------"
+            print("")
+            print("------------------")
+            print("Checking variable: %s" % var)
+            print("------------------")
 
 
         if not self.validName(var):
@@ -790,7 +791,7 @@ class CFChecker:
                 self._add_error("CF Files containing %s featureType may contain 2 occurrences of a cf_role attribute" % featureType)
 
     if not self.silent:
-        print
+        print("")
     self.show_counts(append_to_all_messages=True)
     return self.results
 
@@ -2839,7 +2840,7 @@ class CFChecker:
 
       else:
           #print "RSH: arg is:",arg
-          print "<cfchecker> ERROR: Invalid Type: ", type(arg)
+          print("<cfchecker> ERROR: Invalid Type: %s" % type(arg))
           return 0
   
   
@@ -2991,7 +2992,7 @@ def getargs(arglist):
             debug=True
             continue
         if a in ('-h','--help'):
-            print __doc__
+            print(__doc__)
             exit(0)
         if a in ('-l','--uploader'):
             uploader="yes"
@@ -3015,11 +3016,11 @@ def getargs(arglist):
                 try:
                     version = CFVersion(v)
                 except ValueError:
-                    print "WARNING: '%s' cannot be parsed as a version number." % v
-                    print "Performing check against newest version", newest_version                    
+                    print("WARNING: '%s' cannot be parsed as a version number." % v)
+                    print("Performing check against newest version: %s" % newest_version)
                 if version not in cfVersions:
-                    print "WARNING: %s is not a valid CF version." % version
-                    print "Performing check against newest version", newest_version
+                    print("WARNING: %s is not a valid CF version." % version)
+                    print("Performing check against newest version: %s" % newest_version)
                     version = newest_version
             continue
         if a in ('-x','--cache_tables'):
@@ -3030,7 +3031,8 @@ def getargs(arglist):
         stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
         exit(1)
 
-    return (badc,coards,debug,uploader,useFileName,regionnames,standardname,areatypes,cacheDir,cacheTables,cacheTime,version,args)
+    return badc, coards, debug, uploader, useFileName, regionnames, standardname, areatypes, cacheDir, cacheTables, \
+           cacheTime, version, args
 
 
 def main():
@@ -3050,20 +3052,18 @@ def main():
                      version=version,
                      debug=debug)
     for file in files:
-        #print
         try:
             inst.checker(file)
         except FatalCheckerError:
-            print "Checking of file %s aborted due to error" % file
-        #print
+            print("Checking of file %s aborted due to error" % file)
 
     totals = inst.get_total_counts()
 
     if debug:
-        print
-        print "Results dictionary:", inst.all_results
-        print
-        print "Messages that were printed", inst.all_messages
+        print("")
+        print("Results dictionary: %s" % inst.all_results)
+        print("")
+        print("Messages that were printed: %s" % inst.all_messages)
 
     errs = totals["FATAL"] + totals["ERROR"]
     if errs:
