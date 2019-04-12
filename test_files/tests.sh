@@ -17,7 +17,7 @@ failed=0
 echo "Unzipping input netcdf files..."
 gzip -d *.gz
 
-cache_opts="-x --cache_dir /home/ros/temp"
+cache_opts="-x --cache_dir /home/ros/temp/cfcache-files-py3"
 
 for file in `ls *.nc`
 do

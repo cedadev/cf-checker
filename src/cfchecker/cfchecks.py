@@ -51,7 +51,6 @@ from builtins import map
 from past.builtins import basestring
 from builtins import object
 import sys, os, time
-from functools import reduce
 
 if sys.version_info[:2] < (2,7):
     from ordereddict import OrderedDict
@@ -68,6 +67,8 @@ warnings.filterwarnings("ignore",category=FutureWarning)
 from netCDF4 import Dataset as netCDF4_Dataset
 from netCDF4 import Variable as netCDF4_Variable
 from netCDF4 import VLType as netCDF4_VLType
+
+import netCDF4
 
 from cfunits import Units
 
@@ -89,7 +90,6 @@ from xml.sax.handler import feature_namespaces
 def normalize_whitespace(text):
     "Remove redundant whitespace from a string."
     return ' '.join(text.split())
-
 
 def isnt_str_or_basestring(thing):
     """
@@ -1625,9 +1625,9 @@ class CFChecker(object):
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
         if re.match("^.*,.*$",conventions):
-            conventionList = string.split(conventions,",")
+            conventionList = conventions.split(",")
         else:
-            conventionList = string.split(conventions)
+            conventionList = conventions.split()
 
         found = 0
         coards = 0
@@ -2676,6 +2676,7 @@ class CFChecker(object):
                   region_names = self.getStringValue(varName)
                   if len(region_names):
                       for region in region_names:
+                          print ("RSH region list: {}".format(self.region_name_lh.list))
                           if not region in self.region_name_lh.list:
                               self._add_error("Invalid region name: %s" % region, varName, code="3.3")
                   else:
@@ -2697,23 +2698,17 @@ class CFChecker(object):
       # memory. E.g. [['a','b','c']] becomes ['abc']
       array=self.f.variables[varName][:]
       ndim = array.ndim
-      if array.dtype.kind == 'S':
-          strlen = array.shape[-1]
-              
-          new_shape = array.shape[0:-1]
-          new_size  = int(reduce(mul, new_shape, 1))
-            
-          array = numpy.ma.resize(array, (new_size, strlen))
-          
-          array = array.filled(fill_value='')
 
-          array = numpy.array([''.join(x).rstrip() for x in array],
-                              dtype='S%d' % strlen)
+      if array.dtype.kind in ('S', 'U'): 
+          if array.dtype.kind == 'U':
+              array = array.astype('S')
             
-          array = array.reshape(new_shape)
+          array = netCDF4.chartostring(array)
+          shape = array.shape
+          array = numpy.array([x.rstrip() for x in array.flat], dtype='S') #array.dtype)
+          array = numpy.reshape(array, shape)
+          array = numpy.ma.masked_where(array==b'', array)
 
-          array = numpy.ma.where(array=='', numpy.ma.masked, array)
-      
           # If varName is one dimension convert result of join from a string into an array
           if ndim == 1:
               array = [array]
@@ -2733,7 +2728,7 @@ class CFChecker(object):
         if not re.search("^[a-zA-Z0-9_ ]*$",compress):
             self._add_error("Invalid syntax for 'compress' attribute", varName, code="8.2")
         else:
-            dimensions=string.split(compress)
+            dimensions=compress.split()
             dimProduct=1
             for x in dimensions:
                 found='false'
