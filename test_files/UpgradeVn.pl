@@ -18,7 +18,7 @@ $standardNameVN="65 (2019-04-09T13:32:32Z)";
 $areaTypeVN="9 (07 August 2018)";
 $regionNameVN="4 (18 December 2018)";
 
-$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
+$TEST_FILES_DIR="/home/ros/git-projects/cf-checker-bugfixes/test_files";
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
 foreach $file (<*.check>) {
