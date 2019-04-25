@@ -1132,7 +1132,7 @@ class CFChecker:
 
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
-                            if not (boundsData[i][0] <= value <= boundsData[i][1]) and not (boundsData[i][0] >= value >= boundsData[i][1]):
+                            if not (boundsData[i][0] <= value <= boundsData[i][1]):
                                 self._add_warn("Data for variable %s lies outside cell boundaries" % var,
                                                var, code="7.1")
                                 break
@@ -2898,24 +2898,8 @@ class CFChecker:
     (increasing or decreasing)."""
     values=self.f.variables[varName][:]
 
-    if not self.isStrictlyMonotonic(values):
+    if not numpy.all(numpy.diff(values) > 0) and not numpy.all(numpy.diff(values) < 0):
         self._add_error("co-ordinate variable not monotonic", varName, code="5")
-
-
-  #-----------------------------
-  def isStrictlyMonotonic(self, values):
-  #-----------------------------
-    """Is array strictly monotonic increasing or decreasing"""
-
-    if numpy.all(numpy.diff(values) > 0):
-        # monotonic increasing
-        return 1
-    elif numpy.all(numpy.diff(values) < 0):
-        # monotonic decreasing
-        return 2
-    else:
-        # not monotonic
-        return 0
 
 
 def getargs(arglist):
