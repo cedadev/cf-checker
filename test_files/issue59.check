@@ -1,0 +1,81 @@
+CHECKING NetCDF FILE: issue59.nc
+=====================
+Using CF Checker Version 3.1.0
+Checking against CF Version CF-1.7
+Using Standard Name Table Version 65 (2019-04-09T13:32:32Z)
+Using Area Type Table Version 9 (07 August 2018)
+Using Standardized Region Name Table Version 4 (18 December 2018)
+
+WARN: (7.1): Boundary var lev_bnds should not have attribute units
+WARN: (7.1): Boundary var lev_bnds should not have attribute standard_name
+
+------------------
+Checking variable: time
+------------------
+
+------------------
+Checking variable: time_bnds
+------------------
+
+------------------
+Checking variable: lev
+------------------
+
+------------------
+Checking variable: lev_bnds
+------------------
+INFO: attribute formula_terms is being used in a non-standard way
+ERROR: (4.3.3): formula_terms attribute only allowed on coordinate variables
+
+------------------
+Checking variable: p0
+------------------
+
+------------------
+Checking variable: a
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: b
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: ps
+------------------
+
+------------------
+Checking variable: a_bnds
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: b_bnds
+------------------
+INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+
+------------------
+Checking variable: lat
+------------------
+
+------------------
+Checking variable: lat_bnds
+------------------
+
+------------------
+Checking variable: lon
+------------------
+
+------------------
+Checking variable: lon_bnds
+------------------
+
+------------------
+Checking variable: cl
+------------------
+INFO: attribute history is being used in a non-standard way
+
+ERRORS detected: 1
+WARNINGS given: 2
+INFORMATION messages: 6

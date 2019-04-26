@@ -53,7 +53,10 @@ else:
     from collections import OrderedDict
     from collections import defaultdict
 
-import re, string, types, numpy
+import re
+import string
+import types
+import numpy
 
 from netCDF4 import Dataset as netCDF4_Dataset
 from netCDF4 import Variable as netCDF4_Variable
@@ -1129,7 +1132,7 @@ class CFChecker:
 
                     for i, value in (enumerate(varData) if len(varData.shape) else enumerate([varData])):
                         try:
-                            if not (boundsData[i][0] <= value <= boundsData[i][1]):
+                            if not (boundsData[i][0] <= value <= boundsData[i][1]) and not (boundsData[i][0] >= value >= boundsData[i][1]):
                                 self._add_warn("Data for variable %s lies outside cell boundaries" % var,
                                                var, code="7.1")
                                 break
@@ -2888,48 +2891,33 @@ class CFChecker:
               self._add_warn("The name of a multi-dimensional coordinate variable should not match the name of any of its dimensions.",
                              varName, code="5")
 
+
   #--------------------------------------
   def chkValuesMonotonic(self, varName):
   #--------------------------------------
     """A coordinate variable must have values that are strictly monotonic
     (increasing or decreasing)."""
-    var=self.f.variables[varName]
-    i=0
+    values = self.f.variables[varName][:]
 
-    if len(var) == 0 or len(var) == 1:
-        # nothing to check
-        return
-    
-    for i, value in enumerate(var):
-        if i == 0:
-            # First value - no comparison to do
-            lastVal=value
-            continue
-        elif i == 1:
-            if value < lastVal:
-                # Decreasing sequence
-                type='decr'
-            elif value > lastVal:
-                # Increasing sequence
-                type='incr'
-            else:
-                # Same value - ERROR
-                self._add_error("co-ordinate variable not monotonic", varName, code="5")
-                return
+    if not self.isStrictlyMonotonic(values):
+        self._add_error("co-ordinate variable not monotonic", varName, code="5")
 
-            lastVal=value
-        else:
-            if value < lastVal and type != 'decr':
-                # ERROR - should be increasing value
-                self._add_error("co-ordinate variable not monotonic", varName, code="5")
-                return
-            elif value > lastVal and type != 'incr':
-                # ERROR - should be decreasing value
-                self._add_error("co-ordinate variable not monotonic", varName, code="5")
-                return
 
-            lastVal=value
+  #-----------------------------
+  def isStrictlyMonotonic(self, values):
+  #-----------------------------
+    """Is array strictly monotonic increasing or decreasing"""
 
+    if numpy.all(numpy.diff(values) > 0):
+        # monotonic increasing
+        return 1
+    elif numpy.all(numpy.diff(values) < 0):
+        # monotonic decreasing
+        return 2
+    else:
+        # not monotonic
+        return 0
+	
 
 def getargs(arglist):
     
