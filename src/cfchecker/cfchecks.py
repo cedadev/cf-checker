@@ -2837,26 +2837,6 @@ class CFChecker:
               self._add_error("flag_meanings attribute is missing", varName, code="3.5")
               
 
-  #-----------------------
- # def getType(self, arg):
-  #-----------------------
-
-#      if type(arg) == type(numpy.array([])):
-#      if isinstance(arg, numpy.ndarray):
-#          return "array"
-#
-#      elif isinstance(arg, basestring):
-#          return "str"
-#
-#      elif isinstance(arg, list):
-#          return "list"
-#
-#      else:
-#          #print "RSH: arg is:",arg
-#          print("<cfchecker> ERROR: Invalid Type: %s" % type(arg))
-#          return 0
-  
-  
   #----------------------------------------    
   def equalNumOfValues(self, arg1, arg2):
   #----------------------------------------
