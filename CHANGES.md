@@ -3,6 +3,22 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## April 2019
+
+CF Checker release 3.1.1
+
+This is a bug fix release.
+
+Requires: NetCDF v4.5.1+ and netcdf4-python v1.2.5+  
+
+Various bug fixes including:
+
+[#45](https://github.com/cedadev/cf-checker/issues/45): Check for units in flag_masks and flag_values
+[#46](https://github.com/cedadev/cf-checker/issues/46): Error checking bounds on a scalar coordinate variable
+[#49](https://github.com/cedadev/cf-checker/issues/49): Checker reports error when units is "years" even if not time
+[#52](https://github.com/cedadev/cf-checker/issues/52): wrong result when using auxillary coordinate with _Fillvalue
+[#58](https://github.com/cedadev/cf-checker/issues/58): Checker crashes for variables with one single flag_values or flag_mask
+
 ## March 2018
 
 CF Checker release 3.1.0
