@@ -2785,7 +2785,12 @@ class CFChecker:
               if isinstance(values, basestring):
                   values = values.split()
 
-              if not self.uniqueList(values):
+              try:
+                  iterator = iter(values)
+              except TypeError:
+                  iterator = [values]
+
+              if not self.uniqueList(iterator):
                   self._add_error("flag_values attribute must contain a list of unique values", varName, code="3.5")
                   
           if hasattr(var, 'flag_masks'):
@@ -2799,8 +2804,13 @@ class CFChecker:
                   self._add_error("Number of flag_masks values must equal the number or words/phrases in flag_meanings",
                                   varName, code="3.5")
                   
-              # flag_values values must be non-zero
-              for v in masks:
+              # flag_masks values must be non-zero
+              try:
+                  iterator = iter(masks)
+              except TypeError:
+                  iterator = [masks]
+
+              for v in iterator:
                   if v == 0:
                       self._add_error("flag_masks values must be non-zero", varName, code="3.5")
                       
@@ -2827,57 +2837,24 @@ class CFChecker:
               self._add_error("flag_meanings attribute is missing", varName, code="3.5")
               
 
-  #-----------------------
-  def getType(self, arg):
-  #-----------------------
-
-#      if type(arg) == type(numpy.array([])):
-      if isinstance(arg, numpy.ndarray):
-          return "array"
-
-      elif isinstance(arg, basestring):
-          return "str"
-
-      elif type(arg) == list:
-          return "list"
-
-      else:
-          #print "RSH: arg is:",arg
-          print("<cfchecker> ERROR: Invalid Type: %s" % type(arg))
-          return 0
-  
-  
-  
   #----------------------------------------    
   def equalNumOfValues(self, arg1, arg2):
   #----------------------------------------
-      """ Check that arg1 and arg2 contain the same number of blank-separated elements."""
+      """ Check that arg1 and arg2 contain the same number elements."""
 
-      # Determine the type of both arguments.  strings and arrays need to be handled differently
-      type_arg1 = self.getType(arg1)
-      type_arg2 = self.getType(arg2)
-      
-      if not type_arg1 or not type_arg2:
-          # Invalid type
-          return -1
-          
-      if type_arg1 == "str":
-          len_arg1 = len(arg1.split())
-      else:
-          len_arg1 = len(arg1)
+      # Determine if args are strings. Strings need to be split up into elements.
+      if isinstance(arg1, basestring):
+          arg1 = arg1.split()
 
-      if type_arg2 == "str":
-          len_arg2 = len(arg2.split())
-      else:
-          len_arg2 = len(arg2)
-      
-      
-      if len_arg1 != len_arg2:
+      if isinstance(arg2, basestring):
+          arg2 = arg2.split()
+
+      if numpy.size(arg1) != numpy.size(arg2):
           return 0
 
       return 1
 
-      
+       
   #------------------------------------------
   def chkMultiDimCoord(self, varName, axes):
   #------------------------------------------
