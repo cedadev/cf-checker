@@ -11,9 +11,9 @@ The CF Checker is a utility that checks the contents of a NetCDF file complies w
 
 * [netcdf4-python](https://pypi.python.org/pypi/netCDF4) at version 1.2.5 or newer. This package requires [netCDF](https://www.unidata.ucar.edu/software/netcdf/), [HDF5](https://www.hdfgroup.org/solutions/hdf5/) and [zlib](ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4) libraries.
 
-* [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 1.8 or newer
+* [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 1.8 or 1.9
 
-* [numpy](https://pypi.python.org/pypi/numpy) version 1.7 or newer
+* [numpy](https://pypi.python.org/pypi/numpy) version 1.7 up to and including 1.16.4
 
 ## Installation
 
