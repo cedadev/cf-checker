@@ -69,7 +69,7 @@ Checking variable: VIL
 ------------------
 Checking variable: VIL_FLAGS
 ------------------
-ERROR: Attribute flag_values of incorrect type
+ERROR: Attribute flag_values of incorrect type (expecting 'Data Variable' type, got 'String' type)
 
 ERRORS detected: 1
 WARNINGS given: 0

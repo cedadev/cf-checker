@@ -1634,7 +1634,7 @@ class CFChecker(object):
         else:
             conventions = value
         
-        print("RSH conventions: {}".format(conventions))
+        #print("RSH conventions: {}".format(conventions))
 
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
@@ -1817,6 +1817,8 @@ class CFChecker(object):
 
         attrType=type(value)
 
+        print("RSH: {}: type {}".format(attribute, attrType))
+
         if is_str_or_basestring(value):
             attrType='S'
         elif numpy.issubdtype(attrType, numpy.int) or numpy.issubdtype(attrType, numpy.float):
@@ -1827,7 +1829,6 @@ class CFChecker(object):
             attrType='NoneType'
         else:
             self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
-        warnings.resetwarnings()
 
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
@@ -1849,7 +1850,15 @@ class CFChecker(object):
                 typeError=1
 
             if typeError:
-                self._add_error("Attribute %s of incorrect type (expecting %s, got %s)" % (attribute, self.AttrList[attribute][0], attrType),
+
+                attrLookup = {"D": "Data Variable",
+                              "N": "Numeric",
+                              "S": "String"}
+
+                self._add_error("Attribute %s of incorrect type (expecting '%s' type, got '%s' type)" % 
+                                (attribute, 
+                                 attrLookup[self.AttrList[attribute][0]], 
+                                 attrLookup[attrType]), 
                                 varName)
             
         # Attribute attached to the wrong kind of variable
@@ -2162,7 +2171,7 @@ class CFChecker(object):
             return
 
         (stdName,modifier) = self.getStdName(var)
-        stdName=stdName.encode('ascii')
+        #stdName=stdName.encode('ascii')
 
         if stdName not in self.alias:
             self._add_error("No formula defined for standard name: %s" % stdName, varName, code=scode)
@@ -2264,6 +2273,9 @@ class CFChecker(object):
       if hasattr(var, 'units') and var.units != '':
           # Type of units is a string
           units = var.units
+
+          #print("RSH: {} units: {}".format(varName, units))
+
           if isnt_str_or_basestring(units):
               self._add_error("units attribute must be of type 'String'", varName, code="3.1")
               # units not a string so no point carrying out further tests
@@ -2290,7 +2302,7 @@ class CFChecker(object):
               # be consistent with units given in standard_name table
               if hasattr(var, 'standard_name'):
                   (stdName,modifier) = self.getStdName(var)
-                  stdName = stdName.encode('ascii')
+                  #stdName = stdName.encode('ascii')
 
                   # Is the Standard Name modifier number_of_observations being used.
                   if modifier == 'number_of_observations':
@@ -2303,6 +2315,7 @@ class CFChecker(object):
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
 
+                      # Remove this line for python3??
                       # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
                       stdNameUnits=stdNameUnits.encode('ascii')
 

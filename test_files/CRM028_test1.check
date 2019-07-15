@@ -38,7 +38,7 @@ WARN: (4.4.1): Use of the calendar and/or month_lengths attributes is recommende
 ------------------
 Checking variable: Temperature
 ------------------
-ERROR: Attribute missing_value of incorrect type
+ERROR: Attribute missing_value of incorrect type (expecting 'Data Variable' type, got 'Numeric' type)
 
 ERRORS detected: 4
 WARNINGS given: 2
