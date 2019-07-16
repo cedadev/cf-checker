@@ -77,8 +77,6 @@ from cfunits import Units
 
 from operator import mul
 
-import warnings
-
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
 
@@ -987,6 +985,7 @@ class CFChecker(object):
           # If there are more than 2, which is invalid syntax, this will have been picked up by chkDescription()
           return (bits[0],bits[1])
     
+
   #--------------------------------------------------
   def getInterpretation(self, units, positive=None):
   #--------------------------------------------------
@@ -1252,6 +1251,7 @@ class CFChecker(object):
     "substitute tokens for WORD and SEP (space or end of string)"
     return s.replace('WORD', r'[A-Za-z0-9_]+').replace('SEP', r'(\s+|$)')
 
+
   #--------------------------------------------------------
   def chkGridMappingAttribute(self, varName, grid_mapping):
   #--------------------------------------------------------
@@ -1302,6 +1302,7 @@ class CFChecker(object):
 
       return (list(map(str,grid_mapping_vars)), list(map(str,coord_vars)))
 
+
   #------------------------------------
   def validGridMappingAttributes(self):
   #------------------------------------
@@ -1337,7 +1338,8 @@ class CFChecker(object):
                                     ('straight_vertical_longitude_from_pole', 'N'),
                                     ('towgs84', 'N')])
       return
-                                    
+            
+                        
   #-------------------------------------
   def chkGridMappingVar(self, varName):
   #-------------------------------------
@@ -1411,6 +1413,7 @@ class CFChecker(object):
           if hasattr(var, 'projected_crs_name') and not hasattr(var, 'geographic_crs_name'):
               self._add_error("projected_crs_name is defined therefore geographic_crs_name must be also",
                               varName, code="5.6")
+
 
   #------------------------
   def setUpFormulas(self):
@@ -1539,6 +1542,7 @@ class CFChecker(object):
       else:
           return 0
 
+
   #-------------------------------------------
   def commaOrBlankSeparatedList(self, list):
   #-------------------------------------------
@@ -1620,6 +1624,7 @@ class CFChecker(object):
                 self._add_error("Global attribute %s must be of type 'String'" % attribute,
                                 code="2.6.2")
 
+
   #------------------------------
   def getFileCFVersion(self):
   #------------------------------
@@ -1637,8 +1642,6 @@ class CFChecker(object):
         else:
             conventions = value
         
-        #print("RSH conventions: {}".format(conventions))
-
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
         if re.match("^.*,.*$",conventions):
@@ -1661,6 +1664,7 @@ class CFChecker(object):
             rc = CFVersion((1, 0))
 
     return rc
+
 
   #--------------------------
   def validName(self, name):
@@ -1763,14 +1767,13 @@ class CFChecker(object):
         if not self.uniqueList(dimensions):
             self._add_error("variable has repeated dimensions", varName, code="2.4")
 
+
   #-------------------------------------------------------
   def getTypeCode(self, obj):
   #-------------------------------------------------------
       """
       Get the type, as a 1-character code
       """
-  #     self._add_debug("getTypeCode: Object - %s" % obj)
-
       if isinstance(obj, netCDF4_Variable):
           # Variable object
           if isinstance(obj.datatype, netCDF4_VLType):
@@ -1783,7 +1786,11 @@ class CFChecker(object):
               self._add_warn("Problem getting typecode: {}".format(e), obj.name)
       else:
           # Attribute object
-          typecode = obj.dtype.char
+          if isinstance(obj, bytes):
+              # Bytestring
+              typecode='S'
+          else:
+              typecode = obj.dtype.char
           
       return typecode
 
@@ -1820,7 +1827,9 @@ class CFChecker(object):
 
         attrType=type(value)
 
-        print("RSH: {}: type {}".format(attribute, attrType))
+        if isinstance(value, bytes):
+            # Bytestring
+            value = value.decode('utf-8')
 
         if is_str_or_basestring(value):
             attrType='S'
@@ -1919,6 +1928,7 @@ class CFChecker(object):
 
           if not cf_role in ['timeseries_id','profile_id','trajectory_id']:
               self._add_error("Invalid value for cf_role attribute", varName, code="9.5")
+
 
   #---------------------------------
   def chkRaggedArray(self,varName):
@@ -2174,7 +2184,6 @@ class CFChecker(object):
             return
 
         (stdName,modifier) = self.getStdName(var)
-        #stdName=stdName.encode('ascii')
 
         if stdName not in self.alias:
             self._add_error("No formula defined for standard name: %s" % stdName, varName, code=scode)
@@ -2260,6 +2269,7 @@ class CFChecker(object):
                 except StopIteration:
                     break
 
+
   #----------------------------------------
   def chkUnits(self,varName,allCoordVars):
   #----------------------------------------
@@ -2276,8 +2286,6 @@ class CFChecker(object):
       if hasattr(var, 'units') and var.units != '':
           # Type of units is a string
           units = var.units
-
-          #print("RSH: {} units: {}".format(varName, units))
 
           if isnt_str_or_basestring(units):
               self._add_error("units attribute must be of type 'String'", varName, code="3.1")
@@ -2305,7 +2313,6 @@ class CFChecker(object):
               # be consistent with units given in standard_name table
               if hasattr(var, 'standard_name'):
                   (stdName,modifier) = self.getStdName(var)
-                  #stdName = stdName.encode('ascii')
 
                   # Is the Standard Name modifier number_of_observations being used.
                   if modifier == 'number_of_observations':
@@ -2538,6 +2545,10 @@ class CFChecker(object):
         try:
             if missingValue:
                 if hasattr(var, '_FillValue'):
+
+                    if isinstance(fillValue, bytes):
+                        fillValue = fillValue.decode('utf-8')
+
                     if fillValue != missingValue:
                         # Special case: NaN == NaN is not detected as NaN does not compare equal to anything else
                         if not (numpy.isnan(fillValue) and numpy.isnan(missingValue)):
@@ -2695,9 +2706,8 @@ class CFChecker(object):
                   region_names = self.getStringValue(varName)
                   if len(region_names):
                       for region in region_names:
-                          print ("RSH region list: {}".format(self.region_name_lh.list))
-                          if not region in self.region_name_lh.list:
-                              self._add_error("Invalid region name: %s" % region, varName, code="3.3")
+                          if not region.decode('utf-8') in self.region_name_lh.list:
+                              self._add_error("Invalid region name: {}".format(region.decode('utf-8')), varName, code="3.3")
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
 
@@ -2734,6 +2744,7 @@ class CFChecker(object):
           
       return array
         
+
   #-----------------------------------
   def chkCompressAttr(self, varName):
   #-----------------------------------
@@ -2767,6 +2778,7 @@ class CFChecker(object):
                     self._add_error("values of %s must be in the range 0 to %s" % (varName, dimProduct - 1),
                                     varName, code="8.2")
 
+
   #---------------------------------
   def chkPackedData(self, varName):
   #---------------------------------
@@ -2798,6 +2810,7 @@ class CFChecker(object):
         if type == 'f' and varType == 'i':
             self._add_warn("scale_factor/add_offset are type float, therefore should not be of type int", varName, code="8.1")
             
+
   #----------------------------
   def chkFlags(self, varName):
   #----------------------------

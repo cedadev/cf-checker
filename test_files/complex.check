@@ -2,7 +2,7 @@ CHECKING NetCDF FILE: complex.nc
 =====================
 Using CF Checker Version 3.1.1
 Checking against CF Version CF-1.0
-Using Standard Name Table Version 65 (2019-04-09T13:32:32Z)
+Using Standard Name Table Version 67 (2019-06-18T13:25:38Z)
 Using Standardized Region Name Table Version 4 (18 December 2018)
 
 WARN: (2.6.1): No 'Conventions' attribute present
@@ -48,7 +48,7 @@ ERROR: (4.4.1): The attributes 'month_lengths', 'leap_year' and 'leap_month' mus
 Checking variable: lat2d
 ------------------
 WARN: (3): No standard_name or long_name attribute specified
-ERROR: Attribute missing_value of incorrect type
+ERROR: Attribute missing_value of incorrect type (expecting 'Data Variable' type, got 'Numeric' type)
 WARN: attribute missing_value attached to wrong kind of variable
 
 ------------------
