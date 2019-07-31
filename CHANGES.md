@@ -5,13 +5,11 @@ See https://github.com/cedadev/cf-checker/milestones?state=closed for full detai
 -----------------------------------------------------------------
 ## July 2019
 
-CF Checker release 3.1.2
+CF Checker release 3.1.3
 
 This is a bug fix release
 
 [#64](https://github.com/cedadev/cf-checker/issues/64): Required version of cfunits is v1.8 to v1.9.1
-
-[#65](https://github.com/cedadev/cf-checker/issues/65): Checker not giving a warning when variable is type int and scale_factor/add_offset are float
 
 ## April 2019
 
