@@ -2704,10 +2704,17 @@ class CFChecker(object):
               if name == "region":
                   # Check values are from the permitted list
                   region_names = self.getStringValue(varName)
-                  if len(region_names):
+                  
+                  if len(region_names) == 1 and region_names[0] == None:
+                      # Not a char variable so getStringValue couldn't be applied
+                      self._add_error("Variable {} of invalid type. Region variable should be of type char.".format(varName), varName, code="3.3")
+
+                  elif len(region_names):
                       for region in region_names:
-                          if not region.decode('utf-8') in self.region_name_lh.list:
+
+                          if not region.decode('utf-8') in list(self.region_name_lh.list):
                               self._add_error("Invalid region name: {}".format(region.decode('utf-8')), varName, code="3.3")
+
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
 
@@ -2741,7 +2748,11 @@ class CFChecker(object):
           # If varName is one dimension convert result of join from a string into an array
           if ndim == 1:
               array = [array]
-          
+              
+      else:
+          # Variable not of char type
+          return [None]
+
       return array
         
 

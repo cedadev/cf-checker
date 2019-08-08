@@ -3,6 +3,14 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## July 2019
+
+CF Checker release 3.1.3
+
+This is a bug fix release
+
+[#64](https://github.com/cedadev/cf-checker/issues/64): Required version of cfunits is v1.8 to v1.9.1
+
 ## April 2019
 
 CF Checker release 3.1.1
