@@ -2646,10 +2646,16 @@ class CFChecker:
               if name == "region":
                   # Check values are from the permitted list
                   region_names = self.getStringValue(varName)
-                  if len(region_names):
+                  
+                  if len(region_names) == 1 and region_names[0] == None:
+                      # Not a char variable so getStringValue couldn't be applied
+                      self._add_error("Variable {} of invalid type. Region variable should be of type char.".format(varName), varName, code="3.3")
+
+                  elif len(region_names):
                       for region in region_names:
-                          if not region in self.region_name_lh.list:
-                              self._add_error("Invalid region name: %s" % region, varName, code="3.3")
+                          if not region in list(self.region_name_lh.list):
+                              self._add_error("Invalid region name: {}".format(region), varName, code="3.3")
+
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
 
@@ -2669,6 +2675,7 @@ class CFChecker:
       # memory. E.g. [['a','b','c']] becomes ['abc']
       array=self.f.variables[varName][:]
       ndim = array.ndim
+
       if array.dtype.kind == 'S':
           strlen = array.shape[-1]
               
@@ -2689,7 +2696,11 @@ class CFChecker:
           # If varName is one dimension convert result of join from a string into an array
           if ndim == 1:
               array = [array]
-          
+              
+      else:
+          # Variable not of char type
+          return [None]
+
       return array
         
   #-----------------------------------
