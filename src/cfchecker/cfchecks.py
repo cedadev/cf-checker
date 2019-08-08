@@ -2798,7 +2798,7 @@ class CFChecker(object):
         return
 
     varType = var.dtype.char
-
+   
     # One or other attributes present; run remaining checks
     if varType != type:
         if type != 'f' and type != 'd':
@@ -2808,7 +2808,7 @@ class CFChecker(object):
             self._add_error("must be of type byte, short or int", varName, code="8.1")
 
         if type == 'f' and varType == 'i':
-            self._add_warn("scale_factor/add_offset are type float, therefore should not be of type int", varName, code="8.1")
+            self._add_warn("scale_factor/add_offset are type float, therefore variable should not be of type int", varName, code="8.1")
             
 
   #----------------------------
