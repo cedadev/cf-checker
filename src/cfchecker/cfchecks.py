@@ -2325,10 +2325,6 @@ class CFChecker(object):
                       # Get canonical units from standard name table
                       stdNameUnits = self.std_name_dh.dict[stdName]
 
-                      # Remove this line for python3??
-                      # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
-                      # stdNameUnits=stdNameUnits.encode('ascii')
-
                       canonicalUnit = Units(stdNameUnits)
                       # To compare units we need to remove the reference time from the variable units
                       if re.search("since", units):
