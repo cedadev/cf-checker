@@ -59,6 +59,8 @@ The following parameters can be set on the command-line or through environment v
 
 ### Wrapper script
 
+Note: The wrapper script has not been tested under Python 3.  The cf-checker itself now has the option to cache the standard_name, area_types and region_name tables.
+
 A wrapper to cfchecks, called `cf-checker`, is provided in the `src/` directory, which will maintain local copies of the standard names table and the area types table, and will refresh these local copies only if the age of the file (based on its modification time) is more than a specified maximum, defaulting to 1 day.  This allows for running the checker repeatedly without refetching the tables on each invocation, while still keeping them reasonably up to date.
 
 For a usage message, type `cf-checker -h`
