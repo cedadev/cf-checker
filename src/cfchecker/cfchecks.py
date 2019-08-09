@@ -2327,7 +2327,7 @@ class CFChecker(object):
 
                       # Remove this line for python3??
                       # stdNameUnits is unicode which udunits can't deal with.  Explicity convert it to ASCII
-                      stdNameUnits=stdNameUnits.encode('ascii')
+                      # stdNameUnits=stdNameUnits.encode('ascii')
 
                       canonicalUnit = Units(stdNameUnits)
                       # To compare units we need to remove the reference time from the variable units
