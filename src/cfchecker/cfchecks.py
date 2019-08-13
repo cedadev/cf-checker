@@ -444,6 +444,9 @@ class CFChecker(object):
       if debug:
           self.categories += ("DEBUG",)
 
+      if not isinstance(self.version, CFVersion):
+          self.version = CFVersion(self.version)
+
 
   def checker(self, file):
 
