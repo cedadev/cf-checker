@@ -945,9 +945,13 @@ class CFChecker(object):
 
       # Does it have a reference time?
       if hasattr(variable, 'units'):
-          u = Units(variable.units)
-          if u.isreftime:
-              return 1
+          try:
+              u = Units(variable.units)
+              if u.isreftime:
+                  return 1
+          except TypeError:
+              # No need to indicate error here as picked up in chkUnits
+              pass
       
       # Axis attribute has the value 'T'
       if hasattr(variable, 'axis'):
@@ -2303,7 +2307,11 @@ class CFChecker(object):
                              varName, code="4.4")
           else:
               # units must be recognizable by udunits package
-              varUnit = Units(units)
+              try:
+                  varUnit = Units(units)
+              except TypeError:
+                  varUnit = Units('error')
+
               if not varUnit.isvalid:
                   self._add_error("Invalid units: %s" % units,  varName, code="3.1")
                   # Invalid unit so no point continuing with further unit checks
@@ -2647,7 +2655,11 @@ class CFChecker(object):
             self._add_warn("leap_month is ignored as leap_year NOT specified", varName, code="4.4.1")
 
     # Time units must contain a reference time
-    varUnits = Units(var.units)
+    try:
+        varUnits = Units(var.units)
+    except TypeError:
+        varUnits = Units('error')
+
     if not varUnits.isreftime:
         self._add_error("Invalid units and/or reference time", varName, code="4.4")
 
