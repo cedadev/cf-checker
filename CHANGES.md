@@ -3,6 +3,14 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## August 2019
+
+CF Checker release 3.2.0
+
+Upgrade to Python 3.
+
+This version and subsequent ones only support Python 3.
+
 ## July 2019
 
 CF Checker release 3.1.3
