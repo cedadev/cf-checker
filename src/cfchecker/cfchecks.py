@@ -451,7 +451,6 @@ class CFChecker(object):
   def checker(self, file):
 
     self._init_results(file)
-    fileSuffix = re.compile('^\S+\.nc$')
 
     if self.uploader:
         realfile = string.split(file,".nc")[0]+".nc"
@@ -465,7 +464,7 @@ class CFChecker(object):
         print("=====================")
 
     # Check for valid filename
-    if not fileSuffix.match(file):
+    if not file.endswith('.nc'):
         self._fatal("Filename must have .nc suffix", code="2.1")
 
     # Read in netCDF file
