@@ -10,13 +10,14 @@ std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-st
 area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml
 
 cfchecker="/home/ros/software/dev/bin/cfchecks"
+cfchecker="/home/ros/software/dev-python3/bin/cfchecks"
 
 failed=0
 
 echo "Unzipping input netcdf files..."
 gzip -d *.gz
 
-cache_opts="-x --cache_dir /home/ros/temp"
+cache_opts="-x --cache_dir /home/ros/temp/cfcache-files-py3"
 
 for file in `ls *.nc`
 do

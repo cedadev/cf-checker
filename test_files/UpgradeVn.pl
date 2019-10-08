@@ -13,12 +13,14 @@
 #           Before running simply alter the variables $checkerVN and
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
-$checkerVN="3.1.3";
+$checkerVN="3.2.0rc1";
 $standardNameVN="67 (2019-06-18T13:25:38Z)";
 $areaTypeVN="9 (07 August 2018)";
 $regionNameVN="4 (18 December 2018)";
 
-$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
+
+$TEST_FILES_DIR="/home/ros/git-projects/cf-checker-python3/test_files";
+
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
 foreach $file (<*.check>) {
