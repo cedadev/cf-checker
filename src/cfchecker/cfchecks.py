@@ -178,7 +178,8 @@ vn1_4 = CFVersion((1, 4))
 vn1_5 = CFVersion((1, 5))
 vn1_6 = CFVersion((1, 6))
 vn1_7 = CFVersion((1, 7))
-cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6, vn1_7]
+vn1_8 = CFVersion((1, 8))
+cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6, vn1_8]
 newest_version = max(cfVersions)
 
 
