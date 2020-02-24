@@ -14,7 +14,7 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="4.0.0";
-$standardNameVN="68 (2019-09-18T13:48:23Z)";
+$standardNameVN="71 (2020-02-04T12:00Z)";
 $areaTypeVN="9 (07 August 2018)";
 $regionNameVN="4 (18 December 2018)";
 
