@@ -2970,6 +2970,47 @@ class CFChecker(object):
     else:
         # not monotonic
         return 0
+
+#--------------------------------------------------------------------------------------------------------------------
+def chkFiles(files, uploader=None, useFileName="yes", badc=None, coards=None,
+             standardName=STANDARDNAME, areaTypes=AREATYPES, regionnames=REGIONNAMES,
+             cacheTables=False, cacheTime=0, cacheDir='/tmp', version=newest_version, debug=False, silent=True):
+#--------------------------------------------------------------------------------------------------------------------
+    """ Check files given in 'files' for compliance. Returns an OrderedDict holding the 
+        number of results in each category. """
+
+    if not isinstance(files, list):
+        files = [files]
+
+    inst = CFChecker(uploader=uploader,
+                     useFileName=useFileName,
+                     badc=badc,
+                     coards=coards,
+                     cfRegionNamesXML=regionnames,
+                     cfStandardNamesXML=standardName,
+                     cfAreaTypesXML=areaTypes,
+                     cacheDir=cacheDir,
+                     cacheTables=cacheTables,
+                     cacheTime=cacheTime,
+                     version=version,
+                     debug=debug,
+                     silent=silent)
+
+    for file in files:
+        try:
+            inst.checker(file)
+        except FatalCheckerError:
+            print("Checking of file %s aborted due to error" % file)
+
+    totals = inst.get_total_counts()
+
+    if debug:
+        print("")
+        print("Results dictionary: %s" % inst.all_results)
+        print("")
+        print("Messages that were printed: %s" % inst.all_messages)
+
+    return totals
 	
 
 def getargs(arglist):
@@ -3080,31 +3121,20 @@ def main():
 
     (badc,coards,debug,uploader,useFileName,regionnames,standardName,areaTypes,cacheDir,cacheTables,cacheTime,version,files)=getargs(sys.argv)
     
-    inst = CFChecker(uploader=uploader,
-                     useFileName=useFileName,
-                     badc=badc,
-                     coards=coards,
-                     cfRegionNamesXML=regionnames,
-                     cfStandardNamesXML=standardName,
-                     cfAreaTypesXML=areaTypes,
-                     cacheDir=cacheDir,
-                     cacheTables=cacheTables,
-                     cacheTime=cacheTime,
-                     version=version,
-                     debug=debug)
-    for file in files:
-        try:
-            inst.checker(file)
-        except FatalCheckerError:
-            print("Checking of file %s aborted due to error" % file)
-
-    totals = inst.get_total_counts()
-
-    if debug:
-        print("")
-        print("Results dictionary: %s" % inst.all_results)
-        print("")
-        print("Messages that were printed: %s" % inst.all_messages)
+    totals = chkFiles(files=files, 
+                      uploader=uploader, 
+                      useFileName=useFileName, 
+                      badc=badc, 
+                      coards=coards, 
+                      regionnames=regionnames,
+                      standardName=standardName,
+                      areaTypes=areaTypes, 
+                      cacheDir=cacheDir,
+                      cacheTables=cacheTables,
+                      cacheTime=cacheTime,
+                      version=version,
+                      debug=debug,
+                      silent=False)
 
     errs = totals["FATAL"] + totals["ERROR"]
     if errs:
