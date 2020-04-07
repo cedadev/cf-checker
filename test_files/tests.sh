@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # Note that you may need to change the $cfchecker variable in this file to
 # point to the full path location of your "cfchecks" script
@@ -11,6 +11,7 @@ area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-t
 
 cfchecker="/home/ros/software/dev/bin/cfchecks"
 cfchecker="/home/ros/software/dev-python3/bin/cfchecks"
+cfchecker="/home/ros/software/cf-checker/bin/cfchecks"
 
 failed=0
 

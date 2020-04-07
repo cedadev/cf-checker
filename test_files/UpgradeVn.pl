@@ -14,12 +14,12 @@
 #           $standardNameVN as appropriate.
 #-------------------------------------------------------------------------- 
 $checkerVN="4.0.0";
-$standardNameVN="71 (2020-02-04T12:00Z)";
+$standardNameVN="72 (2020-03-10T11:52:02Z)";
 $areaTypeVN="9 (07 August 2018)";
 $regionNameVN="4 (18 December 2018)";
 
 
-$TEST_FILES_DIR="/home/ros/git-projects/cf-checker/test_files";
+$TEST_FILES_DIR="/home/ros/Development/cf-checker/test_files";
 
 chdir $TEST_FILES_DIR or die "Failed to cd to $TEST_FILES_DIR: $!\n";
 
