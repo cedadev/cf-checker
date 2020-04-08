@@ -470,7 +470,7 @@ class CFChecker(object):
 
     # Read in netCDF file
     try:
-        self.f=netCDF4_Dataset(file,"r")
+        self.f=netCDF4.Dataset(file,"r")
     except RuntimeError as e:
         self._fatal("%s: %s" % (e, file))
 
@@ -703,17 +703,19 @@ class CFChecker(object):
     # Check global attributes
     self.chkGlobalAttributes()
         
-    (coordVars,auxCoordVars,boundsVars,climatologyVars,gridMappingVars)=self.getCoordinateDataVars()
+    (coordVars,auxCoordVars,boundsVars,climatologyVars,geometryContainerVars,gridMappingVars)=self.getCoordinateDataVars()
     self.coordVars = coordVars
     self.auxCoordVars = auxCoordVars
     self.boundsVars = boundsVars
     self.climatologyVars = climatologyVars
+    self.geometryContainerVars = geometryContainerVars
     self.gridMappingVars = gridMappingVars
 
     self._add_debug("Auxillary Coordinate Vars: %s" % list(map(str,auxCoordVars)))
     self._add_debug("Coordinate Vars: %s" % list(map(str,coordVars)))
     self._add_debug("Boundary Vars: %s" % list(map(str,boundsVars)))
     self._add_debug("Climatology Vars: %s" % list(map(str,climatologyVars)))
+    self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars)))
     self._add_debug("Grid Mapping Vars: %s" % list(map(str,gridMappingVars)))
 
     allCoordVars=coordVars[:]
@@ -745,7 +747,7 @@ class CFChecker(object):
             print("------------------")
 
         if not self.validName(var):
-            self._add_error("Invalid variable name", var, code='2.3')
+            self._add_warning("Variable names should begin with a letter and be composed of letters, digits and undescores", var, code='2.3')
 
         dt = self.f.variables[var].dtype
         if dt not in valid_types:
@@ -769,7 +771,7 @@ class CFChecker(object):
         self.chkDescription(var)
 
         for attribute in map(str, self.f.variables[var].ncattrs()):
-            self.chkAttribute(attribute,var,allCoordVars)
+            self.chkAttribute(attribute,var,allCoordVars,geometryContainerVars)
 
         self.chkUnits(var,allCoordVars)
         self.chkValidMinMaxRange(var)
@@ -795,6 +797,11 @@ class CFChecker(object):
             # Additional conformance checks from CF-1.7 onwards
             self.chkActualRange(var)
             self.chkComputedStandardName(var)
+
+        if self.version >= vn1_8:
+            # Additional conformance checks from CF-1.8 onwards
+            if var in geometryContainerVars:
+                self.chkGeometryContainerVar(var)
 
         if var in coordVars:
             self.chkMultiDimCoord(var, axes)
@@ -898,14 +905,30 @@ class CFChecker(object):
           self.AttrList['_FillValue']=['D',('C','D')]
           self.AttrList['featureType']=['S','G']
           self.AttrList['instance_dimension']=['S','D']
+          self.AttrList['missing_value']=['D',('C','D')]
           self.AttrList['sample_dimension']=['S','D']
 
-      if self.version>= vn1_7:
+      if self.version >= vn1_7:
           self.AttrList['actual_range']=['N',('C','D')]
+          self.AttrList['add_offset']=['N',('C','D')]
           self.AttrList['comment']=['S',('G','C','D')]
           self.AttrList['computed_standard_name']=['S','C']
           self.AttrList['external_variables']=['S','G']
+          self.AttrList['instance_dimension']=['S','-']
+          self.AttrList['sample_dimension']=['S','-']
           self.AttrList['scale_factor']=['N',('C','D')]
+
+      if self.version >= vn1_8:
+          self.AttrList['coordinates']=['S',('D', 'M')]
+          self.AttrList['geometry']=['S',('C','D')]
+          self.AttrList['geometry_type']=['S','M']
+          self.AttrList['grid_mapping']=['S',('D','M')]
+          self.AttrList['history']=['S',('G','Gr')]
+          self.AttrList['interior_ring']=['S','M']
+          self.AttrList['node_coordinates']=['S','M']
+          self.AttrList['node_count']=['S','M']
+          self.AttrList['part_node_count']=['S','M']
+          self.AttrList['title']=['S',('G', 'Gr')]
       
       return
 
@@ -1044,6 +1067,7 @@ class CFChecker(object):
     climatologyVars = []
     gridMappingVars = []
     auxCoordVars = []
+    geometryContainerVars = []
 
     # Split each variable in allVariables into either coordVars or variables (data vars)
     for varname, var in list(self.f.variables.items()):
@@ -1225,6 +1249,23 @@ class CFChecker(object):
                     self._add_error("Climatology attribute referencing non-existent variable",
                                     var, code="7.4")
 
+
+        #-----------------------------
+        # Geometry Container Variables
+        #-----------------------------
+        if hasattr(self.f.variables[var],'geometry'):
+            geometry=self.f.variables[var].geometry
+            if not re.search("^[a-zA-Z0-9_]*$",geometry):
+                self._add_error("Invalid syntax for 'geometry' attribute", var, code="7.5")
+            else:
+                if geometry in variables:
+                    geometryContainerVars.append(geometry)
+                else:
+                    self._add_error("Geometry attribute referencing non-existent variable",
+                                    var, code="7.5")
+                        
+
+        
         #------------------------------------------
         # Is there a grid_mapping variable?
         #------------------------------------------
@@ -1249,7 +1290,7 @@ class CFChecker(object):
                     self._add_error("grid_mapping attribute referencing non-existent coordinate variable %s" % cv,
                                      var, code="5.6")
                     
-    return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
+    return (coordVars, auxCoordVars, boundaryVars, climatologyVars, geometryContainerVars, gridMappingVars)
 
 
   #------------------
@@ -1258,7 +1299,103 @@ class CFChecker(object):
     "substitute tokens for WORD and SEP (space or end of string)"
     return s.replace('WORD', r'[A-Za-z0-9_]+').replace('SEP', r'(\s+|$)')
 
+  #------------------------------------------
+  def get_variable_attributes(self, varName):
+  #------------------------------------------    
+      """Get all attributes of this variable and store in a dictionary"""
+      variable = self.f.variables[varName]
+      attributes = {}
 
+      for attr in map(str, variable.ncattrs()):
+          try:
+              attributes[attr] = variable.getncattr(attr)
+              if isinstance(attributes[attr], basestring):
+                  try:
+                      attributes[attr] = str(attributes[attr])
+                  except:
+                      attributes[attr] = attributes[attr].encode(errors='ignore')
+          except UnicodeDecodeError:
+              pass
+
+      print("RSH: attributes - {}".format(attributes))
+      return attributes
+
+
+  #------------------------------------------
+  def chkGeometryContainerVar(self, varName):
+  #------------------------------------------
+      """Section 7.5: Geometry Container Variable Checks"""
+      print("RSH: Running Geometry Container Variable Checks")
+       
+      # Get all attributes for this variable
+      attributes = self.get_variable_attributes(varName)
+
+      node_coordinates = attributes.get('node_coordinates')
+      geometry_type = attributes.get('geometry_type')
+      node_count = attributes.get('node_count')
+      coordinates = attributes.get('coordinates')
+      part_node_count = attributes.get('part_node_count')
+      interior_ring = attributes.get('interior_ring')
+      
+      if node_coordinates is None:
+          self._add_error("No node_coordinates attribute set", varName, code="7.5")
+      else:
+          if not self.parseBlankSeparatedList(node_coordinates):
+                self._add_error("Invalid syntax for 'node_coordinates' attribute", varName, code="7.5")
+          else:
+              for var in node_coordinates.split():
+                  if var not in list(map(str, self.f.variables)):
+                      self._add_error("node_coordinates attribute referencing non-existent variable: {}".format(var), varName, code="7.5")
+
+      if geometry_type is None:
+          self._add_error("No geometry_type attribute set", varName, code="7.5")
+      else:
+          geometry_type = geometry_type.lower()
+          valid_geometry_types=['point', 'line', 'polygon']
+
+          if geometry_type in valid_geometry_types:
+              # Valid geometry_type
+              if geometry_type == 'line' and not numpy.all(self.f.variables[node_count][:] >= 2):
+                  # Each geometry must have a minimum of 2 nodes
+                  self._add_error("For 'line' geometry_type, each geometry must have a minimum of two nodes", varName, code="7.5")
+                  
+              elif geometry_type == 'polygon' and not numpy.all(self.f.variables[node_count][:] >= 3):
+                  # Each geometry must have a minimum of 3 nodes
+                  self._add_error("For 'polygon' geometry_type, each geometry must have a minimum of three nodes", varName, code="7.5")
+          else:
+              self._add_error("Invalid geometry_type: {}".format(geometry_type), varName, code="7.5")
+          
+      if part_node_count is not None and node_count is not None:
+          if self.f.variables[part_node_count][:].sum() != self.f.variables[node_count][:].sum():
+              self._add_error("Sum of part_node_count values must equal sum of node_count values", varName, code="7.5")
+              
+      if interior_ring is not None and part_node_count is None:
+          self._add_error("No part_node_count attribute set", varName, code="7.5")
+
+      if interior_ring is not None:
+          interior_ring_variable = self.f.variables[interior_ring]
+          
+          for value in interior_ring_variable[:]:
+              if value != 0 and value != 1:
+                  self._add_error("Values of interior ring variable: '{}' must be either 0 or 1".format(interior_ring), interior_ring, code="7.5")
+
+          if len(interior_ring_variable.dimensions) != 1:
+              self._add_error("Interior ring variable: '{}' must only have 1 dimension".format(interior_ring), interior_ring, code="7.5")
+              
+          if part_node_count is not None:
+              part_node_count_variable = self.f.variables[part_node_count]
+              
+              if len(part_node_count_variable.dimensions) != 1:
+                  self._add_error("Part node count variable: '{}' must only have 1 dimension".format(part_node_count), part_node_count, code="7.5")
+
+              if len(interior_ring_variable.dimensions) == 1 and len(part_node_count_variable.dimensions) == 1:
+                  
+                  if interior_ring_variable.dimensions[0] != part_node_count_variable.dimensions[0]:
+                      self._add_error("Interior ring variable {} and part node count variable {} must have the same single dimension.".format(interior_ring, part_node_count), varName, code="7.5")
+                  
+
+
+      
   #--------------------------------------------------------
   def chkGridMappingAttribute(self, varName, grid_mapping):
   #--------------------------------------------------------
@@ -1676,7 +1813,7 @@ class CFChecker(object):
   #--------------------------
   def validName(self, name):
   #--------------------------
-    """ Check for valid name.  They must begin with a
+    """ Check for valid name.  They should begin with a
     letter and be composed of letters, digits and underscores."""
 
     nameSyntax = re.compile('^[a-zA-Z][a-zA-Z0-9_]*$')
@@ -1803,7 +1940,7 @@ class CFChecker(object):
 
 
   #-------------------------------------------------------
-  def chkAttribute(self, attribute,varName,allCoordVars):
+  def chkAttribute(self, attribute,varName,allCoordVars,geometryContainerVars):
   #-------------------------------------------------------
     """Check the syntax of the attribute name, that the attribute
     is of the correct type and that it is attached to the right
@@ -1890,6 +2027,9 @@ class CFChecker(object):
                 break
             elif use == "D" and varName not in allCoordVars:
                 # Valid association
+                break
+            elif use =="M" and varName in geometryContainerVars:
+                # Variable is a geometry container variable - valid association
                 break
             elif i == usesLen:
                 if attribute == "missing_value":
