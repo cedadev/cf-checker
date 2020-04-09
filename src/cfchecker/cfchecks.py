@@ -927,6 +927,7 @@ class CFChecker(object):
           self.AttrList['interior_ring']=['S','M']
           self.AttrList['node_coordinates']=['S','M']
           self.AttrList['node_count']=['S','M']
+          self.AttrList['nodes']=['S','C']
           self.AttrList['part_node_count']=['S','M']
           self.AttrList['title']=['S',('G', 'Gr')]
       
@@ -1068,6 +1069,7 @@ class CFChecker(object):
     gridMappingVars = []
     auxCoordVars = []
     geometryContainerVars = []
+
 
     # Split each variable in allVariables into either coordVars or variables (data vars)
     for varname, var in list(self.f.variables.items()):
@@ -1264,7 +1266,14 @@ class CFChecker(object):
                     self._add_error("Geometry attribute referencing non-existent variable",
                                     var, code="7.5")
                         
-
+        if hasattr(self.f.variables[var], 'node_coordinates'):
+            if self.parseBlankSeparatedList(self.f.variables[var].node_coordinates):
+                node_coordinates = self.f.variables[var].node_coordinates.split()
+                for coord in node_coordinates:
+                    if coord in allVariables:
+                        # Add coordinate to auxillary coordinate list only if it exists in the file
+                        # and is not already in the list
+                        auxCoordVars.append(coord)
         
         #------------------------------------------
         # Is there a grid_mapping variable?
@@ -1289,9 +1298,17 @@ class CFChecker(object):
                 if cv not in allVariables:
                     self._add_error("grid_mapping attribute referencing non-existent coordinate variable %s" % cv,
                                      var, code="5.6")
-                    
+
+    # Make sure lists are unique
+    gridMappingVars = self.unique(gridMappingVars)
+    auxCoordVars = self.unique(auxCoordVars)
+
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, geometryContainerVars, gridMappingVars)
 
+  def unique(self, list):
+      """Get a unique values from list"""
+      x = numpy.array(list)
+      return numpy.unique(x).tolist()
 
   #------------------
   def subst(self, s):
@@ -1336,7 +1353,10 @@ class CFChecker(object):
       coordinates = attributes.get('coordinates')
       part_node_count = attributes.get('part_node_count')
       interior_ring = attributes.get('interior_ring')
-      
+
+      node_coord_axes = []
+      node_coord_dimensions = []
+
       if node_coordinates is None:
           self._add_error("No node_coordinates attribute set", varName, code="7.5")
       else:
@@ -1345,7 +1365,46 @@ class CFChecker(object):
           else:
               for var in node_coordinates.split():
                   if var not in list(map(str, self.f.variables)):
-                      self._add_error("node_coordinates attribute referencing non-existent variable: {}".format(var), varName, code="7.5")
+                      self._add_error("Node_coordinates attribute referencing non-existent variable: {}".format(var),
+                                      varName,
+                                      code="7.5")
+                  else:
+                      # Check node_coordinate variable has an axis attribute
+                      if hasattr(self.f.variables[var], 'axis'):
+                          # Keep details of axis
+                          node_coord_axes.append(self.f.variables[var].axis)
+                      else:
+                          self._add_error("Node_coordinates variable '{}' must have an axis attribute ".format(var),
+                                          varName,
+                                          code="7.5")
+
+                      if len(self.f.variables[var].dimensions) != 1:
+                          self._add_error("Node coordinate variable '{}' must only have a single dimension".format(var),
+                                          var,
+                                          code="7.5")
+                      else:
+                          if self.f.variables[var].dimensions[0] not in node_coord_dimensions:
+                              node_coord_dimensions.append(self.f.variables[var].dimensions[0])
+
+              if not self.uniqueList(node_coord_axes):
+                  self._add_error("Multiple node coordinate variables with same value of axis attribute",
+                                  varName,
+                                  code="7.5")
+
+              if len(node_coord_dimensions) != 1:
+                  self._add_error("All node coordinate variables ({}) must have the "
+                                  "same single dimension".format(node_coordinates),
+                                  varName,
+                                  code="7.5")
+              else:
+                  # Same single dimension on all node coordinate variables
+                  d = self.f.dimensions[node_coord_dimensions[0]].size
+                  total_nodes = self.f.variables[node_count][:].sum()
+                  if d != total_nodes:
+                      self._add_error("Dimension '{}' must equal the total number of nodes "
+                                      "in all the geometries".format(node_coord_dimensions[0]),
+                                      varName,
+                                      code="7.5")
 
       if geometry_type is None:
           self._add_error("No geometry_type attribute set", varName, code="7.5")
@@ -1357,11 +1416,15 @@ class CFChecker(object):
               # Valid geometry_type
               if geometry_type == 'line' and not numpy.all(self.f.variables[node_count][:] >= 2):
                   # Each geometry must have a minimum of 2 nodes
-                  self._add_error("For 'line' geometry_type, each geometry must have a minimum of two nodes", varName, code="7.5")
+                  self._add_error("For 'line' geometry_type, each geometry must have a minimum of two nodes",
+                                  varName,
+                                  code="7.5")
                   
               elif geometry_type == 'polygon' and not numpy.all(self.f.variables[node_count][:] >= 3):
                   # Each geometry must have a minimum of 3 nodes
-                  self._add_error("For 'polygon' geometry_type, each geometry must have a minimum of three nodes", varName, code="7.5")
+                  self._add_error("For 'polygon' geometry_type, each geometry must have a minimum of three nodes",
+                                  varName,
+                                  code="7.5")
           else:
               self._add_error("Invalid geometry_type: {}".format(geometry_type), varName, code="7.5")
           
@@ -1377,10 +1440,10 @@ class CFChecker(object):
           
           for value in interior_ring_variable[:]:
               if value != 0 and value != 1:
-                  self._add_error("Values of interior ring variable: '{}' must be either 0 or 1".format(interior_ring), interior_ring, code="7.5")
+                  self._add_error("Values of interior ring variable '{}' must be either 0 or 1".format(interior_ring), interior_ring, code="7.5")
 
           if len(interior_ring_variable.dimensions) != 1:
-              self._add_error("Interior ring variable: '{}' must only have 1 dimension".format(interior_ring), interior_ring, code="7.5")
+              self._add_error("Interior ring variable '{}' must only have 1 dimension".format(interior_ring), interior_ring, code="7.5")
               
           if part_node_count is not None:
               part_node_count_variable = self.f.variables[part_node_count]
@@ -2817,7 +2880,7 @@ class CFChecker(object):
       if not hasattr(var, 'standard_name') and \
          not hasattr(var, 'long_name'):
 
-          exceptions=self.boundsVars+self.climatologyVars+self.gridMappingVars
+          exceptions=self.boundsVars+self.climatologyVars+self.gridMappingVars+self.geometryContainerVars
           if varName not in exceptions:
               self._add_warn("No standard_name or long_name attribute specified", varName, code="3")
               
