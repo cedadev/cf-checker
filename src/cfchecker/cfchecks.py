@@ -715,7 +715,8 @@ class CFChecker(object):
     self._add_debug("Coordinate Vars: %s" % list(map(str,coordVars)))
     self._add_debug("Boundary Vars: %s" % list(map(str,boundsVars)))
     self._add_debug("Climatology Vars: %s" % list(map(str,climatologyVars)))
-    self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars)))
+    #self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars)))
+    self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars.keys())))
     self._add_debug("Grid Mapping Vars: %s" % list(map(str,gridMappingVars)))
 
     allCoordVars=coordVars[:]
@@ -1068,7 +1069,7 @@ class CFChecker(object):
     climatologyVars = []
     gridMappingVars = []
     auxCoordVars = []
-    geometryContainerVars = []
+    geometryContainerVars = {}
 
 
     # Split each variable in allVariables into either coordVars or variables (data vars)
@@ -1224,10 +1225,10 @@ class CFChecker(object):
         #----------------------------
         # Climatology Variable Checks
         #----------------------------
-        if hasattr(self.f.variables[var],'climatology'):
+        if hasattr(self.f.variables[var], 'climatology'):
             climatology=self.f.variables[var].climatology
             # Check syntax of 'climatology' attribute
-            if not re.search("^[a-zA-Z0-9_]*$",climatology):
+            if not re.search("^[a-zA-Z0-9_]*$", climatology):
                 self._add_error("Invalid syntax for 'climatology' attribute", var, code="7.4")
             else:
                 if climatology in variables:
@@ -1255,17 +1256,22 @@ class CFChecker(object):
         #-----------------------------
         # Geometry Container Variables
         #-----------------------------
-        if hasattr(self.f.variables[var],'geometry'):
+        if hasattr(self.f.variables[var], 'geometry'):
             geometry=self.f.variables[var].geometry
-            if not re.search("^[a-zA-Z0-9_]*$",geometry):
+            if not re.search("^[a-zA-Z0-9_]*$", geometry):
                 self._add_error("Invalid syntax for 'geometry' attribute", var, code="7.5")
             else:
                 if geometry in variables:
-                    geometryContainerVars.append(geometry)
+                    # geometryContainerVars.append(geometry)
+                    # Add geometry and associated data variable to dictionary
+                    if geometryContainerVars.get(geometry) is None:
+                        geometryContainerVars[geometry] = []
+
+                    geometryContainerVars[geometry].append(var)
                 else:
                     self._add_error("Geometry attribute referencing non-existent variable",
                                     var, code="7.5")
-                        
+
         if hasattr(self.f.variables[var], 'node_coordinates'):
             if self.parseBlankSeparatedList(self.f.variables[var].node_coordinates):
                 node_coordinates = self.f.variables[var].node_coordinates.split()
@@ -1337,7 +1343,6 @@ class CFChecker(object):
       print("RSH: attributes - {}".format(attributes))
       return attributes
 
-
   #------------------------------------------
   def chkGeometryContainerVar(self, varName):
   #------------------------------------------
@@ -1353,6 +1358,7 @@ class CFChecker(object):
       coordinates = attributes.get('coordinates')
       part_node_count = attributes.get('part_node_count')
       interior_ring = attributes.get('interior_ring')
+      grid_mapping = attributes.get('grid_mapping')
 
       node_coord_axes = []
       node_coord_dimensions = []
@@ -1456,7 +1462,21 @@ class CFChecker(object):
                   if interior_ring_variable.dimensions[0] != part_node_count_variable.dimensions[0]:
                       self._add_error("Interior ring variable {} and part node count variable {} must have the same single dimension.".format(interior_ring, part_node_count), varName, code="7.5")
                   
+      if grid_mapping is not None:
+          # Associated data variable(s) must also carry a grid_mapping attribute
+          for data_var in self.geometryContainerVars[varName]:
+              if not hasattr(self.f.variables[data_var], 'grid_mapping'):
+                  self._add_error('Variable {} must have a grid_mapping attribute'.format(data_var),
+                                  data_var,
+                                  code='7.5')
 
+      if coordinates is not None:
+          # Associated data variable(s) must also carry a coordinates attribute
+          for data_var in self.geometryContainerVars[varName]:
+              if not hasattr(self.f.variables[data_var], 'coordinates'):
+                  self._add_error('Variable {} must have a coordinates attribute'.format(data_var),
+                                  data_var,
+                                  code='7.5')
 
       
   #--------------------------------------------------------
@@ -2091,7 +2111,7 @@ class CFChecker(object):
             elif use == "D" and varName not in allCoordVars:
                 # Valid association
                 break
-            elif use =="M" and varName in geometryContainerVars:
+            elif use =="M" and varName in geometryContainerVars.keys():
                 # Variable is a geometry container variable - valid association
                 break
             elif i == usesLen:
@@ -2880,7 +2900,7 @@ class CFChecker(object):
       if not hasattr(var, 'standard_name') and \
          not hasattr(var, 'long_name'):
 
-          exceptions=self.boundsVars+self.climatologyVars+self.gridMappingVars+self.geometryContainerVars
+          exceptions=self.boundsVars+self.climatologyVars+self.gridMappingVars+list(map(str, self.geometryContainerVars.keys()))
           if varName not in exceptions:
               self._add_warn("No standard_name or long_name attribute specified", varName, code="3")
               
