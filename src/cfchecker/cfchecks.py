@@ -13,7 +13,7 @@
 # CF Checker Version: See __version__
 #
 #-------------------------------------------------------------
-''' cfchecks [OPTIONS] file1 [file2...]
+""" cfchecks [OPTIONS] file1 [file2...]
 
 Description:
  The CF Checker checks NetCDF files for compliance to the CF standard.
@@ -42,7 +42,7 @@ Options:
  --cache_dir:
        directory in which to store cached tables
 
-'''
+"""
 from __future__ import print_function
 
 from builtins import str
@@ -74,8 +74,6 @@ from netCDF4 import VLType as netCDF4_VLType
 import netCDF4
 
 from cfunits import Units
-
-from operator import mul
 
 # Version is imported from the package module cfchecker/__init__.py
 from cfchecker import __version__
@@ -135,7 +133,6 @@ class CFVersion(object):
     def __str__(self):
         return "CF-%s" % ".".join(map(str, self.tuple))
 
-
     def __cmp__(self, other):
 
         # maybe overkill but allow for different lengths in future e.g. 3.2 and 3.2.1
@@ -162,7 +159,7 @@ class CFVersion(object):
 
     def __ge__(self, other):
         if self.__cmp__(other) >= 0:
-	        return True
+            return True
         return False
 
     def __lt__(self, other):
@@ -179,7 +176,7 @@ vn1_5 = CFVersion((1, 5))
 vn1_6 = CFVersion((1, 6))
 vn1_7 = CFVersion((1, 7))
 vn1_8 = CFVersion((1, 8))
-cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6, vn1_8]
+cfVersions = [vn1_0, vn1_1, vn1_2, vn1_3, vn1_4, vn1_5, vn1_6, vn1_7, vn1_8]
 newest_version = max(cfVersions)
 
 
@@ -202,13 +199,13 @@ class ConstructDict(ContentHandler):
 
         if useShelve:
             import shelve
-            if shelveFile == None:
+            if shelveFile is None:
                 self.shFile = os.path.join(cacheDir, 'cfexpr_cache')
             else:
                 self.shFile = os.path.join(cacheDir, shelveFile)
             now = time.time()
-            exists = os.path.isfile( self.shFile ) or os.path.isfile( '%s.dat' % self.shFile )
-            self.dict = shelve.open( self.shFile )
+            exists = os.path.isfile(self.shFile) or os.path.isfile('%s.dat' % self.shFile)
+            self.dict = shelve.open(self.shFile)
 
             if exists:
                 ctime = self.dict['__contentTime__']
@@ -253,7 +250,6 @@ class ConstructDict(ContentHandler):
         elif name == 'last_modified':
             self.inLastModifiedContent = 1
             self.last_modified = ""
-            
 
     def characters(self, ch):
         if self.inUnitsContent:
@@ -309,13 +305,13 @@ class ConstructList(ContentHandler):
 
         if useShelve:
           import shelve
-          if shelveFile == None:
+          if shelveFile is None:
             self.shFile = os.path.join(cacheDir, 'cfexpr_cachel')
           else:
             self.shFile = os.path.join(cacheDir, shelveFile)
           now = time.time()
-          exists = os.path.isfile( self.shFile ) or os.path.isfile( '%s.dat' % self.shFile )
-          self.list = shelve.open( self.shFile )
+          exists = os.path.isfile(self.shFile) or os.path.isfile('%s.dat' % self.shFile)
+          self.list = shelve.open(self.shFile)
 
           if exists:
             ctime = self.list['__contentTime__']
@@ -581,15 +577,15 @@ class CFChecker(object):
         self._add_message("ERROR", *args, **kwargs)
 
   def _add_warn(self, *args, **kwargs):
-        "as _add_error but for warnings"
+        """"as _add_error but for warnings"""
         self._add_message("WARN", *args, **kwargs)
 
   def _add_info(self, *args, **kwargs):
-        "as _add_error but for informational messages"
+        """as _add_error but for informational messages"""
         self._add_message("INFO", *args, **kwargs)
 
   def _add_version(self, *args, **kwargs):
-        "as _add_error but for informational messages"
+        """as _add_error but for informational messages"""
         self._add_message("VERSION", *args, **kwargs)
         
   def _add_debug(self, *args, **kwargs):
@@ -667,7 +663,9 @@ class CFChecker(object):
         return counts
 
   def _update_counts(self, counts, results):
-        "helper for _get_counts()"
+        """
+        helper for _get_counts()
+        """
         for category in self.categories:
             counts[category] += len(results[category])
 
@@ -703,7 +701,9 @@ class CFChecker(object):
     # Check global attributes
     self.chkGlobalAttributes()
         
-    (coordVars,auxCoordVars,boundsVars,climatologyVars,geometryContainerVars,gridMappingVars)=self.getCoordinateDataVars()
+    (coordVars, auxCoordVars, boundsVars, climatologyVars,
+     geometryContainerVars, gridMappingVars) = self.getCoordinateDataVars()
+
     self.coordVars = coordVars
     self.auxCoordVars = auxCoordVars
     self.boundsVars = boundsVars
@@ -711,13 +711,12 @@ class CFChecker(object):
     self.geometryContainerVars = geometryContainerVars
     self.gridMappingVars = gridMappingVars
 
-    self._add_debug("Auxillary Coordinate Vars: %s" % list(map(str,auxCoordVars)))
-    self._add_debug("Coordinate Vars: %s" % list(map(str,coordVars)))
-    self._add_debug("Boundary Vars: %s" % list(map(str,boundsVars)))
-    self._add_debug("Climatology Vars: %s" % list(map(str,climatologyVars)))
-    #self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars)))
-    self._add_debug("Geometry Container Vars: %s" % list(map(str,geometryContainerVars.keys())))
-    self._add_debug("Grid Mapping Vars: %s" % list(map(str,gridMappingVars)))
+    self._add_debug("Auxillary Coordinate Vars: %s" % list(map(str, auxCoordVars)))
+    self._add_debug("Coordinate Vars: %s" % list(map(str, coordVars)))
+    self._add_debug("Boundary Vars: %s" % list(map(str, boundsVars)))
+    self._add_debug("Climatology Vars: %s" % list(map(str, climatologyVars)))
+    self._add_debug("Geometry Container Vars: %s" % list(map(str, geometryContainerVars.keys())))
+    self._add_debug("Grid Mapping Vars: %s" % list(map(str, gridMappingVars)))
 
     allCoordVars=coordVars[:]
     allCoordVars[len(allCoordVars):]=auxCoordVars[:]
@@ -1402,7 +1401,7 @@ class CFChecker(object):
                                   "same single dimension".format(node_coordinates),
                                   varName,
                                   code="7.5")
-              else:
+              elif node_count is not None:
                   # Same single dimension on all node coordinate variables
                   d = self.f.dimensions[node_coord_dimensions[0]].size
                   total_nodes = self.f.variables[node_count][:].sum()
@@ -1433,7 +1432,36 @@ class CFChecker(object):
                                   code="7.5")
           else:
               self._add_error("Invalid geometry_type: {}".format(geometry_type), varName, code="7.5")
-          
+
+      if node_count is None:
+          # There is no node_count variable, so all geometries must be single part point geometries
+          try:
+              if self.f.dimensions[node_coord_dimensions[0]].size > 1:
+                  if geometry_type != 'point':
+                      self._add_error("Geometry type must be 'point' as no node_count attribute is present",
+                                      varName,
+                                      code="7.5")
+                  for data_var in self.geometryContainerVars[varName]:
+                      if node_coord_dimensions[0] not in self.f.variables[data_var].dimensions:
+                          self._add_error("Dimension {} of node coordinate variable must be one of "
+                                          "the dimensions of {}".format(node_coord_dimensions[0], data_var),
+                                          varName,
+                                          code="7.5")
+          except:
+              pass
+
+      else:
+          # Find the netCDF dimension for the total number of geometries for each
+          # data variable the geometry applies to
+          geometry_dimension = self.f.variables[node_count].dimensions[0]
+          print("RSH geometry_dimension: {}".format(geometry_dimension))
+          for data_var in self.geometryContainerVars[varName]:
+              if geometry_dimension not in self.f.variables[data_var].dimensions:
+                  self._add_error('One of the dimensions of {} must be the number of geometries '
+                                  'to which the data applies'.format(data_var),
+                                  data_var,
+                                  code="7.5")
+
       if part_node_count is not None and node_count is not None:
           if self.f.variables[part_node_count][:].sum() != self.f.variables[node_count][:].sum():
               self._add_error("Sum of part_node_count values must equal sum of node_count values", varName, code="7.5")
@@ -1861,6 +1889,7 @@ class CFChecker(object):
 
     if "Conventions" in list(map(str, self.f.ncattrs())):
         value = self.f.getncattr('Conventions')
+
         if is_str_or_basestring(value):
             try:
                 conventions = str(value)
@@ -1868,7 +1897,7 @@ class CFChecker(object):
                 conventions = value.encode(errors='ignore') 
         else:
             conventions = value
-        
+
         # Split string up into component parts
         # If a comma is present we assume a comma separated list as names cannot contain commas
         if re.match("^.*,.*$",conventions):
