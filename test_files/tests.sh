@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # Note that you may need to change the $cfchecker variable in this file to
 # point to the full path location of your "cfchecks" script
@@ -11,6 +11,8 @@ area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-t
 
 cfchecker="/home/ros/software/dev/bin/cfchecks"
 cfchecker="/home/ros/software/dev-python3/bin/cfchecks"
+# Local desktop location	
+cfchecker="/home/ros/software/cf-checker/bin/cfchecks"
 
 failed=0
 
@@ -42,7 +44,7 @@ do
   then 
     # CF-1.4
     $cfchecker $cache_opts -s $std_name_table -a $area_table -v 1.4 $file > $outdir/$file.out 2>&1
-  elif [[ $file == "CF_1_7.nc" || $file == "example_6.2.nc" || $file == "example_5.10.nc" || $file = "issue27.nc" || $file = "issue59.nc" || $file = "compress.nc" || $file == "issue58.nc" ]]
+  elif [[ $file == "CF_1_7.nc" || $file == "example_6.2.nc" || $file == "example_5.10.nc" || $file = "issue27.nc" || $file = "issue59.nc" || $file = "compress.nc" || $file == "issue58.nc" || $file == "issue67.nc" ]]
   then
     # Run checker using the CF version specified in the conventions attribute of the file
     $cfchecker $cache_opts -s $std_name_table -v auto $file > $outdir/$file.out 2>&1

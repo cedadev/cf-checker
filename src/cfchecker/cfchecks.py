@@ -2970,7 +2970,23 @@ class CFChecker(object):
                   
                   if len(region_names) == 1 and region_names[0] == None:
                       # Not a char variable so getStringValue couldn't be applied
-                      self._add_error("Variable {} of invalid type. Region variable should be of type char.".format(varName), varName, code="3.3")
+
+                      # Does variable have flag_meanings attribute
+                      if hasattr(var, 'flag_meanings'):
+                          # Check values are from the region names permitted list
+                          meanings = var.flag_meanings
+
+                          if is_str_or_basestring(meanings):
+                              region_names = meanings.split()
+                              for region in region_names:
+                                  if not region in list(self.region_name_lh.list):
+                                      self._add_error("Invalid region name: {}".format(region), varName, code="3.3")
+
+                          else:
+                              self._add_error("Invalid syntax for 'flag_meanings' attribute.", varName, code="3.5")
+
+                      else:
+                          self._add_error("Variable {} of invalid type. Region variable should be of type char.".format(varName), varName, code="3.3")
 
                   elif len(region_names):
                       for region in region_names:
