@@ -3,6 +3,23 @@
 See https://github.com/cedadev/cf-checker/milestones?state=closed for full details of each release.
 
 -----------------------------------------------------------------
+## October 2019
+
+CF Checker release 4.0.0
+
+First official Python 3 release.
+
+* Support for Python 3 only.
+* CEDA cf-checker wrapper script removed.  Caching of standard_name, area_type and region tables has been incorporated into the checker at a previous version
+
+## August 2019
+
+CF Checker release 3.2.0rc1
+
+First Python3 release candidate.
+* Python 3 support only
+* The Python 2 version will no longer be actively developed and will only get bugfixes.  Bugfixes will continue until sometime in 2020.
+
 ## July 2019
 
 CF Checker release 3.1.3

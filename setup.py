@@ -27,8 +27,6 @@ setup(name='cfchecker',
           'Operating System :: MacOS',
           'Operating System :: POSIX :: Linux',
           'Programming Language :: Python',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
       ],
 
       keywords='',
@@ -41,7 +39,6 @@ setup(name='cfchecker',
 
       include_package_data=True,
       zip_safe=False,
-      install_requires=['netCDF4', 'numpy>=1.7,<1.17', 'cfunits>=1.1.4,<3.0.0'],
+      install_requires=['netCDF4', 'numpy>=1.7', 'cfunits>=3.0.0', 'future'],
       entry_points={'console_scripts': ['cfchecks = cfchecker.cfchecks:main']},
-      scripts=['src/cf-checker']
       )

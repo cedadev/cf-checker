@@ -7,13 +7,13 @@ The CF Checker is a utility that checks the contents of a NetCDF file complies w
 * The package runs on [**Linux**](http://en.wikipedia.org/wiki/Linux)
   and [**Mac OS**](http://en.wikipedia.org/wiki/Mac_OS) operating systems.
 
-* [Python 2.7](https://www.python.org/)
+* [Python 3.x](https://www.python.org/)
 
 * [netcdf4-python](https://pypi.python.org/pypi/netCDF4) at version 1.2.5 or newer. This package requires [netCDF](https://www.unidata.ucar.edu/software/netcdf/), [HDF5](https://www.hdfgroup.org/solutions/hdf5/) and [zlib](ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4) libraries.
 
-* [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 1.8 or 1.9
+* [cfunits-python](https://bitbucket.org/cfpython/cfunits-python) package version 3.0.0 or newer
 
-* [numpy](https://pypi.python.org/pypi/numpy) version 1.7 up to and including 1.16.4
+* [numpy](https://pypi.python.org/pypi/numpy) version 1.15 or newer
 
 ## Installation
 
@@ -57,16 +57,6 @@ The following parameters can be set on the command-line or through environment v
 2. `CF_AREA_TYPES` or (CL option `-a`) : The path or URL to the CF area types table
 3. `CF_REGION_NAMES` or (CL option `-r`): The path or URL to the CF region names table
 
-### Wrapper script
-
-A wrapper to cfchecks, called `cf-checker`, is provided in the `src/` directory, which will maintain local copies of the standard names table and the area types table, and will refresh these local copies only if the age of the file (based on its modification time) is more than a specified maximum, defaulting to 1 day.  This allows for running the checker repeatedly without refetching the tables on each invocation, while still keeping them reasonably up to date.
-
-For a usage message, type `cf-checker -h`
-
-Note that the wrapper defaults to storing the downloaded files in `/var/spool/cf-checker`, so if the script is used unmodified then this directory should be created or else an alternative value should be passed as a command line option (`-d`).  Ensure either that all users have write permission to the directory used, or else that a user that does have write permission runs a cron job to refresh the tables.  For the latter purpose, it is permissible to run the wrapper without specifying any data files to check, in which it will do no more than update the tables; this is still conditional on age, so for this purpose it is recommended to run the wrapper with a maximum age of zero (`-t 0`), and to run the cron job at intervals not exceeding the
-default maximum age.
-
-The wrapper is maintained by CEDA and not by NCAS CMS.
 
 ### Running the Test script
 
