@@ -1809,7 +1809,7 @@ class CFChecker(object):
     kind of variable."""
     var=self.f.variables[varName]
 
-    if not self.validName(attribute) and attribute != "_FillValue":
+    if not self.validName(attribute) and attribute not in ["_FillValue", "_Encoding"]:
         self._add_error("Invalid attribute name: {}".format(attribute),
                         varName)
         return
