@@ -702,7 +702,7 @@ class CFChecker(object):
     self.chkGlobalAttributes()
         
     (coordVars, auxCoordVars, boundsVars, climatologyVars,
-     geometryContainerVars, gridMappingVars) = self.getCoordinateDataVars()
+     geometryContainerVars, gridMappingVars, nodeCoordinateVars) = self.getCoordinateDataVars()
 
     self.coordVars = coordVars
     self.auxCoordVars = auxCoordVars
@@ -710,6 +710,7 @@ class CFChecker(object):
     self.climatologyVars = climatologyVars
     self.geometryContainerVars = geometryContainerVars
     self.gridMappingVars = gridMappingVars
+    self.nodeCoordinateVars = nodeCoordinateVars
 
     self._add_debug("Auxillary Coordinate Vars: %s" % list(map(str, auxCoordVars)))
     self._add_debug("Coordinate Vars: %s" % list(map(str, coordVars)))
@@ -718,12 +719,12 @@ class CFChecker(object):
     self._add_debug("Geometry Container Vars: %s" % list(map(str, geometryContainerVars.keys())))
     self._add_debug("Grid Mapping Vars: %s" % list(map(str, gridMappingVars)))
 
-    allCoordVars=coordVars[:]
-    allCoordVars[len(allCoordVars):]=auxCoordVars[:]
+    allCoordVars = coordVars[:]
+    allCoordVars[len(allCoordVars):] = auxCoordVars[:]
 
     self.setUpFormulas()
     
-    axes=list(self.f.dimensions.keys())
+    axes = list(self.f.dimensions.keys())
 
     self._add_debug("Axes: %s" % axes)
 
@@ -802,6 +803,7 @@ class CFChecker(object):
             # Additional conformance checks from CF-1.8 onwards
             if var in geometryContainerVars:
                 self.chkGeometryContainerVar(var)
+            self.chkNodesAttribute(var)
 
         if var in coordVars:
             self.chkMultiDimCoord(var, axes)
@@ -1069,6 +1071,7 @@ class CFChecker(object):
     gridMappingVars = []
     auxCoordVars = []
     geometryContainerVars = {}
+    nodeCoordinateVars = []
 
 
     # Split each variable in allVariables into either coordVars or variables (data vars)
@@ -1255,30 +1258,31 @@ class CFChecker(object):
         #-----------------------------
         # Geometry Container Variables
         #-----------------------------
-        if hasattr(self.f.variables[var], 'geometry'):
-            geometry=self.f.variables[var].geometry
-            if not re.search("^[a-zA-Z0-9_]*$", geometry):
-                self._add_error("Invalid syntax for 'geometry' attribute", var, code="7.5")
-            else:
-                if geometry in variables:
-                    # geometryContainerVars.append(geometry)
-                    # Add geometry and associated data variable to dictionary
-                    if geometryContainerVars.get(geometry) is None:
-                        geometryContainerVars[geometry] = []
-
-                    geometryContainerVars[geometry].append(var)
+        if self.version >= vn1_8:
+            if hasattr(self.f.variables[var], 'geometry'):
+                geometry = self.f.variables[var].geometry
+                if not re.search("^[a-zA-Z0-9_]*$", geometry):
+                    self._add_error("Invalid syntax for 'geometry' attribute", var, code="7.5")
                 else:
-                    self._add_error("Geometry attribute referencing non-existent variable",
-                                    var, code="7.5")
+                    if geometry in variables:
+                        # geometryContainerVars.append(geometry)
+                        # Add geometry and associated data variable to dictionary
+                        if geometryContainerVars.get(geometry) is None:
+                            geometryContainerVars[geometry] = []
 
-        if hasattr(self.f.variables[var], 'node_coordinates'):
-            if self.parseBlankSeparatedList(self.f.variables[var].node_coordinates):
-                node_coordinates = self.f.variables[var].node_coordinates.split()
-                for coord in node_coordinates:
-                    if coord in allVariables:
-                        # Add coordinate to auxillary coordinate list only if it exists in the file
-                        # and is not already in the list
-                        auxCoordVars.append(coord)
+                        geometryContainerVars[geometry].append(var)
+                    else:
+                        self._add_error("Geometry attribute referencing non-existent variable",
+                                        var, code="7.5")
+
+            if hasattr(self.f.variables[var], 'node_coordinates'):
+                if self.parseBlankSeparatedList(self.f.variables[var].node_coordinates):
+                    node_coordinates = self.f.variables[var].node_coordinates.split()
+                    for coord in node_coordinates:
+                        if coord in allVariables:
+                            # Add coordinate to auxillary coordinate and node coordinate lists
+                            auxCoordVars.append(coord)
+                            nodeCoordinateVars.append(coord)
         
         #------------------------------------------
         # Is there a grid_mapping variable?
@@ -1307,8 +1311,9 @@ class CFChecker(object):
     # Make sure lists are unique
     gridMappingVars = self.unique(gridMappingVars)
     auxCoordVars = self.unique(auxCoordVars)
+    nodeCoordinateVars = self.unique(nodeCoordinateVars)
 
-    return (coordVars, auxCoordVars, boundaryVars, climatologyVars, geometryContainerVars, gridMappingVars)
+    return (coordVars, auxCoordVars, boundaryVars, climatologyVars, geometryContainerVars, gridMappingVars, nodeCoordinateVars)
 
   def unique(self, list):
       """Get a unique values from list"""
@@ -1339,14 +1344,13 @@ class CFChecker(object):
           except UnicodeDecodeError:
               pass
 
-      print("RSH: attributes - {}".format(attributes))
+      self._add_debug("attributes - {}".format(attributes), varName)
       return attributes
 
   #------------------------------------------
   def chkGeometryContainerVar(self, varName):
   #------------------------------------------
       """Section 7.5: Geometry Container Variable Checks"""
-      print("RSH: Running Geometry Container Variable Checks")
        
       # Get all attributes for this variable
       attributes = self.get_variable_attributes(varName)
@@ -1454,7 +1458,7 @@ class CFChecker(object):
           # Find the netCDF dimension for the total number of geometries for each
           # data variable the geometry applies to
           geometry_dimension = self.f.variables[node_count].dimensions[0]
-          print("RSH geometry_dimension: {}".format(geometry_dimension))
+
           for data_var in self.geometryContainerVars[varName]:
               if geometry_dimension not in self.f.variables[data_var].dimensions:
                   self._add_error('One of the dimensions of {} must be the number of geometries '
@@ -1506,7 +1510,31 @@ class CFChecker(object):
                                   data_var,
                                   code='7.5')
 
-      
+  #------------------------------------
+  def chkNodesAttribute(self, varName):
+  #------------------------------------
+      """Validate nodes attribute"""
+      var=self.f.variables[varName]
+
+      if hasattr(var, 'nodes'):
+          # Syntax: a string whose value is a single variable name
+          if not self.validName(var.nodes):
+              self._add_error("'nodes' attribute must be a string whose value is a single variable name",
+                              varName,
+                              code='7.5')
+          else:
+              # Check that variable is a node coordinate variable and exists in the file
+              node_coordinate = var.nodes
+              if node_coordinate not in self.nodeCoordinateVars:
+                  self._add_error("Variable referenced by 'nodes' attribute not identified as a node coordinate variable",
+                                  varName,
+                                  code='7.5')
+
+              if node_coordinate not in list(map(str, self.f.variables)):
+                  self._add_error("'nodes' attribute referencing non-existent variable",
+                                  varName,
+                                  code='7.5')
+
   #--------------------------------------------------------
   def chkGridMappingAttribute(self, varName, grid_mapping):
   #--------------------------------------------------------
@@ -2221,7 +2249,7 @@ class CFChecker(object):
       and for this purpose the variable name is also passed in)
       """
       rc=1
-      print("RSH auxCoordVars: {}".format(self.auxCoordVars))
+
       # Is it a string-valued aux coord var with standard_name of area_type?
       if value in self.auxCoordVars:
           if self.f.variables[value].dtype.char != 'c':
@@ -2998,7 +3026,7 @@ class CFChecker(object):
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
 
-              if name == "area_type":
+              if self.version >= vn1_4 and name == "area_type":
                   # Check values from the permitted list
                   area_types = self.getStringValue(varName)
 
