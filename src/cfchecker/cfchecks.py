@@ -2221,6 +2221,7 @@ class CFChecker(object):
       and for this purpose the variable name is also passed in)
       """
       rc=1
+      print("RSH auxCoordVars: {}".format(self.auxCoordVars))
       # Is it a string-valued aux coord var with standard_name of area_type?
       if value in self.auxCoordVars:
           if self.f.variables[value].dtype.char != 'c':
@@ -2996,6 +2997,35 @@ class CFChecker(object):
 
                   else:
                       self._add_error("No region names specified", varName, code="3.3")
+
+              if name == "area_type":
+                  # Check values from the permitted list
+                  area_types = self.getStringValue(varName)
+
+                  if len(area_types) == 1 and area_types[0] == None:
+                      # Not a char variable
+                      if hasattr(var, 'flag_meanings'):
+                          # Check values are from the region names permitted list
+                          meanings = var.flag_meanings
+
+                          if is_str_or_basestring(meanings):
+                              area_types = meanings.split()
+                              for area in area_types:
+                                  if not area in list(self.area_type_lh.list):
+                                      self._add_error("Invalid area_type: {}".format(area), varName, code="3.3")
+                          else:
+                              self._add_error("Invalid syntax for 'flag_meanings' attribute.", varName, code="3.5")
+
+                      else:
+                          self._add_error("Variable {} of invalid type. Area Types variable should be of type char.".format(varName), varName, code="3.3")
+
+                  elif len(area_types):
+                      for area in area_types:
+                          if not area.decode('utf-8') in list(self.area_type_lh.list):
+                              self._add_error("Invalid area_type: {}".format(area.decode('utf-8')), varName, code="3.3")
+
+                  else:
+                      self._add_error("No area types specified", varName, code="3.3")
 
               if hasattr(var, 'positive'):
                   # Check that positive attribute is consistent with sign implied by standard_name
