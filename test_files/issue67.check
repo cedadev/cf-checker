@@ -1,0 +1,52 @@
+CHECKING NetCDF FILE: issue67.nc
+=====================
+Using CF Checker Version 4.0.0
+Checking against CF Version CF-1.7
+Using Standard Name Table Version 73 (2020-06-23T11:50:17Z)
+Using Area Type Table Version 10 (23 June 2020)
+Using Standardized Region Name Table Version 4 (18 December 2018)
+
+WARN: (7.1): Boundary var vertices_latitude should not have attribute units
+WARN: (7.1): Boundary var vertices_longitude should not have attribute units
+
+------------------
+Checking variable: basin
+------------------
+INFO: attribute history is being used in a non-standard way
+ERROR: Invalid attribute name: _ChunkSizes
+
+------------------
+Checking variable: i
+------------------
+
+------------------
+Checking variable: j
+------------------
+
+------------------
+Checking variable: latitude
+------------------
+ERROR: Invalid attribute name: _ChunkSizes
+
+------------------
+Checking variable: longitude
+------------------
+ERROR: Invalid attribute name: _ChunkSizes
+
+------------------
+Checking variable: vertices_latitude
+------------------
+ERROR: Invalid attribute name: _ChunkSizes
+WARN: (7.1): Boundary Variable vertices_latitude should not have _FillValue attribute
+WARN: (7.1): Boundary Variable vertices_latitude should not have missing_value attribute
+
+------------------
+Checking variable: vertices_longitude
+------------------
+ERROR: Invalid attribute name: _ChunkSizes
+WARN: (7.1): Boundary Variable vertices_longitude should not have _FillValue attribute
+WARN: (7.1): Boundary Variable vertices_longitude should not have missing_value attribute
+
+ERRORS detected: 5
+WARNINGS given: 6
+INFORMATION messages: 1
