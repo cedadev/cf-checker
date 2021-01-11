@@ -1667,8 +1667,8 @@ class CFChecker(object):
             if is_str_or_basestring(var.getncattr(attribute)):
                 attr_type = 'S'
           
-            elif (numpy.issubdtype(attr_type, numpy.int) or
-                  numpy.issubdtype(attr_type, numpy.float) or
+            elif (numpy.issubdtype(attr_type, numpy.integer) or
+                  numpy.issubdtype(attr_type, numpy.floating) or
                   attr_type == numpy.ndarray):
                 attr_type = 'N'
 
@@ -2085,7 +2085,7 @@ class CFChecker(object):
 
             if is_str_or_basestring(value):
                 attrType = 'S'
-            elif numpy.issubdtype(attrType, numpy.int) or numpy.issubdtype(attrType, numpy.float):
+            elif numpy.issubdtype(attrType, numpy.integer) or numpy.issubdtype(attrType, numpy.floating):
                 attrType = 'N'
             elif attrType == numpy.ndarray:
                 attrType = 'N'
