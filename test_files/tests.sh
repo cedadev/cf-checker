@@ -9,10 +9,7 @@ mkdir $outdir
 std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml
 area_table=http://cfconventions.org/Data/area-type-table/current/src/area-type-table.xml
 
-cfchecker="/home/ros/software/dev/bin/cfchecks"
-cfchecker="/home/ros/software/dev-python3/bin/cfchecks"
-# Local desktop location	
-cfchecker="/home/ros/software/cf-checker/bin/cfchecks"
+cfchecker="cfchecks"
 
 failed=0
 

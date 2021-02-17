@@ -2,7 +2,7 @@ CHECKING NetCDF FILE: issue27.nc
 =====================
 Using CF Checker Version 4.0.0
 Checking against CF Version CF-1.6
-Using Standard Name Table Version 76 (2020-10-13T12:38:27Z)
+Using Standard Name Table Version 77 (2021-01-19T13:38:50Z)
 Using Area Type Table Version 10 (23 June 2020)
 Using Standardized Region Name Table Version 4 (18 December 2018)
 
@@ -26,7 +26,6 @@ Checking variable: obs_time_tai93
 ------------------
 Checking variable: obs_time_utc
 ------------------
-INFO: Invalid Type for attribute: _FillValue <class 'numpy.uint16'>
 
 ------------------
 Checking variable: lat
@@ -135,7 +134,6 @@ Checking variable: sat_range
 ------------------
 Checking variable: asc_flag
 ------------------
-INFO: Invalid Type for attribute: _FillValue <class 'numpy.uint8'>
 
 ------------------
 Checking variable: subsat_lat
@@ -689,4 +687,4 @@ Checking variable: surf_freq_mw
 
 ERRORS detected: 38
 WARNINGS given: 7
-INFORMATION messages: 3
+INFORMATION messages: 1
