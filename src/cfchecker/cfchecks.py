@@ -1187,6 +1187,10 @@ class CFChecker(object):
                                     self._add_error("Boundary var %s has inconsistent %s to %s" % (bounds, x, var),
                                                     bounds, code="7.1")
 
+                        if hasattr(self.f.variables[bounds], 'bounds'):
+                            self._add_error("Boundary var {} must not have attribute bounds".format(bounds),
+                                            bounds, code="7.1")
+
                     else:
                         self._add_error("bounds attribute referencing non-existent variable %s" % bounds,
                                         bounds, code="7.1")
@@ -1218,6 +1222,11 @@ class CFChecker(object):
                                                var,
                                                code="7.1")
                                 self._add_debug("%s" % e, bounds)
+                                break
+                            except ValueError as e:
+                                self._add_error("Problem with variable: {} \n(Python Error: {})".format(var, e),
+                                                var,
+                                                code="7.1")
                                 break
 
             # ----------------------------
