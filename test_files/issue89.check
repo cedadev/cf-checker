@@ -1,0 +1,48 @@
+CHECKING NetCDF FILE: issue89.nc
+=====================
+Using CF Checker Version 4.0.0
+Checking against CF Version CF-1.6
+Using Standard Name Table Version 77 (2021-01-19T13:38:50Z)
+Using Area Type Table Version 10 (23 June 2020)
+Using Standardized Region Name Table Version 4 (18 December 2018)
+
+ERROR: (7.1): Boundary var time_bounds must not have attribute bounds
+WARN: (7.1): Data for variable time lies outside cell boundaries
+ERROR: (7.1): Incorrect number of dimensions for boundary variable: time_bounds
+ERROR: (7.1): Boundary var time_bounds must not have attribute bounds
+ERROR: (7.1): Problem with variable: time_bounds 
+(Python Error: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all())
+
+------------------
+Checking variable: pr
+------------------
+
+------------------
+Checking variable: time
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: x
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: y
+------------------
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: time_bounds
+------------------
+INFO: attribute axis is being used in a non-standard way
+INFO: attribute bounds is being used in a non-standard way
+INFO: attribute calendar is being used in a non-standard way
+
+------------------
+Checking variable: Lambert_Conformal
+------------------
+
+ERRORS detected: 7
+WARNINGS given: 1
+INFORMATION messages: 3

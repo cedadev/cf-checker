@@ -6,6 +6,7 @@ Using Standard Name Table Version 77 (2021-01-19T13:38:50Z)
 Using Area Type Table Version 10 (23 June 2020)
 Using Standardized Region Name Table Version 4 (18 December 2018)
 
+WARN: (2.3): Global attribute EXTRA_DIMENSION.bnds: Attribute names should begin with a letter and be composed of letters, digits and underscores
 WARN: (7.1): Boundary var vertices_latitude should not have attribute units
 WARN: (7.1): Boundary var vertices_longitude should not have attribute units
 
@@ -48,5 +49,5 @@ WARN: (7.1): Boundary Variable vertices_longitude should not have _FillValue att
 WARN: (7.1): Boundary Variable vertices_longitude should not have missing_value attribute
 
 ERRORS detected: 5
-WARNINGS given: 6
+WARNINGS given: 7
 INFORMATION messages: 1
