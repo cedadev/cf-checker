@@ -3,7 +3,8 @@
 # Note that you may need to change the $cfchecker variable in this file to
 # point to the full path location of your "cfchecks" script
 
-outdir=tests_output.$$
+# as with cache dir below, best to put it in /tmp since we dont want ani git orphan files
+outdir=/tmp/cfchecker/tests_output
 mkdir $outdir
 
 std_name_table=http://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml
@@ -13,10 +14,13 @@ cfchecker="cfchecks"
 
 failed=0
 
-echo "Unzipping input netcdf files..."
-gzip -d *.gz
+# no gz files so this fails
+# echo "Unzipping input netcdf files..."
+# gzip -d *.gz
 
-cache_opts="-x --cache_dir /home/ros/temp/cfcache-files-py3"
+# this is a better location since we don't want to add any git orpah files
+mkdir /tmp/cfchecker
+cache_opts="-x --cache_dir /tmp/cfchecker"
 
 for file in `ls *.nc`
 do
