@@ -29,6 +29,7 @@ on:
   #pull_request:
   #  branches:
   #  - master
+  # run a cron test every night
   schedule:
     - cron: '0 0 * * *'
 
@@ -56,6 +57,8 @@ jobs:
         run: conda --version 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
         run: python -V 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: conda install udunits2
       - shell: bash -l {0}
         run: pip install cfchecker 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
