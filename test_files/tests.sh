@@ -14,7 +14,7 @@ cfchecker="cfchecks"
 
 failed=0
 
-# no gz files so this fails
+# no gz files so this fails if not run from here
 # echo "Unzipping input netcdf files..."
 # gzip -d *.gz
 
