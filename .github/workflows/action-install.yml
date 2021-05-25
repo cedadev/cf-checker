@@ -1,0 +1,70 @@
+# Install esmvalcore from PyPi on different OS's
+# and different Python version; test locally with
+# act: https://github.com/nektos/act
+# Example how to setup conda workflows:
+# https://github.com/marketplace/actions/setup-miniconda
+# Notes:
+#  - you can group commands with | delimiter (or &&) but those will be run
+#    in one single call; declaring the shell variable makes the action run each
+#    command separately (better for debugging);
+#  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
+# TODO: read the cron tasking documentation:
+# https://www.netiq.com/documentation/cloud-manager-2-5/ncm-reference/data/bexyssf.html
+
+name: PyPi Install
+
+# runs on a push on master and at the end of every day
+on:
+  # triggering on push without branch name will run tests everytime
+  # there is a push on any branch
+  # turn it on only if needed
+  push:
+    branches:
+    - master
+    # test before merge on a dev branch
+    # - ga_tests
+
+  # run the test only if the PR is to master
+  # turn it on if required
+  #pull_request:
+  #  branches:
+  #  - master
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  linux:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+      # fail-fast set to False allows all other tests
+      # in the worflow to run regardless of any fail
+      fail-fast: false
+    name: Linux Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: cfchecker
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          channels: conda-forge
+      - shell: bash -l {0}
+        run: mkdir -p pypi_install_linux_artifacts_python_${{ matrix.python-version }}
+      - shell: bash -l {0}
+        run: conda --version 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+      - shell: bash -l {0}
+        run: python -V 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: pip install cfchecker 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - shell: bash -l {0}
+        run: cfchecks --help
+      - shell: bash -l {0}
+        run: cfchecks --version 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: PyPi_Install_Linux_python_${{ matrix.python-version }}
+          path: pypi_install_linux_artifacts_python_${{ matrix.python-version }}
