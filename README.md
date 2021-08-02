@@ -21,6 +21,11 @@ To install from [PyPI](https://pypi.python.org/pypi/cfchecker):
 
     pip install cfchecker
 
+To install from [Conda-forge](https://github.com/conda-forge/cfchecker-feedstock):
+
+    conda create -n cfchecker -c conda-forge cfchecker # create new env OR
+    conda install cfchecker -c conda-forge             # install on existing env
+
 Alternatively, to install from source:
 
 1. Download the cfchecker package from [cfchecker releases](https://github.com/cedadev/cf-checker/releases)
