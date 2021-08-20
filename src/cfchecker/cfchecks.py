@@ -736,6 +736,7 @@ class CFChecker(object):
                        numpy.int32,
                        numpy.float32,
                        numpy.double,
+                       str,
                        'int16',
                        'float32']
 
