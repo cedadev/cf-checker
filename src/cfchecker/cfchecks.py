@@ -2159,9 +2159,16 @@ class CFChecker(object):
             usesLen = len(uses)
             i = 1
             for use in uses:
-                if use == "C" and varName in allCoordVars:
-                    # Valid association
-                    break
+                if use == "C":
+                    if self.version < vn1_7:
+                        if varName in allCoordVars:
+                            # Valid association
+                            break
+                    else:
+                        # Allow for formula_terms attribute in boundary variables
+                        if varName in allCoordVars or varName in boundsVars:
+                            # Valid association
+                            break
                 elif use == "D" and varName not in allCoordVars:
                     # Valid association
                     break
