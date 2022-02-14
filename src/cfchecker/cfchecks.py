@@ -48,6 +48,8 @@ from __future__ import print_function
 from builtins import str
 from builtins import next
 from builtins import map
+
+import numpy as np
 from past.builtins import basestring
 from builtins import object
 
@@ -776,7 +778,7 @@ class CFChecker(object):
             self.chkDescription(var)
 
             for attribute in map(str, self.f.variables[var].ncattrs()):
-                self.chkAttribute(attribute, var, allCoordVars, geometryContainerVars)
+                self.chkAttribute(attribute, var, allCoordVars, boundsVars, geometryContainerVars)
 
             self.chkUnits(var, allCoordVars)
             self.chkValidMinMaxRange(var)
@@ -785,7 +787,7 @@ class CFChecker(object):
             self.chkPositiveAttribute(var)
             self.chkCellMethods(var)
             self.chkCellMeasures(var)
-            self.chkFormulaTerms(var, allCoordVars)
+            self.chkFormulaTerms(var, allCoordVars, boundsVars)
             self.chkCompressAttr(var)
             self.chkPackedData(var)
 
@@ -2073,7 +2075,7 @@ class CFChecker(object):
           
         return typecode
 
-    def chkAttribute(self, attribute, varName, allCoordVars, geometryContainerVars):
+    def chkAttribute(self, attribute, varName, allCoordVars, boundsVars, geometryContainerVars):
         """Check the syntax of the attribute name, that the attribute
         is of the correct type and that it is attached to the right
         kind of variable."""
@@ -2157,9 +2159,16 @@ class CFChecker(object):
             usesLen = len(uses)
             i = 1
             for use in uses:
-                if use == "C" and varName in allCoordVars:
-                    # Valid association
-                    break
+                if use == "C":
+                    if self.version < vn1_7:
+                        if varName in allCoordVars:
+                            # Valid association
+                            break
+                    else:
+                        # Allow for formula_terms attribute in boundary variables
+                        if varName in allCoordVars or varName in boundsVars:
+                            # Valid association
+                            break
                 elif use == "D" and varName not in allCoordVars:
                     # Valid association
                     break
@@ -2434,7 +2443,7 @@ class CFChecker(object):
                 except StopIteration:
                     pass
 
-    def chkFormulaTerms(self, varName, allCoordVars):
+    def chkFormulaTerms(self, varName, allCoordVars, boundsVars):
         """Checks on formula_terms attribute (CF Section 4.3.3):
         formula_terms = var: term var: term ...
         1) No standard_name present
@@ -2451,16 +2460,42 @@ class CFChecker(object):
             else:
                 scode = "4.3.2"
 
+            bounds_parent = None
             if varName not in allCoordVars:
-                self._add_error("formula_terms attribute only allowed on coordinate variables", varName, code=scode)
+                if self.version < vn1_7:
+                    self._add_error("formula_terms attribute only allowed on coordinate variables", varName, code=scode)
+                else:
+                    if varName not in boundsVars:
+                        self._add_error("formula_terms attribute only allowed on coordinate variables and associated "
+                                        "boundary variables", varName, code=scode)
+                    else:
+                        for var_name, var_data in self.f.variables.items():
+                            if hasattr(var_data, 'bounds'):
+                                if var_data.bounds == varName:
+                                    bounds_parent = var_data
+
+            # Check for consistency between bounds and parent coordinate variable
+            if bounds_parent:
+                for attr_common in ['units', 'standard_name', 'axis', 'positive', 'calendar',
+                                    'leap_month', 'leap_year']:
+                    if hasattr(var, attr_common) and hasattr(bounds_parent, attr_common):
+                        self._add_warn("Duplicate entries of variable attribute " + attr_common +
+                                       "in coordinate and associated boundary variable", varName, code="7.1")
+                        if var.ncattr[attr_common] == bounds_parent.ncattr[attr_common]:
+                            self._add_error("Variable attribute " + attr_common +
+                                            " does not agree between coordinate and associated boundary variable",
+                                            varName, code='7.1')
 
             # Get standard_name to determine which formula is to be used
-            if not hasattr(var, 'standard_name'):
+            if not hasattr(var, 'standard_name') and not hasattr(bounds_parent, 'standard_name'):
                 self._add_error("Cannot get formula definition as no standard_name", varName, code=scode)
                 # No sense in carrying on as can't validate formula_terms without valid standard name
                 return
 
-            (stdName, modifier) = self.getStdName(var)
+            if hasattr(var, 'standard_name'):
+                (stdName, modifier) = self.getStdName(var)
+            else:
+                (stdName, modifier) = self.getStdName(bounds_parent)
 
             if stdName not in self.alias:
                 self._add_error("No formula defined for standard name: %s" % stdName, varName, code=scode)
@@ -2549,6 +2584,44 @@ class CFChecker(object):
 
                     except StopIteration:
                         break
+
+            # Check conformity of formula_terms in boundary coordinate variable
+            if hasattr(var, 'bounds'):
+                var_bounds = self.f.variables[var.bounds]
+                if not hasattr(var_bounds, 'formula_terms'):
+                    self._add_error("formula_terms attribute not present in boundary variable", varName, code=7.1)
+                else:
+                    formulaTerms_bounds = var_bounds.formula_terms
+                    ft_dict = {}
+                    for nft, ft in enumerate([formulaTerms, formulaTerms_bounds]):
+                        ft_dict[nft] = {}
+                        ft_dict[nft]['term'], ft_dict[nft]['variable'] = [], []
+                        for element in ft.split(' '):
+                            if element.endswith(':'):
+                                ft_dict[nft]['term'].append(element.rstrip(':'))
+                            else:
+                                ft_dict[nft]['variable'].append(element)
+
+                    if ft_dict[0]['term'] != ft_dict[1]['term']:
+                        self._add_error("Terms in formula_terms attribute vary between coordinate "
+                                        "and associated boundary variable", varName, code=7.1)
+
+                    for n_term_var, term_var in enumerate(ft_dict[0]['variable']):
+                        term_var_dim = self.f.variables[term_var].dimensions
+                        for dim_term in term_var_dim:
+                            if hasattr(self.f.variables[dim_term], 'positive'):
+                                term_interp = self.getInterpretation(self.f.variables[dim_term].units,
+                                                                     self.f.variables[dim_term].positive)
+                            else:
+                                term_interp = self.getInterpretation(self.f.variables[dim_term].units)
+                            if term_interp == "Z":
+                                term_var_dim_bound = self.f.variables[ft_dict[1]['variable'][n_term_var]].dimensions
+                                if len(term_var_dim_bound) != len(term_var_dim)+1:
+                                    self._add_error("Variable depending on vertical dimension in the formula_terms "
+                                                    "attribute in the coordinate and associated boundary variable have "
+                                                    "same dimensionality", varName, code=7.1)
+                                else:
+                                    break
 
     def chkUnits(self, varName, allCoordVars):
         """Check units attribute"""
