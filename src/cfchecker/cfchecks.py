@@ -2159,16 +2159,13 @@ class CFChecker(object):
             usesLen = len(uses)
             i = 1
             for use in uses:
-                if use == "C":
-                    if self.version < vn1_7:
-                        if varName in allCoordVars:
-                            # Valid association
-                            break
-                    else:
-                        # Allow for formula_terms attribute in boundary variables
-                        if varName in allCoordVars or varName in boundsVars:
-                            # Valid association
-                            break
+                if use == "C" and varName in allCoordVars:
+                    # Valid association
+                    break
+                elif use == "C" and self.version >= vn1_7 and attribute == "formula_terms" and varName in boundsVars:
+                    # Allow for formula_terms attribute in boundary variables
+                    # Valid association
+                    break
                 elif use == "D" and varName not in allCoordVars:
                     # Valid association
                     break
@@ -2477,11 +2474,11 @@ class CFChecker(object):
             # Check for consistency between bounds and parent coordinate variable
             if bounds_parent:
                 for attr_common in ['units', 'standard_name', 'axis', 'positive', 'calendar',
-                                    'leap_month', 'leap_year']:
+                                    'leap_month', 'leap_year', 'month_lengths']:
                     if hasattr(var, attr_common) and hasattr(bounds_parent, attr_common):
                         self._add_warn("Duplicate entries of variable attribute " + attr_common +
-                                       "in coordinate and associated boundary variable", varName, code="7.1")
-                        if var.ncattr[attr_common] == bounds_parent.ncattr[attr_common]:
+                                       " in coordinate and associated boundary variable", varName, code="7.1")
+                        if var.getncattr(attr_common) != bounds_parent.getncattr(attr_common):
                             self._add_error("Variable attribute " + attr_common +
                                             " does not agree between coordinate and associated boundary variable",
                                             varName, code='7.1')

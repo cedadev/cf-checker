@@ -24,8 +24,8 @@ Checking variable: lev
 ------------------
 Checking variable: lev_bnds
 ------------------
-INFO: attribute formula_terms is being used in a non-standard way
-ERROR: (4.3.3): formula_terms attribute only allowed on coordinate variables
+WARN: (7.1): Duplicate entries of variable attribute units in coordinate and associated boundary variable
+WARN: (7.1): Duplicate entries of variable attribute standard_name in coordinate and associated boundary variable
 
 ------------------
 Checking variable: p0
@@ -76,6 +76,6 @@ Checking variable: cl
 ------------------
 INFO: attribute history is being used in a non-standard way
 
-ERRORS detected: 1
-WARNINGS given: 2
-INFORMATION messages: 6
+ERRORS detected: 0
+WARNINGS given: 4
+INFORMATION messages: 5
