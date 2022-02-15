@@ -1,0 +1,68 @@
+CHECKING NetCDF FILE: issue75.nc
+=====================
+Using CF Checker Version 4.1.0
+Checking against CF Version CF-1.7
+Using Standard Name Table Version 78 (2021-09-21T11:55:06Z)
+Using Area Type Table Version 10 (23 June 2020)
+Using Standardized Region Name Table Version 4 (18 December 2018)
+
+WARN: (7.1): Data for variable eta lies outside cell boundaries
+WARN: (7.1): Data for variable A lies outside cell boundaries
+WARN: (7.1): Data for variable B lies outside cell boundaries
+
+------------------
+Checking variable: eta
+------------------
+ERROR: (4.3.3): Formula term a2 not present in formula for atmosphere_hybrid_sigma_pressure_coordinate
+ERROR: (7.1): Terms in formula_terms attribute vary between coordinate and associated boundary variable
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: eta_bnds
+------------------
+
+------------------
+Checking variable: A
+------------------
+
+------------------
+Checking variable: B
+------------------
+
+------------------
+Checking variable: A_bnds
+------------------
+
+------------------
+Checking variable: B_bnds
+------------------
+
+------------------
+Checking variable: lat
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: lon
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+ERROR: (5): co-ordinate variable not monotonic
+
+------------------
+Checking variable: PS
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: P0
+------------------
+WARN: (3): No standard_name or long_name attribute specified
+
+------------------
+Checking variable: temp
+------------------
+
+ERRORS detected: 5
+WARNINGS given: 7
+INFORMATION messages: 0
