@@ -2473,6 +2473,7 @@ class CFChecker(object):
 
             # Check for consistency between bounds and parent coordinate variable
             if bounds_parent:
+                # bounds_parent will only be set for CF-1.7 & greater
                 for attr_common in ['units', 'standard_name', 'axis', 'positive', 'calendar',
                                     'leap_month', 'leap_year', 'month_lengths']:
                     if hasattr(var, attr_common) and hasattr(bounds_parent, attr_common):
@@ -2583,7 +2584,7 @@ class CFChecker(object):
                         break
 
             # Check conformity of formula_terms in boundary coordinate variable
-            if hasattr(var, 'bounds'):
+            if hasattr(var, 'bounds') and self.version >= vn1_7:
                 var_bounds = self.f.variables[var.bounds]
                 if not hasattr(var_bounds, 'formula_terms'):
                     self._add_error("formula_terms attribute not present in boundary variable", varName, code=7.1)
@@ -2605,20 +2606,50 @@ class CFChecker(object):
 
                     for n_term_var, term_var in enumerate(ft_dict[0]['variable']):
                         term_var_dim = self.f.variables[term_var].dimensions
+
+                        if len(term_var_dim) == 0:
+                            # Dimensionless var
+                            if ft_dict[0]['variable'][n_term_var] != ft_dict[1]['variable'][n_term_var]:
+                                self._add_error("The variable name in the formula_terms attribute for term: {}, "
+                                                "must be the same in the coordinate and associated boundary "
+                                                "variable".format(ft_dict[0]['term'][n_term_var]),
+                                                varName, code=7.1)
+
                         for dim_term in term_var_dim:
-                            if hasattr(self.f.variables[dim_term], 'positive'):
-                                term_interp = self.getInterpretation(self.f.variables[dim_term].units,
-                                                                     self.f.variables[dim_term].positive)
+                            if hasattr(self.f.variables[dim_term], 'units'):
+                                if hasattr(self.f.variables[dim_term], 'positive'):
+                                    term_interp = self.getInterpretation(self.f.variables[dim_term].units,
+                                                                         self.f.variables[dim_term].positive)
+                                else:
+                                    term_interp = self.getInterpretation(self.f.variables[dim_term].units)
                             else:
-                                term_interp = self.getInterpretation(self.f.variables[dim_term].units)
+                                # Unable to determine interpretation as no units attribute
+                                term_interp = None
+
                             if term_interp == "Z":
                                 term_var_dim_bound = self.f.variables[ft_dict[1]['variable'][n_term_var]].dimensions
+
+                                if ft_dict[0]['variable'][n_term_var] == ft_dict[1]['variable'][n_term_var]:
+                                    self._add_error("The variable name in the formula_terms attribute for term: {}, "
+                                                    "which depends on the vertical dimension, must be different in the "
+                                                    "coordinate and associated boundary variable".format(ft_dict[0]['term'][n_term_var]),
+                                                    varName, code=7.1)
+
                                 if len(term_var_dim_bound) != len(term_var_dim)+1:
                                     self._add_error("Variable depending on vertical dimension in the formula_terms "
                                                     "attribute in the coordinate and associated boundary variable have "
                                                     "same dimensionality", varName, code=7.1)
                                 else:
                                     break
+                            else:
+                                # Non vertical dimension - variable name for boundary and coordinate variable must
+                                # be the same.
+                                if ft_dict[0]['variable'][n_term_var] != ft_dict[1]['variable'][n_term_var]:
+                                    self._add_error("The variable name in the formula_terms attribute for term: {}, "
+                                                    "must be the same in the coordinate and associated boundary "
+                                                    "variable".format(ft_dict[0]['term'][n_term_var]),
+                                                    varName, code=7.1)
+
 
     def chkUnits(self, varName, allCoordVars):
         """Check units attribute"""

@@ -15,6 +15,7 @@ Checking variable: eta
 ------------------
 ERROR: (4.3.3): Formula term a2 not present in formula for atmosphere_hybrid_sigma_pressure_coordinate
 ERROR: (7.1): Terms in formula_terms attribute vary between coordinate and associated boundary variable
+ERROR: (7.1): The variable name in the formula_terms attribute for term: a2, must be the same in the coordinate and associated boundary variable
 ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
@@ -63,6 +64,6 @@ WARN: (3): No standard_name or long_name attribute specified
 Checking variable: temp
 ------------------
 
-ERRORS detected: 5
+ERRORS detected: 6
 WARNINGS given: 7
 INFORMATION messages: 0
