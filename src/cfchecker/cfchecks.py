@@ -738,9 +738,12 @@ class CFChecker(object):
                        numpy.int32,
                        numpy.float32,
                        numpy.double,
-                       str,
                        'int16',
                        'float32']
+
+        if self.version >= vn1_8:
+            # String type valid from CF-1.8
+            valid_types.append(str)
 
         # Check each variable
         for var in list(self.f.variables.keys()):
