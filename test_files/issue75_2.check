@@ -1,4 +1,4 @@
-CHECKING NetCDF FILE: issue59.nc
+CHECKING NetCDF FILE: issue75_2.nc
 =====================
 Using CF Checker Version 4.1.0
 Checking against CF Version CF-1.7
@@ -8,6 +8,11 @@ Using Standardized Region Name Table Version 4 (18 December 2018)
 
 WARN: (7.1): Boundary var lev_bnds should not have attribute units
 WARN: (7.1): Boundary var lev_bnds should not have attribute standard_name
+WARN: (7.1): Data for variable lev lies outside cell boundaries
+WARN: (7.1): Data for variable A lies outside cell boundaries
+WARN: (7.1): Data for variable B lies outside cell boundaries
+WARN: (7.1): Data for variable lat lies outside cell boundaries
+WARN: (7.1): Data for variable lon lies outside cell boundaries
 
 ------------------
 Checking variable: time
@@ -20,26 +25,31 @@ Checking variable: time_bnds
 ------------------
 Checking variable: lev
 ------------------
+ERROR: (7.1): The variable name in the formula_terms attribute for term: p0, must be the same in the coordinate and associated boundary variable
+ERROR: (7.1): The variable name in the formula_terms attribute for term: a, which depends on the vertical dimension, must be different in the coordinate and associated boundary variable
+ERROR: (7.1): Variable depending on vertical dimension in the formula_terms attribute in the coordinate and associated boundary variable have same dimensionality
+ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lev_bnds
 ------------------
 WARN: (7.1): Duplicate entries of variable attribute units in coordinate and associated boundary variable
 WARN: (7.1): Duplicate entries of variable attribute standard_name in coordinate and associated boundary variable
+ERROR: (4.3.3): p0_dummy is not declared as a variable
 
 ------------------
 Checking variable: p0
 ------------------
 
 ------------------
-Checking variable: a
+Checking variable: A
 ------------------
-INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+WARN: (3.1): units attribute should be present
 
 ------------------
-Checking variable: b
+Checking variable: B
 ------------------
-INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
+WARN: (3.1): units attribute should be present
 
 ------------------
 Checking variable: ps
@@ -48,16 +58,15 @@ Checking variable: ps
 ------------------
 Checking variable: a_bnds
 ------------------
-INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
 
 ------------------
 Checking variable: b_bnds
 ------------------
-INFO: (3.1): No units attribute set.  Please consider adding a units attribute for completeness.
 
 ------------------
 Checking variable: lat
 ------------------
+ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lat_bnds
@@ -66,6 +75,7 @@ Checking variable: lat_bnds
 ------------------
 Checking variable: lon
 ------------------
+ERROR: (5): co-ordinate variable not monotonic
 
 ------------------
 Checking variable: lon_bnds
@@ -76,6 +86,6 @@ Checking variable: cl
 ------------------
 INFO: attribute history is being used in a non-standard way
 
-ERRORS detected: 0
-WARNINGS given: 4
-INFORMATION messages: 5
+ERRORS detected: 7
+WARNINGS given: 11
+INFORMATION messages: 1
