@@ -3114,8 +3114,8 @@ class CFChecker(object):
                     elif len(region_names):
                         for region in region_names:
 
-                            if not region.decode('utf-8') in list(self.region_name_lh.list):
-                                self._add_error("Invalid region name: {}".format(region.decode('utf-8')),
+                            if not region.tolist().decode('utf-8') in list(self.region_name_lh.list):
+                                self._add_error("Invalid region name: {}".format(region.tolist().decode('utf-8')),
                                                 varName,
                                                 code="3.3")
                     else:
@@ -3145,8 +3145,8 @@ class CFChecker(object):
 
                     elif len(area_types):
                         for area in area_types:
-                            if not area.decode('utf-8') in list(self.area_type_lh.list):
-                                self._add_error("Invalid area_type: {}".format(area.decode('utf-8')),
+                            if not area.tolist().decode('utf-8') in list(self.area_type_lh.list):
+                                self._add_error("Invalid area_type: {}".format(area.tolist().decode('utf-8')),
                                                 varName, code="3.3")
 
                     else:
