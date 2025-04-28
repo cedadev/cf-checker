@@ -1,0 +1,24 @@
+CHECKING NetCDF FILE: quantization.nc
+=====================
+Using CF Checker Version 4.1.0
+Checking against CF Version CF-1.8
+Using Standard Name Table Version 90 (2025-03-20T01:16:14Z)
+Using Area Type Table Version 13 (20 March 2025)
+Using Standardized Region Name Table Version 5 (12 November 2024)
+
+
+------------------
+Checking variable: bit_groom
+------------------
+
+------------------
+Checking variable: bit_round
+------------------
+
+------------------
+Checking variable: granular_bit_round
+------------------
+
+ERRORS detected: 0
+WARNINGS given: 0
+INFORMATION messages: 0

@@ -2086,7 +2086,14 @@ class CFChecker(object):
         var = self.f.variables[varName]
 
         # https://www.unidata.ucar.edu/software/netcdf/docs/file_format_specifications.html
-        reserved_attributes = ["_FillValue", "_Encoding", "_Unsigned"]
+        reserved_attributes = [
+            "_FillValue",
+            "_Encoding",
+            "_Unsigned",
+            "_QuantizeBitGroomNumberOfSignificantDigits",
+            "_QuantizeBitRoundNumberOfSignificantBits",
+            "_QuantizeGranularBitRoundNumberOfSignificantDigits",
+        ]
 
         if not self.validName(attribute) and attribute not in reserved_attributes:
             self._add_error("Invalid attribute name: {}".format(attribute),
