@@ -87,7 +87,7 @@ def _do_test(filename, checkfilename, version='1.0'):
     
     if len(diff) > 0:
         for line in diff:
-            print line,
+            print(line),
         assert False
 
 

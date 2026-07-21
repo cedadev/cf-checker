@@ -2124,6 +2124,8 @@ class CFChecker(object):
                 attrType = 'N'
             elif attrType == type(None):
                 attrType = 'NoneType'
+            elif isinstance(value, (list, tuple)):
+                attrType = 'L'
             else:
                 self._add_info("Invalid Type for attribute: %s %s" % (attribute, attrType))
 
@@ -2150,13 +2152,14 @@ class CFChecker(object):
 
                     attrLookup = {"D": "Data Variable",
                                   "N": "Numeric",
-                                  "S": "String"}
+                                  "S": "String",
+                                  "L": "List"}
 
                     self._add_error("Attribute %s of incorrect type (expecting '%s' type, got '%s' type)" %
-                                    (attribute,
-                                     attrLookup[self.AttrList[attribute][0]],
-                                     attrLookup[attrType]),
-                                    varName)
+                        (attribute,
+                        attrLookup[self.AttrList[attribute][0]],
+                        attrLookup.get(attrType, str(attrType))),
+                        varName)
 
             # Attribute attached to the wrong kind of variable
             uses = self.AttrList[attribute][1]
